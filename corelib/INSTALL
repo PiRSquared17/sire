@@ -1,100 +1,62 @@
-Sire 1.0 release candidate
-
-Installation instructions
-=========================
-
 A. INSTALL THE DEPENDENCIES
 
 First, make sure that you have downloaded and installed all
 of the dependencies of Sire. These are;
 
-(0) Functioning C++ and C compilers (recommend gcc >= 4.2)
-(1) cmake >= 2.8
-(2) Qt >= 4.5
-(3) boost >= 1.5  (make sure to include boost::python)
-(4) gsl >= 1.6
-(5) python >= 2.5 but not python 3
+(1) Functioning C++ and C compilers (recommend gcc >= 4.2)
+(2) cmake >= 2.8.11.2
+(3) python (for running the compilation scripts)
 
-(6) Optionally, to use MPI, you must have an MPI2 compatible
-    library, such as mpich2 installed
+B. DOWNLOAD AND COMPILE THE SOURCE
 
-The links to all of these dependencies are provided
-on the Sire "Download" page on the website 
-(http://siremol.org/Sire/Download.html)
+Downloading and compiling Sire is controlled using a python
+script called download_compile_sire.py. Simply download
+this script from the Sire website and run;
 
-B. BUILD THE CORE LIBRARIES
+python download_compile_sire.py
 
-The next step is to compile and install the core Sire libraries.
-The source for these are in the "corelib" directory. Because the
-Sire build system is based on cmake, we first have to run cmake
-in the build directory.
+This will download all of the Sire source, compile it
+and install it all to the current directory.
 
-(1) cd build/corelib
-(2) cmake ../../corelib
+If you want help running the script type
 
-This will print out a lot of information as cmake configures Sire.
-You can change any of the options during this stage by running
-the command "ccmake ."
+python download_compile_sire.py --help
 
-This will bring up a menu where you can set options such as 
-where to install Sire, which parts of Sire to compile, optimisation
-flags etc. To start with, only change the installation directory, 
-as it is best to get a simple install working before trying anything
-fancy.
+Once Sire has compiled, you will have a sire.app directory.
+This will contain all of the Sire executables and libraries,
+and can be freely copied to wherever you want to install
+Sire.
 
-Once cmake has run successfully you can compile and install the core
-libraries using;
+To run a Sire executable, simply type;
 
-(3) make 
-(4) make install/strip
+/path/to/sire.app/bin/sire_executable
 
-This will install the libraries into the directory you gave in
-the ccmake options page. In addition, a "sire" binary will be
-produced and installed in the "bin" directory based on the
-installation root. Try to run this "sire" binary to see if it 
-runs without crashing. If it crashes, then get in touch on
-the Sire user forums and we should be able to help you out.
+e.g., to run the Sire waterswap executable, type
 
-You may need to ensure that the directory in which you installed
-the Sire libraries is included in your LD_LIBRARY_PATH
+/path/to/sire.app/bin/waterswap
 
-C. BUILD THE PYTHON 2 WRAPPER LIBRARIES
+To get help on a particular Sire executable type
 
-The final stage of installation is to build the python 2 wrappers.
-Sire is mainly used by writing python scripts, so building the
-python 2 wrappers is pretty vital. First run cmake in the build/python2
-directory, e.g.
+/path/to/sire.app/bin/sire_executable --help
 
-(1) cd ../python2
-(2) cmake ../../python2
+e.g.
 
-Note that you may have to use "ccmake ." to get into the options
-menu to tell cmake where you installed Sire, and to tell cmake
-where to install your python libraries.
+/path/to/sire.app/bin/waterswap --help
 
-Once cmake has run successfully, make the wrappers using;
+To run all of the Sire unit tests type
 
-(3) make 
-(4) make install/strip
+/path/to/sire.app/bin/sire_test
 
-Building the python wrappers can take time, so you may want to 
-make it quicker by running make in parallel, e.g. "make -j 4"
-if you have a quad-core machine.
+To package your installation of Sire up into a self-extracting
+executable, type
 
-You may need to ensure that the directory in which you installed
-the python wrappers is included in your PYTHONPATH
+/path/to/sire.app/bin/package_sire
 
-D. TEST THE PROGRAM
+To update your build of Sire to the latest version, simply
+rerun the "download_compile_sire.py" script in the same
+directory as the source.
 
-Once everything has been installed, you can test Sire by running
-some of the tests in the corelib/test directory, e.g. 
+To get further help, please get in touch with the authors
+via the Sire mailing lists, or via the email links on the
+Sire website, http://siremol.org
 
-(1) cd ../../corelib
-(2) sire_python test/SireMove/simulation.py
-
-would run a Monte Carlo simulation on a box of water. 
-
-If you have any problems or want to ask for more detail, then
-please get in touch via the user forums.
-
-Good luck :-)

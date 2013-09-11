@@ -1,0 +1,7 @@
+# trunk should not be directly edited!!!
+# To update trunk, use the svn merge commands below to 
+# update from the devel branch. Every time you merge,
+# make sure that you update the revision numbers in these commands
+
+svn merge -r 2103:2106 ../corelib/branches/devel corelib
+svn merge -r 2103:2106 ../python/branches/devel python
