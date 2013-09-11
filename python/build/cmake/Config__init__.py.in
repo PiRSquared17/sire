@@ -1,0 +1,14 @@
+#################################
+#
+# Defines some variables that say
+# where Sire is installed etc.
+#
+
+import Sire.Base
+
+binary_directory = Sire.Base.getBinDir()
+library_directory = Sire.Base.getLibDir()
+include_directory = "%s/include" % Sire.Base.getInstallDir()
+share_directory = Sire.Base.getShareDir()
+parameter_directory = "%s/parameters" % share_directory
+test_directory = "%s/test" % Sire.Base.getInstallDir()

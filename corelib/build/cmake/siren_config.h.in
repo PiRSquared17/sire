@@ -1,0 +1,25 @@
+
+// Auto-generated file - do not edit
+
+#ifndef SIRE_CONFIG_H
+#define SIRE_CONFIG_H
+
+#cmakedefine HAVE_UNISTD_H 1
+
+#cmakedefine HAVE_LSEEK64 1
+
+#cmakedefine HAVE_MALLOC_MALLOC_H 1
+
+#cmakedefine HAVE_MSTATS 1
+
+#cmakedefine HAVE_CUBEROOT 1
+
+#cmakedefine HAVE_MALLINFO 1
+
+#cmakedefine HAVE_SYSCTL 1
+
+#cmakedefine HAVE_BACKTRACE 1
+
+#cmakedefine HAVE_EXECINFO_H 1
+
+#endif
