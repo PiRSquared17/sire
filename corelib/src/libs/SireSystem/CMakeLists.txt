@@ -22,6 +22,7 @@ set ( SIRESYSTEM_HEADERS
       distancecomponent.h
       energymonitor.h
       errors.h
+      freeenergymonitor.h
       geometrycomponent.h
       idassigner.h
       identityconstraint.h
@@ -62,6 +63,7 @@ set ( SIRESYSTEM_SOURCES
       distancecomponent.cpp
       energymonitor.cpp
       errors.cpp
+      freeenergymonitor.cpp
       geometrycomponent.cpp
       idassigner.cpp
       identityconstraint.cpp

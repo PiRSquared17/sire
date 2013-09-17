@@ -25,3 +25,6 @@ special_code = { "SireSystem::MonitorID" : fix_MonitorID,
                  "SireSystem::MonitorIdx" : fix_MonitorIdx
                }
 
+implicitly_convertible = [ ("SireMol::MoleculeGroup", "SireSystem::AssignerGroup"),
+                           ("SireSystem::IDAssigner", "SireSystem::AssignerGroup") ]
+

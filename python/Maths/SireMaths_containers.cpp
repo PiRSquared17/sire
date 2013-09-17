@@ -48,6 +48,7 @@
 #include "SireMaths/multifixed.h"
 #include "SireMaths/multidouble.h"
 #include "SireMaths/histogram.h"
+#include "SireMaths/freeenergyaverage.h"
 
 using namespace SireMaths;
 
@@ -61,6 +62,8 @@ void register_SireMaths_containers()
     register_list< QVector<MultiFloat> >();
     register_list< QVector<MultiFixed> >();
     register_list< QVector<MultiDouble> >();
+
+    register_list< QVector<FreeEnergyAverage> >();
 
     register_list< QVector<HistogramValue> >();
 

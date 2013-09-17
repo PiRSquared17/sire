@@ -12,6 +12,7 @@
 #include "dihedralcomponent.h"
 #include "distancecomponent.h"
 #include "energymonitor.h"
+#include "freeenergymonitor.h"
 #include "geometrycomponent.h"
 #include "idassigner.h"
 #include "identityconstraint.h"

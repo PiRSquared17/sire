@@ -29,6 +29,8 @@
 
 #include "EnergyMonitor.pypp.hpp"
 
+#include "FreeEnergyMonitor.pypp.hpp"
+
 #include "GeometryComponent.pypp.hpp"
 
 #include "IDAndSet_MonitorID_.pypp.hpp"
@@ -150,6 +152,8 @@ BOOST_PYTHON_MODULE(_System){
 
     register_EnergyMonitor_class();
 
+    register_FreeEnergyMonitor_class();
+
     register_IDAssigner_class();
 
     register_IdentityConstraint_class();
@@ -191,6 +195,10 @@ BOOST_PYTHON_MODULE(_System){
     register_TripleDistanceComponent_class();
 
     register_SireSystem_properties();
+
+    bp::implicitly_convertible< SireMol::MoleculeGroup, SireSystem::AssignerGroup >();
+
+    bp::implicitly_convertible< SireSystem::IDAssigner, SireSystem::AssignerGroup >();
 
     register_WindowedComponent_class();
 }

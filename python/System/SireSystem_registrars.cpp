@@ -12,6 +12,7 @@
 #include "monitoridx.h"
 #include "constraints.h"
 #include "anglecomponent.h"
+#include "freeenergymonitor.h"
 #include "monitorproperty.h"
 #include "monitorname.h"
 #include "sysidx.h"
@@ -46,6 +47,8 @@ void register_SireSystem_objects()
     ObjectRegistry::registerConverterFor< SireSystem::MonitorIdx >();
     ObjectRegistry::registerConverterFor< SireSystem::Constraints >();
     ObjectRegistry::registerConverterFor< SireSystem::AngleComponent >();
+    ObjectRegistry::registerConverterFor< SireSystem::FreeEnergyMonitor >();
+    ObjectRegistry::registerConverterFor< SireSystem::AssignerGroup >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorProperty >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorName >();
     ObjectRegistry::registerConverterFor< SireSystem::SysIdx >();
