@@ -102,7 +102,8 @@ FreeEnergyAverage::FreeEnergyAverage(const Temperature &temperature)
 
 /** Constructor - this defaults to accumulating the average
     at room temperature (25 C) and collects statistics about the
-    free energy using a histogram of the passed bin width */
+    free energy using a histogram of the passed bin width. If the binwidth
+    is zero, then a histogram of energies is not collected */
 FreeEnergyAverage::FreeEnergyAverage(const MolarEnergy &binwidth)
                   : ConcreteProperty<FreeEnergyAverage,ExpAverage>(
                         -1.0 / (k_boltz * double(25*celsius)) ), hist(binwidth.value())

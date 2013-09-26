@@ -175,6 +175,9 @@ public:
     
     void setSwapMonitors(bool swap_monitors);
     
+    bool swapMovesDisabled() const;
+    void setDisableSwaps(bool disable);
+    
     QString toString() const;
     
     void setGenerator(const RanGenerator &generator);
@@ -204,6 +207,10 @@ private:
     /** Whether or not to swap the system monitors when we swap replicas
          - by default we leave the monitors with the systems */
     bool swap_monitors;
+    
+    /** Whether or not to disable RETI tests. This is useful when you want
+        to just use this to RUN TI on a lot of replicas in parallel */
+    bool disable_swaps;
 };
 
 }

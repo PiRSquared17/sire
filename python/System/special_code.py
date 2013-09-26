@@ -28,3 +28,8 @@ special_code = { "SireSystem::MonitorID" : fix_MonitorID,
 implicitly_convertible = [ ("SireMol::MoleculeGroup", "SireSystem::AssignerGroup"),
                            ("SireSystem::IDAssigner", "SireSystem::AssignerGroup") ]
 
+
+def fixMB(mb):   
+    mb.add_declaration_code("#include \"SireSystem/freeenergymonitor.h\"")
+    mb.add_declaration_code("#include \"SireMol/moleculegroup.h\"")
+

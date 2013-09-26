@@ -191,8 +191,8 @@ public:
     
     void set(int i, const BennettsRatios &ratios);
     
-    BennettsRatios merge(int start, int end);
-    BennettsRatios merge(QList<int> indicies);
+    BennettsRatios merge(int start, int end) const;
+    BennettsRatios merge(QList<int> indicies) const;
     
     QList<BennettsRatios> rollingAverage(int niterations) const;
     

@@ -837,20 +837,21 @@ void Bennetts::set(int i, const QList<double> &windows,
 /** Set the deltas for the ith iteration */
 void Bennetts::set(int i, const BennettsRatios &ratios)
 {
-    if (ratios.isEmpty())
-        return;
-
-    if (i == rtios.count())
-        this->add(ratios);
-    else
+    while (i >= rtios.count())
     {
-        i = Index(i).map(rtios.count());
-        rtios[i] = ratios;
+        rtios.append(BennettsRatios());
     }
+
+    i = Index(i).map(rtios.count());
+
+    if (ratios.isEmpty())
+        rtios[i] = BennettsRatios();
+    else
+        rtios[i] = ratios;
 }
 
 /** Merge the deltas for iterations start->end */
-BennettsRatios Bennetts::merge(int start, int end)
+BennettsRatios Bennetts::merge(int start, int end) const
 {
     start = Index(start).map(rtios.count());
     end = Index(end).map(rtios.count());
@@ -859,20 +860,24 @@ BennettsRatios Bennetts::merge(int start, int end)
     
     for (int i=start; i<=end; ++i)
     {
-        set.append( rtios.at(i) );
+        if (not rtios.at(i).isEmpty())
+            set.append( rtios.at(i) );
     }
     
     return BennettsRatios::merge(set);
 }
 
 /** Merge the deltas at the passed indicies */
-BennettsRatios Bennetts::merge(QList<int> indicies)
+BennettsRatios Bennetts::merge(QList<int> indicies) const
 {
     QList<BennettsRatios> set;
     
     foreach (int idx, indicies)
     {
-        set.append( rtios.at( Index(idx).map(rtios.count()) ) );
+        int i = Index(idx).map(rtios.count());
+        
+        if (not rtios.at(i).isEmpty())
+            set.append( rtios.at(i) );
     }
  
     return BennettsRatios::merge(set);
@@ -886,26 +891,50 @@ QList<BennettsRatios> Bennetts::rollingAverage(int niterations) const
 {
     QList<BennettsRatios> merged;
 
-    if (niterations >= rtios.count())
-        merged.append( BennettsRatios::merge(rtios) );
-
-    else if (niterations <= 1)
-        merged = rtios;
+    if (rtios.isEmpty())
+        return merged;
     
+    else if (niterations >= rtios.count())
+    {
+        BennettsRatios r = this->merge(0,-1);
+        
+        if (not r.isEmpty())
+            merged.append(r);
+    }
+    else if (niterations <= 1)
+    {
+        for (int i=0; i<rtios.count(); ++i)
+        {
+            if (not rtios.at(i).isEmpty())
+                merged.append(rtios.at(i));
+        }
+    }
     else
     {
         QList<BennettsRatios> set;
         
-        for (int i=0; i<niterations; ++i)
-            set.append(rtios.at(i));
+        int i=0;
+        
+        for (i=0; i<rtios.count(); ++i)
+        {
+            if (not rtios.at(i).isEmpty())
+            {
+                set.append(rtios.at(i));
+                if (set.count() == niterations)
+                    break;
+            }
+        }
         
         merged.append( BennettsRatios::merge(set) );
         
-        for (int i=niterations; i<rtios.count(); ++i)
+        for (i=i+1; i<rtios.count(); ++i)
         {
-            set.removeFirst();
-            set.append(rtios.at(i));
-            merged.append( BennettsRatios::merge(set) );
+            if (not rtios.at(i).isEmpty())
+            {
+                set.removeFirst();
+                set.append(rtios.at(i));
+                merged.append( BennettsRatios::merge(set) );
+            }
         }
     }
     
@@ -916,7 +945,7 @@ QList<BennettsRatios> Bennetts::rollingAverage(int niterations) const
 void Bennetts::removeAt(int i)
 {
     i = Index(i).map(rtios.count());
-    rtios.removeAt(i);
+    rtios[i] = BennettsRatios();
 }
 
 /** Remove every iteration from 'start' to 'end' (inclusively) */
@@ -930,7 +959,7 @@ void Bennetts::removeRange(int start, int end)
     
     for (int i = start; i <= end; ++i)
     {
-        rtios.removeAt(start);
+        rtios[i] = BennettsRatios();
     }
 }
 
@@ -939,4 +968,3 @@ void Bennetts::clear()
 {
     this->operator=( Bennetts() );
 }
-

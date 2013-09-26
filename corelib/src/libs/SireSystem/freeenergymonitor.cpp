@@ -145,20 +145,25 @@ const char* AssignerGroup::what() const
 /** Return whether or not this is empty */
 bool AssignerGroup::isEmpty() const
 {
-    if (molgroup.isNull() and assgnr.isNull())
+    if (molgroup.read().nViews() == 0 and assgnr.isNull())
         return true;
     
     else if (assgnr.isNull())
         return molgroup->isEmpty();
 
     else
+    {
         return assgnr->asA<IDAssigner>().nPoints() == 0;
+    }
 }
 
 /** Return whether or not this is a holding a MoleculeGroup */
 bool AssignerGroup::isMoleculeGroup() const
 {
-    return not molgroup.isNull();
+    if (not assgnr.isNull())
+        return false;
+    else
+        return molgroup.read().nViews() > 0;
 }
 
 /** Return whether or not this is holding an IDAssigner */
@@ -193,8 +198,9 @@ const IDAssigner& AssignerGroup::assigner() const
 QVector<PartialMolecule> AssignerGroup::views() const
 {
     if (this->isEmpty())
+    {
         return QVector<PartialMolecule>();
-    
+    }
     else if (this->isMoleculeGroup())
     {
         const MoleculeGroup &group = this->group();
@@ -231,6 +237,37 @@ void AssignerGroup::update(const System &system)
     }
 }
 
+/** Return whether or not this group is compatible with 'other'.
+    Compatible means is the same type, refers to the same MoleculeGroup etc. */
+bool AssignerGroup::isCompatible(const AssignerGroup &other) const
+{
+    if (this == &other)
+        return true;
+    
+    if (assgnr.isNull())
+    {
+        if (not other.assgnr.isNull())
+            return false;
+        
+        if (molgroup.isNull())
+            return other.molgroup.isNull();
+
+        //check that the molecule group number is the same and the number
+        //of views is the same
+        return this->group().number() == other.group().number() and
+               this->group().nViews() == other.group().nViews();
+    }
+    else
+    {
+        if (other.assgnr.isNull())
+            return false;
+        
+        // we cannot do much of a comparison of assigners?
+        // Just check that the number of points is the same
+        return assigner().nPoints() == other.assigner().nPoints();
+    }
+}
+
 /////////
 ///////// Implementation of FreeEnergyMonitor
 /////////
@@ -240,7 +277,7 @@ static const RegisterMetaType<FreeEnergyMonitor> r_nrgmonitor;
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, 
                                           const FreeEnergyMonitor &nrgmonitor)
 {
-    writeHeader(ds, r_nrgmonitor, 3);
+    writeHeader(ds, r_nrgmonitor, 1);
     
     SharedDataStream sds(ds);
     
@@ -286,20 +323,25 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
     return ds;
 }
 
-/** Null constructor */
+/** Null constructor. By default, we don't collect a histogram of each of
+    the components energies as this is too memory hungry */
 FreeEnergyMonitor::FreeEnergyMonitor()
                   : ConcreteProperty<FreeEnergyMonitor,SystemMonitor>(),
+                    nrg_template( FreeEnergyAverage(25*celsius, MolarEnergy(0)) ),
                     lambda_symbol("lambda"), shift_delta(0),
                     lamval(0), delta_lambda(0.001), coulomb_power(0)
 {}
 
 /** Construct to monitor the free energy difference of the reference group
-    interacting with group A as it is perturbed into group B */
+    interacting with group A as it is perturbed into group B. By default, 
+    we don't collect a histogram of each of the components energies as this 
+    is too memory hungry */
 FreeEnergyMonitor::FreeEnergyMonitor(const AssignerGroup &ref,
                                      const AssignerGroup &ga,
                                      const AssignerGroup &gb)
               : ConcreteProperty<FreeEnergyMonitor,SystemMonitor>(),
                 refgroup(ref), group_a(ga), group_b(gb),
+                nrg_template( FreeEnergyAverage(25*celsius, MolarEnergy(0)) ),
                 lambda_symbol("lambda"), shift_delta(0), lamval(0), delta_lambda(0.001),
                 coulomb_power(0)
 {}
@@ -425,7 +467,9 @@ void FreeEnergyMonitor::setTemperature(const SireUnits::Dimension::Temperature &
                                      MolarEnergy(nrg_template.histogram().binWidth()));
 }
 
-/** Set the bin width for the histogram of recorded free energies */
+/** Set the bin width for the histogram of recorded free energies. 
+    By default, we don't collect a histogram of each of the components energies 
+    as this is too memory hungry. */
 void FreeEnergyMonitor::setBinWidth(const SireUnits::Dimension::MolarEnergy &binwidth)
 {
     nrg_template = FreeEnergyAverage(nrg_template.temperature(), binwidth);
@@ -435,6 +479,19 @@ void FreeEnergyMonitor::setBinWidth(const SireUnits::Dimension::MolarEnergy &bin
 SireUnits::Dimension::Temperature FreeEnergyMonitor::temperature() const
 {
     return nrg_template.temperature();
+}
+
+/** Set the value of delta lambda to use to calculate the free energy gradients */
+void FreeEnergyMonitor::setDeltaLambda(double delta_lam)
+{
+    if (delta_lam > 0 and delta_lam < 1)
+        delta_lambda = delta_lam;
+}
+
+/** Return the value of delta lambda used to calculate the free energy gradients */
+double FreeEnergyMonitor::deltaLambda() const
+{
+    return delta_lambda;
 }
 
 /** Return the width of the histogram bins used to record the free energies */
@@ -596,17 +653,26 @@ inline pair<double,double> getSoftCLJEnergy(
     
     bool arithmetic_combining_rules = true;
 
-    const double alpha = 1 - lamval;
-    const double alpha_f = 1 - lamval + delta_lambda;
-    double one_minus_alfa_to_n = 1;
-    double one_minus_alfa_to_n_f = 1;
-    const double delta = shift_delta * alpha;
-    const double delta_f = shift_delta * alpha_f;
+    const double alpha_a = 1 - lamval;
+    const double alpha_a_f = 1 - lamval - delta_lambda;
+    double one_minus_alpha_a_to_n = 1;
+    double one_minus_alpha_a_to_n_f = 1;
+    const double delta_a = shift_delta * alpha_a;
+    const double delta_a_f = shift_delta * alpha_a_f;
+
+    const double alpha_b = lamval;
+    const double alpha_b_f = lamval + delta_lambda;
+    double one_minus_alpha_b_to_n = 1;
+    double one_minus_alpha_b_to_n_f = 1;
+    const double delta_b = shift_delta * alpha_b;
+    const double delta_b_f = shift_delta * alpha_b_f;
 
     if (coulomb_power != 0)
     {
-        one_minus_alfa_to_n = SireMaths::pow(1 - alpha, coulomb_power);
-        one_minus_alfa_to_n_f = SireMaths::pow(1 - alpha_f, coulomb_power);
+        one_minus_alpha_a_to_n = SireMaths::pow(1 - alpha_a, coulomb_power);
+        one_minus_alpha_a_to_n_f = SireMaths::pow(1 - alpha_a_f, coulomb_power);
+        one_minus_alpha_b_to_n = SireMaths::pow(1 - alpha_b, coulomb_power);
+        one_minus_alpha_b_to_n_f = SireMaths::pow(1 - alpha_b_f, coulomb_power);
     }
     
     // total_nrg(lam) = (1-lam) * group:group_A + lam * group:group_B
@@ -638,8 +704,8 @@ inline pair<double,double> getSoftCLJEnergy(
             
             double r2 = Vector::distance2(coord0, coord1);
 
-            const double shift = ljpair.sigma() * delta;
-            const double shift_f = ljpair.sigma() * delta_f;
+            const double shift = ljpair.sigma() * delta_a;
+            const double shift_f = ljpair.sigma() * delta_a_f;
             double lj_denom = r2 + shift;
             lj_denom = lj_denom * lj_denom * lj_denom;
 
@@ -656,14 +722,16 @@ inline pair<double,double> getSoftCLJEnergy(
             const double sig12_over_denom2_f = sig6_over_denom_f *
                                                sig6_over_denom_f;
             
-            iljnrg += ljpair.epsilon() * (sig12_over_denom2 - sig6_over_denom);
-            iljnrg_f += ljpair.epsilon() * (sig12_over_denom2_f - sig6_over_denom_f);
+            iljnrg += 4 * ljpair.epsilon() * (sig12_over_denom2 - sig6_over_denom);
+            iljnrg_f += 4 * ljpair.epsilon() * (sig12_over_denom2_f - sig6_over_denom_f);
             
-            icnrg += chg0.value() * chg1.value() * one_over_four_pi_eps0 /
-                           std::sqrt(alpha + r2);
+            icnrg += one_minus_alpha_a_to_n *
+                        chg0.value() * chg1.value() * one_over_four_pi_eps0 /
+                           std::sqrt(alpha_a + r2);
             
-            icnrg_f += chg0.value() * chg1.value() * one_over_four_pi_eps0 /
-                           std::sqrt(alpha_f + r2);
+            icnrg_f += one_minus_alpha_a_to_n_f *
+                        chg0.value() * chg1.value() * one_over_four_pi_eps0 /
+                           std::sqrt(alpha_a_f + r2);
         }
         
         cnrg += (1-lamval) * icnrg;
@@ -691,8 +759,8 @@ inline pair<double,double> getSoftCLJEnergy(
             
             double r2 = Vector::distance2(coord0, coord1);
 
-            const double shift = ljpair.sigma() * delta;
-            const double shift_f = ljpair.sigma() * delta_f;
+            const double shift = ljpair.sigma() * delta_b;
+            const double shift_f = ljpair.sigma() * delta_b_f;
             double lj_denom = r2 + shift;
             lj_denom = lj_denom * lj_denom * lj_denom;
 
@@ -709,14 +777,16 @@ inline pair<double,double> getSoftCLJEnergy(
             const double sig12_over_denom2_f = sig6_over_denom_f *
                                                sig6_over_denom_f;
             
-            iljnrg += ljpair.epsilon() * (sig12_over_denom2 - sig6_over_denom);
-            iljnrg_f += ljpair.epsilon() * (sig12_over_denom2_f - sig6_over_denom_f);
+            iljnrg += 4 * ljpair.epsilon() * (sig12_over_denom2 - sig6_over_denom);
+            iljnrg_f += 4 * ljpair.epsilon() * (sig12_over_denom2_f - sig6_over_denom_f);
             
-            icnrg += chg0.value() * chg1.value() * one_over_four_pi_eps0 /
-                           std::sqrt(alpha + r2);
+            icnrg += one_minus_alpha_b_to_n *
+                        chg0.value() * chg1.value() * one_over_four_pi_eps0 /
+                           std::sqrt(alpha_b + r2);
             
-            icnrg_f += chg0.value() * chg1.value() * one_over_four_pi_eps0 /
-                           std::sqrt(alpha_f + r2);
+            icnrg_f += one_minus_alpha_b_to_n_f * 
+                        chg0.value() * chg1.value() * one_over_four_pi_eps0 /
+                           std::sqrt(alpha_b_f + r2);
         }
 
         cnrg += (lamval) * icnrg;
@@ -769,12 +839,157 @@ int FreeEnergyMonitor::coulombPower() const
     return coulomb_power;
 }
 
+/** Return the lambda value at which the free energy components were collected */
+double FreeEnergyMonitor::lambdaValue() const
+{
+    return lamval;
+}
+
+/** Return the symbol used to find the value of lambda from the system */
+Symbol FreeEnergyMonitor::lambdaComponent() const
+{
+    return lambda_symbol;
+}
+
+/** Return whether this is empty (has no group data) */
+bool FreeEnergyMonitor::isEmpty() const
+{
+    return refgroup.isEmpty();
+}
+
+/** Conserve memory by copying the molecule data etc. from 'other' into this monitor */
+void FreeEnergyMonitor::conserveMemory(const FreeEnergyMonitor &other)
+{
+    if (this->isCompatibleExceptLambda(other))
+    {
+        refgroup = other.refgroup;
+        group_a = other.group_a;
+        group_b = other.group_b;
+    }
+}
+
+/** Return whether or not this monitor is compatible with 'other'
+    (have the same groups, soft-core parameters, delta lambda, temperature etc.) */
+bool FreeEnergyMonitor::isCompatible(const FreeEnergyMonitor &other) const
+{
+    return this->lambdaValue() == other.lambdaValue() and
+           this->lambdaComponent() == other.lambdaComponent() and
+           this->usesSoftCore() == other.usesSoftCore() and
+           this->shiftDelta() == other.shiftDelta() and
+           this->coulombPower() == other.coulombPower() and
+           this->temperature() == other.temperature() and
+           this->binWidth() == other.binWidth() and
+           refgroup.isCompatible(other.refgroup) and
+           group_a.isCompatible(other.group_a) and
+           group_b.isCompatible(other.group_b);
+}
+
+/** Return whether or not this monitor is compatible with other, ignoring that
+    the monitors have different lambda values. This will let you know if it is sensible
+    to construct PMFs from a combination of these monitors */
+bool FreeEnergyMonitor::isCompatibleExceptLambda(const FreeEnergyMonitor &other) const
+{
+    return this->lambdaComponent() == other.lambdaComponent() and
+           this->usesSoftCore() == other.usesSoftCore() and
+           this->shiftDelta() == other.shiftDelta() and
+           this->coulombPower() == other.coulombPower() and
+           this->temperature() == other.temperature() and
+           this->binWidth() == other.binWidth() and
+           refgroup.isCompatible(other.refgroup) and
+           group_a.isCompatible(other.group_a) and
+           group_b.isCompatible(other.group_b);
+}
+
+/** Self-addition operator - you can only add two monitors together if they 
+    have the same groups, soft-core parameters, delta lambda and temperature etc.
+    
+    \throw SireError::incompatible_error
+*/
+FreeEnergyMonitor& FreeEnergyMonitor::operator+=(const FreeEnergyMonitor &other)
+{
+    if (this == &other)
+    {
+        this->operator+=( FreeEnergyMonitor(other) );
+        return *this;
+    }
+    
+    if (not this->isCompatible(other))
+    {
+        throw SireError::incompatible_error( QObject::tr(
+                "Cannot add together two FreeEnergyMonitors as they are in some "
+                "way incompatible."), CODELOC );
+    }
+    
+    if (total_nrgs.isEmpty())
+    {
+        total_nrgs = other.total_nrgs;
+        coul_nrgs = other.coul_nrgs;
+        lj_nrgs = other.lj_nrgs;
+    }
+    else if (not other.total_nrgs.isEmpty())
+    {
+        if (total_nrgs.count() != other.total_nrgs.count())
+            throw SireError::program_bug( QObject::tr(
+                    "It should not be possible for two FreeEnergyMonitors to be compatible "
+                    "but have different numbers of free energies (%1 vs. %2)")
+                        .arg(total_nrgs.count())
+                        .arg(other.total_nrgs.count()), CODELOC );
+        
+        for (int i=0; i<total_nrgs.count(); ++i)
+        {
+            total_nrgs[i] += other.total_nrgs[i];
+        }
+        
+        for (int i=0; i<coul_nrgs.count(); ++i)
+        {
+            coul_nrgs[i] += other.coul_nrgs[i];
+        }
+        
+        for (int i=0; i<lj_nrgs.count(); ++i)
+        {
+            lj_nrgs[i] += other.lj_nrgs[i];
+        }
+    }
+    
+    return *this;
+}
+
+/** Addition operator - you can only add two monitors together if they
+    have the same groups, soft-core parameters, delta lambda, temperature etc.
+    
+    \throw SireError:incompatible_error
+*/
+FreeEnergyMonitor FreeEnergyMonitor::operator+(const FreeEnergyMonitor &other) const
+{
+    FreeEnergyMonitor ret(*this);
+    ret += other;
+    return ret;
+}
+
+/** Merge a whole set of free energy monitors together. Note that you can
+    only merge them if they have the same groups, soft-core parameters, delta lambda,
+    temperature etc.
+    
+    \throw SireError::incompatible_error
+*/
+FreeEnergyMonitor FreeEnergyMonitor::merge(const QList<FreeEnergyMonitor> &monitors)
+{
+    if (monitors.isEmpty())
+        return FreeEnergyMonitor();
+    
+    FreeEnergyMonitor ret = monitors.at(0);
+    
+    for (int i=1; i<monitors.count(); ++i)
+    {
+        ret += monitors.at(i);
+    }
+    
+    return ret;
+}
+
 /** Accumulate energies from the passed system */
 void FreeEnergyMonitor::monitor(System &system)
 {
-    QTime t;
-    t.start();
-
     FreeEnergyMonitor old_state(*this);
 
     try
@@ -966,8 +1181,4 @@ void FreeEnergyMonitor::monitor(System &system)
         FreeEnergyMonitor::operator=(old_state);
         throw;
     }
-    
-    int ms = t.elapsed();
-    
-    qDebug() << "Component free energies took" << ms << "ms";
 }

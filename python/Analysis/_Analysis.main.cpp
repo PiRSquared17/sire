@@ -9,6 +9,8 @@
 
 #include "BennettsRatios.pypp.hpp"
 
+#include "ComponentGradients.pypp.hpp"
+
 #include "DataPoint.pypp.hpp"
 
 #include "FEP.pypp.hpp"
@@ -20,6 +22,8 @@
 #include "PMF.pypp.hpp"
 
 #include "TI.pypp.hpp"
+
+#include "TIComponents.pypp.hpp"
 
 #include "TIPMF.pypp.hpp"
 
@@ -38,6 +42,8 @@ BOOST_PYTHON_MODULE(_Analysis){
 
     register_BennettsRatios_class();
 
+    register_ComponentGradients_class();
+
     register_DataPoint_class();
 
     register_FEP_class();
@@ -49,6 +55,8 @@ BOOST_PYTHON_MODULE(_Analysis){
     register_PMF_class();
 
     register_TI_class();
+
+    register_TIComponents_class();
 
     register_TIPMF_class();
 }

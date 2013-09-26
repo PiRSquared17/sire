@@ -93,6 +93,8 @@ public:
     bool isMoleculeGroup() const;
     bool isAssigner() const;
     
+    bool isCompatible(const AssignerGroup &other) const;
+    
     const MoleculeGroup &group() const;
     const IDAssigner &assigner() const;
 
@@ -140,7 +142,17 @@ public:
     bool operator==(const FreeEnergyMonitor &other) const;
     bool operator!=(const FreeEnergyMonitor &other) const;
     
+    FreeEnergyMonitor& operator+=(const FreeEnergyMonitor &other);
+    
+    FreeEnergyMonitor operator+(const FreeEnergyMonitor &other) const;
+
+    static FreeEnergyMonitor merge(const QList<FreeEnergyMonitor> &monitors);
+    
     static const char* typeName();
+    
+    bool isEmpty() const;
+    bool isCompatible(const FreeEnergyMonitor &other) const;
+    bool isCompatibleExceptLambda(const FreeEnergyMonitor &other) const;
     
     void clearStatistics();
     
@@ -165,6 +177,9 @@ public:
     double deltaLambda() const;
 
     bool usesSoftCore() const;
+    
+    SireCAS::Symbol lambdaComponent() const;
+    double lambdaValue() const;
 
     QVector<SireMol::PartialMolecule> referenceViews() const;
 
@@ -175,6 +190,8 @@ public:
     QVector<SireMaths::FreeEnergyAverage> freeEnergies() const;
     QVector<SireMaths::FreeEnergyAverage> coulombFreeEnergies() const;
     QVector<SireMaths::FreeEnergyAverage> ljFreeEnergies() const;
+
+    void conserveMemory(const FreeEnergyMonitor &other);
 
 private:
     /** The reference group that contains the groups against which
@@ -221,6 +238,7 @@ Q_DECLARE_METATYPE( SireSystem::FreeEnergyMonitor )
 Q_DECLARE_METATYPE( SireSystem::AssignerGroup )
 
 SIRE_EXPOSE_CLASS( SireSystem::FreeEnergyMonitor )
+SIRE_EXPOSE_CLASS( SireSystem::AssignerGroup )
 
 SIRE_END_HEADER
 

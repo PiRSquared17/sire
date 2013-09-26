@@ -208,9 +208,6 @@ check_symbol_exists( backtrace "execinfo.h" HAVE_BACKTRACE )
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/sire_config.h.in 
                ${CMAKE_CURRENT_BINARY_DIR}/sire_config.h)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/siren_config.h.in
-               ${CMAKE_CURRENT_BINARY_DIR}/siren_config.h)
-
 #  We need to get the compiler flags for different options
 set( SIRE_SMALL_FLAGS "" CACHE INTERNAL "Compiler flags to produce small code" )
 set( SIRE_WARNALL_FLAGS "" CACHE INTERNAL "Compiler flags to turn on all warnings" )

@@ -102,7 +102,7 @@ if not (os.path.exists(coord_file) and os.path.exists(top_file)):
 
     sys.exit(-1)
 
-print("Running a waterswap calculating using files %s and %s." % (top_file,coord_file))
+print("\nRunning a waterswap calculation using files %s and %s." % (top_file,coord_file))
 
 ligand = None
 if args.ligand:
@@ -113,16 +113,16 @@ elif "ligand name" in params:
 
 if ligand:
     print("The absolute binding free energy of the molecule containing residue %s "
-          "will be calculated." % (ligand))
+          "will be calculated.\n" % (ligand))
     
 else:
     print("The absolute binding free energy of the first non-protein, non-solvent "
-          "molecule will be calculated.")
+          "molecule will be calculated.\n")
 
 lambda_values = args.lambda_values
 
 if lambda_values:
-    print("Using lambda windows %s" % lambda_values)
+    print("Using lambda windows %s\n" % lambda_values)
     params["lambda values"] = lambda_values
 
 # Now lets run the WSRC calculation

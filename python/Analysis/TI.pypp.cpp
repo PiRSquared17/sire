@@ -13,6 +13,8 @@ namespace bp = boost::python;
 
 #include "SireStream/datastream.h"
 
+#include "SireStream/registeralternativename.h"
+
 #include "SireStream/shareddatastream.h"
 
 #include "ti.h"
@@ -135,7 +137,7 @@ void register_TI_class(){
         }
         { //::SireAnalysis::TI::merge
         
-            typedef ::SireAnalysis::Gradients ( ::SireAnalysis::TI::*merge_function_type )( int,int ) ;
+            typedef ::SireAnalysis::Gradients ( ::SireAnalysis::TI::*merge_function_type )( int,int ) const;
             merge_function_type merge_function_value( &::SireAnalysis::TI::merge );
             
             TI_exposer.def( 
@@ -146,7 +148,7 @@ void register_TI_class(){
         }
         { //::SireAnalysis::TI::merge
         
-            typedef ::SireAnalysis::Gradients ( ::SireAnalysis::TI::*merge_function_type )( ::QList< int > ) ;
+            typedef ::SireAnalysis::Gradients ( ::SireAnalysis::TI::*merge_function_type )( ::QList< int > ) const;
             merge_function_type merge_function_value( &::SireAnalysis::TI::merge );
             
             TI_exposer.def( 

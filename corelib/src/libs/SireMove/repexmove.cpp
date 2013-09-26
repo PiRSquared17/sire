@@ -502,7 +502,7 @@ static const RegisterMetaType<RepExMove> r_repexmove;
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const RepExMove &repexmove)
 {
-    writeHeader(ds, r_repexmove, 2);
+    writeHeader(ds, r_repexmove, 3);
 
     SharedDataStream sds(ds);
     
@@ -510,6 +510,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const RepExMove &repexm
         << repexmove.naccept
         << repexmove.nreject
         << repexmove.swap_monitors
+        << repexmove.disable_swaps
         << static_cast<const SupraMove&>(repexmove);
         
     return ds;
@@ -520,7 +521,20 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExMove &repexmove)
 {
     VersionID v = readHeader(ds, r_repexmove);
 
-    if (v == 2)
+    repexmove.disable_swaps = false;
+
+    if (v == 3)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> repexmove.rangenerator
+            >> repexmove.naccept
+            >> repexmove.nreject
+            >> repexmove.swap_monitors
+            >> repexmove.disable_swaps
+            >> static_cast<SupraMove&>(repexmove);
+    }
+    else if (v == 2)
     {
         SharedDataStream sds(ds);
         
@@ -544,7 +558,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExMove &repexmove)
         repexmove.swap_monitors = false;
     }
     else
-        throw version_error(v, "1-2", r_repexmove, CODELOC);
+        throw version_error(v, "1-3", r_repexmove, CODELOC);
         
     return ds;
 }
@@ -552,14 +566,15 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExMove &repexmove)
 /** Constructor */
 RepExMove::RepExMove()
           : ConcreteProperty<RepExMove,SupraMove>(),
-            naccept(0), nreject(0), swap_monitors(false)
+            naccept(0), nreject(0), swap_monitors(false), disable_swaps(false)
 {}
 
 /** Copy constructor */
 RepExMove::RepExMove(const RepExMove &other)
           : ConcreteProperty<RepExMove,SupraMove>(other),
             naccept(other.naccept), nreject(other.nreject),
-            swap_monitors(other.swap_monitors)
+            swap_monitors(other.swap_monitors),
+            disable_swaps(other.disable_swaps)
 {}
 
 /** Destructor */
@@ -576,6 +591,7 @@ RepExMove& RepExMove::operator=(const RepExMove &other)
         naccept = other.naccept;
         nreject = other.nreject;
         swap_monitors = other.swap_monitors;
+        disable_swaps = other.disable_swaps;
     }
     
     return *this;
@@ -586,7 +602,8 @@ bool RepExMove::operator==(const RepExMove &other) const
 {
     return (this == &other) or
            (naccept == other.naccept and nreject == other.nreject and
-            swap_monitors == other.swap_monitors and SupraMove::operator==(other));
+            swap_monitors == other.swap_monitors and
+            disable_swaps == other.disable_swaps and SupraMove::operator==(other));
 }
 
 /** Comparison operator */
@@ -611,6 +628,18 @@ int RepExMove::nAccepted() const
 int RepExMove::nRejected() const
 {
     return nreject;
+}
+
+/** Return whether or not swap moves are disabled */
+bool RepExMove::swapMovesDisabled() const
+{
+    return disable_swaps;
+}
+
+/** Set disabling of swap moves */
+void RepExMove::setDisableSwaps(bool disable)
+{
+    disable_swaps = disable;
 }
 
 /** Return the average acceptance ratio of the replica exchange
@@ -861,14 +890,8 @@ bool RepExMove::testPair(const Replica &replica_a, const RepExSubMove &move_a,
         double delta = beta_b * ( H_b_i - H_b_j + p_b*(V_b_i - V_b_j) ) +
                        beta_a * ( H_a_i - H_a_j + p_a*(V_a_i - V_a_j) );
         
-        qDebug() << "beta" << beta_a << beta_b;
-        qDebug() << "i" << H_a_i << H_a_j << (H_a_j - H_a_i);
-        qDebug() << "j" << H_b_i << H_b_j << (H_b_j - H_b_i);
-        
         bool move_passed = ( delta > 0 or (std::exp(delta) >= rangenerator.rand()) );
-        
-        qDebug() << "Passed?" << move_passed;
-        
+                
         return move_passed;
     }
     else
@@ -899,8 +922,6 @@ void RepExMove::testAndSwap(Replicas &replicas, const QVector<RepExSubMove> &sub
         //loop over all pairs
         for (int i=start; i<nreplicas-1; i+=2)
         {
-            qDebug() << "Test replicas" << i << (i+1);
-        
             if (this->testPair(replicas[i], submoves.at(i),
                                replicas[i+1], submoves.at(i+1) ))
             {
@@ -953,7 +974,8 @@ void RepExMove::performMove(Nodes &nodes, Replicas &replicas, bool record_stats)
     subsims = QVector<SupraSubSim>();
     
     //now perform all of the replica exchange tests
-    this->testAndSwap(replicas, submoves, even_pairs, record_stats);
+    if (not disable_swaps)
+        this->testAndSwap(replicas, submoves, even_pairs, record_stats);
 }
 
 /** Perform 'nmoves' replica exchange moves (block of sampling for all
@@ -981,8 +1003,6 @@ void RepExMove::move(SupraSystem &system, int nmoves, bool record_stats)
         ///hold this_thread in a local scope to ensure it is deleted before 'nodes'
         {
             ThisThread this_thread = nodes.borrowThisThread();
-        
-            qDebug() << "RUNNING REPLICA EXCHANGE USING" << nodes.count() << "NODES";
         
             for (int i=0; i<nmoves; ++i)
             {

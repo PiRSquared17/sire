@@ -13,6 +13,8 @@ namespace bp = boost::python;
 
 #include "SireMaths/maths.h"
 
+#include "SireStream/registeralternativename.h"
+
 #include "SireStream/shareddatastream.h"
 
 #include "bennetts.h"
@@ -101,7 +103,7 @@ void register_Bennetts_class(){
         }
         { //::SireAnalysis::Bennetts::merge
         
-            typedef ::SireAnalysis::BennettsRatios ( ::SireAnalysis::Bennetts::*merge_function_type )( int,int ) ;
+            typedef ::SireAnalysis::BennettsRatios ( ::SireAnalysis::Bennetts::*merge_function_type )( int,int ) const;
             merge_function_type merge_function_value( &::SireAnalysis::Bennetts::merge );
             
             Bennetts_exposer.def( 
@@ -112,7 +114,7 @@ void register_Bennetts_class(){
         }
         { //::SireAnalysis::Bennetts::merge
         
-            typedef ::SireAnalysis::BennettsRatios ( ::SireAnalysis::Bennetts::*merge_function_type )( ::QList< int > ) ;
+            typedef ::SireAnalysis::BennettsRatios ( ::SireAnalysis::Bennetts::*merge_function_type )( ::QList< int > ) const;
             merge_function_type merge_function_value( &::SireAnalysis::Bennetts::merge );
             
             Bennetts_exposer.def( 

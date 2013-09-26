@@ -13,6 +13,8 @@ namespace bp = boost::python;
 
 #include "SireMaths/maths.h"
 
+#include "SireStream/registeralternativename.h"
+
 #include "SireStream/shareddatastream.h"
 
 #include "fep.h"
@@ -123,7 +125,7 @@ void register_FEP_class(){
         }
         { //::SireAnalysis::FEP::merge
         
-            typedef ::SireAnalysis::FEPDeltas ( ::SireAnalysis::FEP::*merge_function_type )( int,int ) ;
+            typedef ::SireAnalysis::FEPDeltas ( ::SireAnalysis::FEP::*merge_function_type )( int,int ) const;
             merge_function_type merge_function_value( &::SireAnalysis::FEP::merge );
             
             FEP_exposer.def( 
@@ -134,7 +136,7 @@ void register_FEP_class(){
         }
         { //::SireAnalysis::FEP::merge
         
-            typedef ::SireAnalysis::FEPDeltas ( ::SireAnalysis::FEP::*merge_function_type )( ::QList< int > ) ;
+            typedef ::SireAnalysis::FEPDeltas ( ::SireAnalysis::FEP::*merge_function_type )( ::QList< int > ) const;
             merge_function_type merge_function_value( &::SireAnalysis::FEP::merge );
             
             FEP_exposer.def( 

@@ -1587,7 +1587,7 @@ void GridFF::rebuildGrid()
                 closemols_params.append(params);
             }
             //all other points are evaluated using the grid
-            else
+            else if (dist < coul_cutoff)
             {
                 if (params.reduced_charge != 0)
                 {

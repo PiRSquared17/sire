@@ -44,6 +44,9 @@ namespace SireBase
     QString getShareDir();
     
     QString getSireDir(const QString &path, bool assert_exists=true);
+    
+    QString getRepositoryURL();
+    QString getRepositoryVersion();
 }
 
 SIRE_EXPOSE_FUNCTION(SireBase::getInstallDir)
@@ -53,6 +56,8 @@ SIRE_EXPOSE_FUNCTION(SireBase::getLibDir)
 SIRE_EXPOSE_FUNCTION(SireBase::getBundledLibDir)
 SIRE_EXPOSE_FUNCTION(SireBase::getShareDir)
 SIRE_EXPOSE_FUNCTION(SireBase::getSireDir)
+SIRE_EXPOSE_FUNCTION(SireBase::getRepositoryURL)
+SIRE_EXPOSE_FUNCTION(SireBase::getRepositoryVersion)
 
 SIRE_END_HEADER
 

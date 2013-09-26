@@ -136,6 +136,17 @@ void register_RepExMove_class(){
         
         }
         RepExMove_exposer.def( bp::self == bp::self );
+        { //::SireMove::RepExMove::setDisableSwaps
+        
+            typedef void ( ::SireMove::RepExMove::*setDisableSwaps_function_type )( bool ) ;
+            setDisableSwaps_function_type setDisableSwaps_function_value( &::SireMove::RepExMove::setDisableSwaps );
+            
+            RepExMove_exposer.def( 
+                "setDisableSwaps"
+                , setDisableSwaps_function_value
+                , ( bp::arg("disable") ) );
+        
+        }
         { //::SireMove::RepExMove::setGenerator
         
             typedef void ( ::SireMove::RepExMove::*setGenerator_function_type )( ::SireMaths::RanGenerator const & ) ;
@@ -156,6 +167,16 @@ void register_RepExMove_class(){
                 "setSwapMonitors"
                 , setSwapMonitors_function_value
                 , ( bp::arg("swap_monitors") ) );
+        
+        }
+        { //::SireMove::RepExMove::swapMovesDisabled
+        
+            typedef bool ( ::SireMove::RepExMove::*swapMovesDisabled_function_type )(  ) const;
+            swapMovesDisabled_function_type swapMovesDisabled_function_value( &::SireMove::RepExMove::swapMovesDisabled );
+            
+            RepExMove_exposer.def( 
+                "swapMovesDisabled"
+                , swapMovesDisabled_function_value );
         
         }
         { //::SireMove::RepExMove::toString

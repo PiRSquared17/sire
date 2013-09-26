@@ -1364,20 +1364,21 @@ void FEP::set(int i, const QList<double> &windows,
 /** Set the deltas for the ith iteration */
 void FEP::set(int i, const FEPDeltas &deltas)
 {
-    if (deltas.isEmpty())
-        return;
-
-    if (i == dltas.count())
-        this->add(deltas);
-    else
+    while (i >= dltas.count())
     {
-        i = Index(i).map(dltas.count());
-        dltas[i] = deltas;
+        dltas.append( FEPDeltas() );
     }
+
+    i = Index(i).map(dltas.count());
+
+    if (deltas.isEmpty())
+        dltas[i] = FEPDeltas();
+    else
+        dltas[i] = deltas;
 }
 
 /** Merge the deltas for iterations start->end */
-FEPDeltas FEP::merge(int start, int end)
+FEPDeltas FEP::merge(int start, int end) const
 {
     start = Index(start).map(dltas.count());
     end = Index(end).map(dltas.count());
@@ -1386,20 +1387,24 @@ FEPDeltas FEP::merge(int start, int end)
     
     for (int i=start; i<=end; ++i)
     {
-        set.append( dltas.at(i) );
+        if (not dltas.at(i).isEmpty())
+            set.append( dltas.at(i) );
     }
     
     return FEPDeltas::merge(set);
 }
 
 /** Merge the deltas at the passed indicies */
-FEPDeltas FEP::merge(QList<int> indicies)
+FEPDeltas FEP::merge(QList<int> indicies) const
 {
     QList<FEPDeltas> set;
     
     foreach (int idx, indicies)
     {
-        set.append( dltas.at( Index(idx).map(dltas.count()) ) );
+        int i = Index(idx).map(dltas.count());
+
+        if (not dltas.at(i).isEmpty())
+           set.append( dltas.at(i) );
     }
  
     return FEPDeltas::merge(set);
@@ -1413,26 +1418,49 @@ QList<FEPDeltas> FEP::rollingAverage(int niterations) const
 {
     QList<FEPDeltas> merged;
 
-    if (niterations >= dltas.count())
-        merged.append( FEPDeltas::merge(dltas) );
-
-    else if (niterations <= 1)
-        merged = dltas;
+    if (dltas.isEmpty())
+        return merged;
     
+    if (niterations >= dltas.count())
+    {
+        FEPDeltas d = this->merge(0,-1);
+        if (not d.isEmpty())
+            merged.append(d);
+    }
+    else if (niterations <= 1)
+    {
+        for (int i=0; i<dltas.count(); ++i)
+        {
+            if (not dltas.at(i).isEmpty())
+                merged.append(dltas.at(i));
+        }
+    }
     else
     {
         QList<FEPDeltas> set;
         
-        for (int i=0; i<niterations; ++i)
-            set.append(dltas.at(i));
+        int i=0;
+        
+        for (i=0; i<dltas.count(); ++i)
+        {
+            if (not dltas.at(i).isEmpty())
+            {
+                set.append(dltas.at(i));
+                if (set.count() == niterations)
+                    break;
+            }
+        }
         
         merged.append( FEPDeltas::merge(set) );
         
-        for (int i=niterations; i<dltas.count(); ++i)
+        for (i=i+1; i<dltas.count(); ++i)
         {
-            set.removeFirst();
-            set.append(dltas.at(i));
-            merged.append( FEPDeltas::merge(set) );
+            if (not dltas.at(i).isEmpty())
+            {
+                set.removeFirst();
+                set.append(dltas.at(i));
+                merged.append( FEPDeltas::merge(set) );
+            }
         }
     }
     
@@ -1443,7 +1471,7 @@ QList<FEPDeltas> FEP::rollingAverage(int niterations) const
 void FEP::removeAt(int i)
 {
     i = Index(i).map(dltas.count());
-    dltas.removeAt(i);
+    dltas[i] = FEPDeltas();
 }
 
 /** Remove every iteration from 'start' to 'end' (inclusively) */
@@ -1457,7 +1485,7 @@ void FEP::removeRange(int start, int end)
     
     for (int i = start; i <= end; ++i)
     {
-        dltas.removeAt(start);
+        dltas[i] = FEPDeltas();
     }
 }
 

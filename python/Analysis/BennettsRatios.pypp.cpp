@@ -13,6 +13,8 @@ namespace bp = boost::python;
 
 #include "SireMaths/maths.h"
 
+#include "SireStream/registeralternativename.h"
+
 #include "SireStream/shareddatastream.h"
 
 #include "bennetts.h"

@@ -276,8 +276,8 @@ public:
 
     void set(int i, const Gradients &gradients);
     
-    Gradients merge(int start, int end);
-    Gradients merge(QList<int> indicies);
+    Gradients merge(int start, int end) const;
+    Gradients merge(QList<int> indicies) const;
     
     QList<Gradients> rollingAverage(int niterations) const;
     

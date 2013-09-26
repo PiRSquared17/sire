@@ -32,10 +32,10 @@ oxygen = oxygen.edit().setProperty("LJ", LJParameter( 3.15363*angstrom,  \
 first_water = oxygen.molecule().commit()
 
 # This has added a new "LJ" property to the list of properties of the molecule
-print "Available properties of the first water molecule:"
-print first_water.propertyKeys()
-print "The LJ property of the \"O00\" atom of the first water molecule:"
-print first_water.atom( AtomName("O00") ).property("LJ")
+print("Available properties of the first water molecule:")
+print(first_water.propertyKeys())
+print("The LJ property of the \"O00\" atom of the first water molecule:")
+print(first_water.atom( AtomName("O00") ).property("LJ"))
 
 # Do the same to the second molecule - in this case, we put everything
 # together onto a single line
@@ -63,12 +63,12 @@ second_water = second_water.edit() \
 # Note that the molecules must have the same number of atoms and residues etc.
 # to allow you to copy properties from one to another!
 
-print "\nParameters of the atoms in the second water molecule:"
+print("\nParameters of the atoms in the second water molecule:")
 for i in range(0, second_water.nAtoms()):
     atom = second_water.atom( AtomIdx(i) )
-    print "%s : %s, %s" % (atom.name(), atom.property("charge"), atom.property("LJ"))
+    print("%s : %s, %s" % (atom.name(), atom.property("charge"), atom.property("LJ")))
 
 # Save the parameterised water molecules to the disk
-print "\nSaving the parameterised water molecules to disk..."
+print("\nSaving the parameterised water molecules to disk...")
 Sire.Stream.save( (first_water,second_water), "water_dimer.s3" )
 

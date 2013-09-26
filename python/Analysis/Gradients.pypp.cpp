@@ -13,6 +13,8 @@ namespace bp = boost::python;
 
 #include "SireStream/datastream.h"
 
+#include "SireStream/registeralternativename.h"
+
 #include "SireStream/shareddatastream.h"
 
 #include "ti.h"

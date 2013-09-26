@@ -318,8 +318,8 @@ public:
     
     void set(int i, const FEPDeltas &deltas);
     
-    FEPDeltas merge(int start, int end);
-    FEPDeltas merge(QList<int> indicies);
+    FEPDeltas merge(int start, int end) const;
+    FEPDeltas merge(QList<int> indicies) const;
     
     QList<FEPDeltas> rollingAverage(int niterations) const;
     

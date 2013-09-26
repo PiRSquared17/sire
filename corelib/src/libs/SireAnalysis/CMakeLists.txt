@@ -14,7 +14,9 @@ set ( SIREANALYSIS_HEADERS
       bennetts.h
       fep.h
       ti.h
+      ticomponents.h
     )
+
 
 # Define the sources in SireAnalysis
 set ( SIREANALYSIS_SOURCES
@@ -24,6 +26,7 @@ set ( SIREANALYSIS_SOURCES
       bennetts.cpp
       fep.cpp
       ti.cpp
+      ticomponents.cpp
 
       third_party/regress.cpp
 
@@ -39,6 +42,7 @@ set_target_properties (SireAnalysis PROPERTIES
 
 # Link to other Sire libraries
 target_link_libraries (SireAnalysis
+                       SireSystem
                        SireCAS
                        SireMaths
                        SireBase

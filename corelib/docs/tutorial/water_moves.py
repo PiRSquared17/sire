@@ -88,22 +88,22 @@ moves.add( move, 1 )
 # Lets perform 100 moves. The moves are performed on a copy of 'system',
 # with the updated version of 'system' after the moves returned by this
 # function
-print "Running 100 moves..."
+print("Running 100 moves...")
 new_system = moves.move(system, 100, True)
 
 # Now lets run a simulation, writing out a PDB trajectory
 PDB().write(system.molecules(), "output000.pdb")
-print system.energies()
+print(system.energies())
 
 # Here we run 10 blocks of 1000 moves, printing out the 
 # energies and a PDB of the coordinates after each block
 for i in range(1,11):
     system = moves.move(system, 1000, True)
-    print "%d: %s" % (i, system.energies())
+    print("%d: %s" % (i, system.energies()))
     PDB().write(system.molecules(), "output%003d.pdb" % i)
 
 # Finally, we print out information about how many moves
 # were accepted and rejected.
-print "Move information:"
-print moves
+print("Move information:")
+print(moves)
 

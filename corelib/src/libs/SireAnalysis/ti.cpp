@@ -1523,16 +1523,17 @@ Gradients TI::at(int i) const
     must be pure TI gradients, with no associated delta lambda value */
 void TI::set(int i, const QMap<double,FreeEnergyAverage> &gradients)
 {
-    if (gradients.isEmpty())
-        return;
-
-    if (i == grads.count())
-        this->add(gradients);
-    else
+    while (i >= grads.count())
     {
-        i = Index(i).map(grads.count());
-        grads[i] = Gradients(gradients);
+        grads.append( Gradients() );
     }
+
+    i = Index(i).map(grads.count());
+    
+    if (gradients.isEmpty())
+        grads[i] = Gradients();
+    else
+        grads[i] = Gradients(gradients);
 }
 
 /** Set the gradients for the ith iteration equal to 'gradients'. These
@@ -1541,16 +1542,17 @@ void TI::set(int i, const QMap<double,FreeEnergyAverage> &gradients)
 void TI::set(int i, const QMap<double,FreeEnergyAverage> &gradients,
              double delta_lambda)
 {
-    if (gradients.isEmpty())
-        return;
-    
-    if (i == grads.count())
-        this->add(gradients, delta_lambda);
-    else
+    while (i >= grads.count())
     {
-        i = Index(i).map(grads.count());
-        grads[i] = Gradients(gradients, delta_lambda);
+        grads.append( Gradients() );
     }
+
+    i = Index(i).map(grads.count());
+    
+    if (gradients.isEmpty())
+        grads[i] = Gradients();
+    else
+        grads[i] = Gradients(gradients, delta_lambda);
 }
 
 /** Set the gradients for the ith iteration to the passed forwards
@@ -1562,38 +1564,43 @@ void TI::set(int i, const QMap<double,FreeEnergyAverage> &forwards,
                     const QMap<double,FreeEnergyAverage> &backwards,
                     double delta_lambda)
 {
-    if (forwards.isEmpty() and backwards.isEmpty())
-        return;
+    while (i >= grads.count())
+    {
+        grads.append( Gradients() );
+    }
+
+    i = Index(i).map(grads.count());
     
-    else if (i == grads.count())
-    {
-        this->add(forwards, backwards, delta_lambda);
-        return;
-    }
+    if (forwards.isEmpty() and backwards.isEmpty())
+        grads[i] = Gradients();
     else
-    {
-        i = Index(i).map(grads.count());
-        grads.append(Gradients(forwards, backwards, delta_lambda));
-    }
+        grads[i] = Gradients(forwards, backwards, delta_lambda);
 }
 
 void TI::set(int i, const Gradients &gradients)
 {
-    if (not gradients.isEmpty())
+    while (i >= grads.count())
     {
-        i = Index(i).map(grads.count());
-        grads[i] = gradients;
+        grads.append( Gradients() );
     }
+
+    i = Index(i).map(grads.count());
+    
+    if (gradients.isEmpty())
+        grads[i] = Gradients();
+    else
+        grads[i] = gradients;
 }
 
-/** Remove the data for iteration 'i' */
+/** Remove the data for iteration 'i'. This sets the data equal to Gradients() */
 void TI::removeAt(int i)
 {
     i = Index(i).map(grads.count());
-    grads.removeAt(i);
+    grads[i] = Gradients();
 }
 
-/** Remove every iteration from 'start' to 'end' (inclusively) */
+/** Remove every iteration from 'start' to 'end' (inclusively). This sets
+    the data equal to Gradients() */
 void TI::removeRange(int start, int end)
 {
     start = Index(start).map(grads.count());
@@ -1604,7 +1611,7 @@ void TI::removeRange(int start, int end)
     
     for (int i = start; i <= end; ++i)
     {
-        grads.removeAt(start);
+        grads[i] = Gradients();
     }
 }
 
@@ -1616,7 +1623,7 @@ void TI::clear()
 
 /** Merge (average) together the gradients from iteration "start" to iteration
     "end" inclusive */
-Gradients TI::merge(int start, int end)
+Gradients TI::merge(int start, int end) const
 {
     start = Index(start).map(grads.count());
     end = Index(end).map(grads.count());
@@ -1625,20 +1632,24 @@ Gradients TI::merge(int start, int end)
     
     for (int i=start; i<=end; ++i)
     {
-        set.append( grads.at(i) );
+        if (not grads.at(i).isEmpty())
+            set.append( grads.at(i) );
     }
     
     return Gradients::merge(set);
 }
 
 /** Merge together the gradients from the iterations with the passed indicies */
-Gradients TI::merge(QList<int> indicies)
+Gradients TI::merge(QList<int> indicies) const
 {
     QList<Gradients> set;
     
     foreach (int idx, indicies)
     {
-        set.append( grads.at( Index(idx).map(grads.count()) ) );
+        int i = Index(idx).map(grads.count());
+        
+        if (not grads.at(i).isEmpty())
+            set.append( grads.at(i) );
     }
  
     return Gradients::merge(set);
@@ -1650,28 +1661,54 @@ Gradients TI::merge(QList<int> indicies)
     will be the average from 1-50, then 2-51, 3-52.....51-100 */
 QList<Gradients> TI::rollingAverage(int niterations) const
 {
+    if (grads.isEmpty())
+        return QList<Gradients>();
+
     QList<Gradients> merged;
 
     if (niterations >= grads.count())
-        merged.append( Gradients::merge(grads) );
-
+    {
+        Gradients m = this->merge(0,-1);
+        
+        if (not m.isEmpty())
+            merged.append(m);
+    }
     else if (niterations <= 1)
-        merged = grads;
-    
+    {
+        for (int i=0; i<grads.count(); ++i)
+        {
+            if (not grads.at(i).isEmpty())
+                merged.append(grads.at(i));
+        }
+    }
     else
     {
         QList<Gradients> set;
         
-        for (int i=0; i<niterations; ++i)
-            set.append(grads.at(i));
+        int i = 0;
         
-        merged.append( Gradients::merge(set) );
-        
-        for (int i=niterations; i<grads.count(); ++i)
+        for (i=0; i<grads.count(); ++i)
         {
-            set.removeFirst();
-            set.append(grads.at(i));
+            if (not grads.at(i).isEmpty())
+            {
+                set.append(grads.at(i));
+                
+                if (set.count() == niterations)
+                    break;
+            }
+        }
+
+        if (not set.isEmpty())
             merged.append( Gradients::merge(set) );
+        
+        for (i = i+1; i<grads.count(); ++i)
+        {
+            if (not grads.at(i).isEmpty())
+            {
+                set.removeFirst();
+                set.append(grads.at(i));
+                merged.append( Gradients::merge(set) );
+            }
         }
     }
     

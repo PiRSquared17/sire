@@ -3,6 +3,7 @@
 
 #include "SireAnalysis_registrars.h"
 
+#include "ticomponents.h"
 #include "bennetts.h"
 #include "fep.h"
 #include "ti.h"
@@ -12,6 +13,8 @@
 void register_SireAnalysis_objects()
 {
 
+    ObjectRegistry::registerConverterFor< SireAnalysis::TIComponents >();
+    ObjectRegistry::registerConverterFor< SireAnalysis::ComponentGradients >();
     ObjectRegistry::registerConverterFor< SireAnalysis::BennettsRatios >();
     ObjectRegistry::registerConverterFor< SireAnalysis::Bennetts >();
     ObjectRegistry::registerConverterFor< SireAnalysis::FEP >();

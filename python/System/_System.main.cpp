@@ -9,6 +9,8 @@
 
 #include "AngleComponent.pypp.hpp"
 
+#include "AssignerGroup.pypp.hpp"
+
 #include "ChargeConstraint.pypp.hpp"
 
 #include "CheckPoint.pypp.hpp"
@@ -103,6 +105,10 @@ namespace bp = boost::python;
 
 #include "SireSystem_properties.h"
 
+#include "SireSystem/freeenergymonitor.h"
+
+#include "SireMol/moleculegroup.h"
+
 BOOST_PYTHON_MODULE(_System){
     register_SireSystem_objects();
 
@@ -129,6 +135,8 @@ BOOST_PYTHON_MODULE(_System){
     register_GeometryComponent_class();
 
     register_AngleComponent_class();
+
+    register_AssignerGroup_class();
 
     register_MoleculeConstraint_class();
 

@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "sire_config.h"
+#include "sire_version.h"
 #include "getinstalldir.h"
 
 #include <QDir>
@@ -63,6 +64,20 @@ namespace SireBase
 
             return path;
         }
+    }
+
+    /** This function returns the URL of the source repository that contains
+        the core Sire library */
+    QString SIREBASE_EXPORT getRepositoryURL()
+    {
+        return QString(SIRE_REPOSITORY_URL);
+    }
+    
+    /** This function returns the version number(s) of this copy of the corelib
+        from the online source repository */
+    QString SIREBASE_EXPORT getRepositoryVersion()
+    {
+        return QString(SIRE_REPOSITORY_VERSION);
     }
 
     /** This function is used to set the path to the installation directory.

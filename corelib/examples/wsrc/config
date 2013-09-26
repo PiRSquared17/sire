@@ -10,3 +10,5 @@ nsubmoves = 100
 
 # Specify the number of equilibration moves to perform when setting up the system
 nequilmoves = 500
+
+energy monitor frequency = 10

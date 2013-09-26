@@ -1229,6 +1229,11 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     system.setComponent( Symbol("delta_nrg^{next}"), (total_nrg_next_sym - total_nrg_sym) )
     system.setComponent( Symbol("delta_nrg^{prev}"), (total_nrg_sym - total_nrg_prev_sym) )
 
+    system.setComponent( Symbol("delta_bound_nrg^{F}"), (bound_nrg_f_sym - bound_nrg_sym) )
+    system.setComponent( Symbol("delta_bound_nrg^{B}"), (bound_nrg_sym - bound_nrg_b_sym) )
+    system.setComponent( Symbol("delta_free_nrg^{F}"), (free_nrg_f_sym - free_nrg_sym) )
+    system.setComponent( Symbol("delta_free_nrg^{B}"), (free_nrg_sym - free_nrg_b_sym) )
+
     # Now add constraints. These are used to keep the identity of the 
     # swap water, to keep all lambda values between 0 and 1, and to
     # map the alpha values of the softcore forcefields to lambda
@@ -1397,6 +1402,19 @@ def mergeSystems(protein_system, water_system, ligand_mol):
                                                     BennettsFreeEnergyAverage(temperature.val,
                                                                               0.1 * binwidth.val) ) )
     
+    system.add( "delta_bound_g^{F}", MonitorComponent( Symbol("delta_bound_nrg^{F}"),
+                                                       FreeEnergyAverage(temperature.val,
+                                                                         dlam * binwidth.val) ) )
+    system.add( "delta_bound_g^{B}", MonitorComponent( Symbol("delta_bound_nrg^{B}"),
+                                                       FreeEnergyAverage(temperature.val,
+                                                                         dlam * binwidth.val) ) )
+    system.add( "delta_free_g^{F}", MonitorComponent( Symbol("delta_free_nrg^{F}"),
+                                                      FreeEnergyAverage(temperature.val,
+                                                                        dlam * binwidth.val) ) )
+    system.add( "delta_free_g^{B}", MonitorComponent( Symbol("delta_free_nrg^{B}"),
+                                                      FreeEnergyAverage(temperature.val,
+                                                                        dlam * binwidth.val) ) )
+
     # we will monitor the average energy between the swap cluster/ligand and each
     # residue with mobile sidechain, and each mobile solute
     monitor_prosol = None
@@ -1411,15 +1429,11 @@ def mergeSystems(protein_system, water_system, ligand_mol):
         monitor_prosol.add(mobile_solutes)
         system.add(monitor_prosol)
 
-    ligand_protein_nrgmon = EnergyMonitor(ligand_group, monitor_prosol)
-    ligand_protein_nrgmon.setAlphaComponent(alpha_on)
-    swapwater_protein_nrgmon = EnergyMonitor(swap_water_group, monitor_prosol)
-    swapwater_protein_nrgmon.setAlphaComponent(alpha_off)
+    residue_nrgmon = FreeEnergyMonitor(monitor_prosol, ligand_group, swap_water_group)
 
     nrgmons = {}
-    nrgmons["ligand_protein_solute_nrgmon"] = ligand_protein_nrgmon
-    nrgmons["swapwater_protein_solute_nrgmon"] = swapwater_protein_nrgmon
-    
+    nrgmons["residue_nrgmon"] = residue_nrgmon
+
     # because the water molecules can diffuse, we find all waters within
     # a certain distance of the ligand, and then identify them using identity
     # points (placed at the center of the initial positions of the waters),
@@ -1443,37 +1457,29 @@ def mergeSystems(protein_system, water_system, ligand_mol):
                 # we should monitor this water
                 freewater_points.append( VectorPoint(water_mol.evaluate().center()) )
 
-    system.add(mobile_bound_water_group)
-    system.add(mobile_free_water_group)
+        system.add(mobile_bound_water_group)
+        system.add(mobile_free_water_group)
 
-    boundwater_assigner = IDAssigner(boundwater_points, mobile_bound_water_group,
-                                     {"space" : Cartesian()})
+        boundwater_assigner = IDAssigner(boundwater_points, mobile_bound_water_group,
+                                         {"space" : Cartesian()})
 
-    boundwater_assigner.update(system)
+        boundwater_assigner.update(system)
 
-    freewater_assigner = IDAssigner(freewater_points, mobile_free_water_group,
-                                    {"space" : Cartesian()})
+        freewater_assigner = IDAssigner(freewater_points, mobile_free_water_group,
+                                        {"space" : Cartesian()})
 
-    freewater_assigner.update(system)
+        freewater_assigner.update(system)
 
-    ligand_boundwater_nrgmon = EnergyMonitor(ligand_group, boundwater_assigner)
-    ligand_boundwater_nrgmon.setAlphaComponent(alpha_on)
-    swapwater_boundwater_nrgmon = EnergyMonitor(swap_water_group, boundwater_assigner)
-    swapwater_boundwater_nrgmon.setAlphaComponent(alpha_off)
+        boundwater_nrgmon = FreeEnergyMonitor(boundwater_assigner, ligand_group, swap_water_group)
+        freewater_nrgmon = FreeEnergyMonitor(freewater_assigner, ligand_group, swap_water_group)
 
-    ligand_freewater_nrgmon = EnergyMonitor(ligand_group, freewater_assigner)
-    ligand_freewater_nrgmon.setAlphaComponent(alpha_off)
-    swapwater_freewater_nrgmon = EnergyMonitor(swap_water_group, freewater_assigner)
-    swapwater_freewater_nrgmon.setAlphaComponent(alpha_on)
-
-    nrgmons["ligand_boundwater_nrgmon"] = ligand_boundwater_nrgmon
-    nrgmons["swapwater_boundwater_nrgmon"] = swapwater_boundwater_nrgmon
-    nrgmons["ligand_freewater_nrgmon"] = ligand_freewater_nrgmon
-    nrgmons["swapwater_freewater_nrgmon"] = swapwater_freewater_nrgmon
+        nrgmons["boundwater_nrgmon"] = boundwater_nrgmon
+        nrgmons["freewater_nrgmon"] = freewater_nrgmon
 
     for key in list(nrgmons.keys()):
         nrgmons[key].setCoulombPower(coulomb_power.val)
         nrgmons[key].setShiftDelta(shift_delta.val)
+        nrgmons[key].setTemperature(temperature.val)
 
         system.add(key, nrgmons[key], nrgmon_frequency.val)
 
@@ -1511,131 +1517,20 @@ def makeRETI(system, moves):
 
     # Now add monitors for each replica that will copy back
     nrgmons = [ "delta_g^{F}", "delta_g^{B}", "delta_g^{next}", "delta_g^{prev}",
-                "ligand_protein_solute_nrgmon", "swapwater_protein_solute_nrgmon",
-                "ligand_boundwater_nrgmon", "swapwater_boundwater_nrgmon",
-                "ligand_freewater_nrgmon", "swapwater_freewater_nrgmon" ]
+                "delta_bound_g^{F}", "delta_bound_g^{B}",
+                "delta_free_g^{F}", "delta_free_g^{B}",
+                "residue_nrgmon", "boundwater_nrgmon", "freewater_nrgmon" ]
 
     for nrgmon in nrgmons:
         replicas.add( nrgmon, MonitorMonitor(MonitorName(nrgmon), True) )
 
     # now create the replica exchange moves for the replicas
     replica_moves = RepExMove()
+    replica_moves.setDisableSwaps(True)
     replica_moves.setGenerator( RanGenerator(seed+7) )
 
     print("\nReturning the WSRC RETI replicas and moves...")
     return (replicas, replica_moves)
-
-
-def calculatePMF(gradients):
-    """This function calculates and return the PMF given the passed series
-       of lambda values and gradients"""
-
-    pmf = {}
-
-    lamvals = list(gradients.keys())
-    lamvals.sort()
-
-    if lamvals[0] != 0:
-        #we need to start from 0
-        gradients[0] = gradients[lamvals[0]]
-        lamvals.insert(0, 0)
-
-    if lamvals[-1] != 1:
-        #we need to end with 1
-        gradients[1] = gradients[lamvals[-1]]
-        lamvals.append(1)
-
-    #start at 0
-    pmf[ lamvals[0] ] = 0.0
-
-    for i in range(1,len(lamvals)):
-        last_lam = lamvals[i-1]
-        this_lam = lamvals[i]
-
-        delta_lam = this_lam - last_lam
-
-        pmf[this_lam] = pmf[last_lam] + (delta_lam * 0.5 * (gradients[this_lam] + \
-                                                            gradients[last_lam]))
-
-    return pmf
-
-
-def calculatePMFs(gradients):
-    
-    pmfs = []
-
-    lamvals = list(gradients.keys())
-
-    npmfs = len(gradients[lamvals[0]])
-
-    for i in range(0,npmfs):
-        grads = {}
-
-        for lamval in lamvals:
-            grads[lamval] = gradients[lamval][i]
-
-        pmfs.append( calculatePMF(grads) )
-
-    return pmfs
-
-
-def extractEnergies(protein_nrgmon, boundwater_nrgmon, freewater_nrgmon):
-
-    nrgs = []
-
-    nrgmons = [protein_nrgmon, boundwater_nrgmon, freewater_nrgmon]
-
-    group_cnrgs = []
-    group_ljnrgs = []
-    group_totalnrgs = []
-
-    for i in range(0,3):
-        nrgmon = nrgmons[i]
-
-        if i == 2:
-            nrgs.append( (group_cnrgs, group_ljnrgs, group_totalnrgs) )
-
-            group_cnrgs = []
-            group_ljnrgs = []
-            group_totalnrgs = []
-
-        cnrgs = nrgmon.coulombEnergies()
-        ljnrgs = nrgmon.ljEnergies()
-
-        for j in range(0,cnrgs.nColumns()):
-            total_cnrg = 0
-            total_ljnrg = 0
-
-            for i in range(0,cnrgs.nRows()):
-                total_cnrg += cnrgs(i,j).average()
-                total_ljnrg += ljnrgs(i,j).average()
-
-            group_cnrgs.append(total_cnrg)
-            group_ljnrgs.append(total_ljnrg)
-            group_totalnrgs.append(total_cnrg+total_ljnrg)
-
-    nrgs.append( (group_cnrgs, group_ljnrgs, group_totalnrgs) )
-
-    return nrgs
-
-
-def subtractEnergies(nrgs0, nrgs1):
-
-    nrgs = []
-
-    for j in range(0,2):
-        delta_cnrgs = []
-        delta_ljnrgs = []
-        delta_total = []
-
-        for i in range(0, len(nrgs0[j][0])):
-            delta_cnrgs.append( nrgs0[j][0][i] - nrgs1[j][0][i] )
-            delta_ljnrgs.append( nrgs0[j][1][i] - nrgs1[j][1][i] )
-            delta_total.append( nrgs0[j][2][i] - nrgs1[j][2][i] )
-
-        nrgs.append( (delta_cnrgs, delta_ljnrgs, delta_total) )
-
-    return nrgs
 
 
 def getName(view):
@@ -1644,44 +1539,6 @@ def getName(view):
        return "%s:%s" % (residue.name().value(), residue.number().value())
    except:
        return "%s:%s" % (view.name().value(), view.number().value())
-
-
-def writeMonitoredGroups(replica, filename):
-
-    pdbgroup = MoleculeGroup("pdb")
-
-    system = replica.subSystem()
-    ligand_protein_nrgmon = system[MonitorName("ligand_protein_nrgmon")]
-    ligand_boundwater_nrgmon = system[MonitorName("ligand_boundwater_nrgmon")]
-    swapwater_freewater_nrgmon = system[MonitorName("swapwater_freewater_nrgmon")]
-    system = None
-
-    for view in ligand_protein_nrgmon.views0():
-        pdbgroup.add(view)
-                                                 
-    for view in swapwater_freewater_nrgmon.views0():
-        pdbgroup.add(view)
-
-    for view in ligand_protein_nrgmon.views1():
-        pdbgroup.add(view)
-
-    for view in ligand_boundwater_nrgmon.views1():
-        view = view.residue().edit().setProperty("PDB-residue-name", "PRT").commit()
-        pdbgroup.add(view)
-
-    ligand_protein_nrgmon = None
-    ligand_boundwater_nrgmon = None
-
-    for view in swapwater_freewater_nrgmon.views1():
-        pdbgroup.add(view)
-
-    swapwater_freewater_nrgmon = None
-
-    PDB().write(pdbgroup, filename)
-
-    pdbgroup = None
-
-    print("Written the monitored group to file %s" % filename)
 
 
 def loadWSRC():
@@ -1741,7 +1598,26 @@ def loadWSRC():
     return (wsrc_system, wsrc_moves)
 
 
-def analyseWSRC(replicas, iteration):
+def printComponents(comps, FILE):
+    """This function prints out all of the free energy components in the passed object"""
+    print("RESIDUE    TOTAL    COULOMB    LJ", file=FILE)
+    for i in range(0, comps.nComponents()):
+        print("%s  %s  %s  %s" % (comps.viewAt(i).residue(), \
+                                  -comps.integrate(i).values()[-1].y(), \
+                                  -comps.integrateCoulomb(i).values()[-1].y(), \
+                                  -comps.integrateLJ(i).values()[-1].y()), file=FILE)
+
+
+def printFreeEnergy(total, bound, free, FILE):
+    """This function prints out the total, bound and free free energies"""
+    print("TOTAL   BOUND    FREE", file=FILE)
+    print("%s   %s   %s" % (-total.integrate().values()[-1].y(), \
+                            -bound.integrate().values()[-1].y(), \
+                            -free.integrate().values()[-1].y()), file=FILE)
+
+
+def analyseWSRC(replicas, iteration, bennetts_freenrgs, fep_freenrgs, ti_freenrgs, bound_freenrgs, free_freenrgs,
+                res_freenrgs, bound_water_freenrgs, free_water_freenrgs):
     """This function is used to perform all analysis of iteration 'it' of the passed WSRC system"""
 
     print("Analysing iteration %d..." % iteration)
@@ -1772,22 +1648,18 @@ def analyseWSRC(replicas, iteration):
     dg_f = {}
     dg_b = {}
 
-    dg_accum_f = {}
-    dg_accum_b = {}
+    dg_next = {}
+    dg_prev = {}
 
-    dg_accum_next = {}
-    dg_accum_prev = {}
+    dg_bound_f = {}
+    dg_bound_b = {}
+    
+    dg_free_f = {}
+    dg_free_b = {}
 
-    proteinbox_dg = {}
-    proteinbox_dg_coul = {}
-    proteinbox_dg_lj = {}
-
-    waterbox_dg = {}
-    waterbox_dg_coul = {}
-    waterbox_dg_lj = {}
-
-    proteinbox_views = None
-    waterbox_views = None
+    dg_residue = {}
+    dg_boundwater = {}
+    dg_freewater = {}
 
     write_pdbs = (save_pdb.val) and (iteration % pdb_frequency.val == 0)
 
@@ -1810,70 +1682,18 @@ def analyseWSRC(replicas, iteration):
                 PDB().write(bound_leg, "%s/bound_mobile_%000006d_%.5f.pdb" % (outdir.val, iteration, lamval))
                 PDB().write(free_leg, "%s/free_mobile_%000006d_%.5f.pdb" % (outdir.val, iteration, lamval))
 
-        dg = monitors[MonitorName("delta_g^{F}")][-1]
-        dg_f[lamval] = dg.accumulator().average() / delta_lambda
-        dg_accum_f[lamval] = dg.accumulator() 
+        dg_f[lamval] = monitors[MonitorName("delta_g^{F}")][-1].accumulator()
+        dg_b[lamval] = monitors[MonitorName("delta_g^{B}")][-1].accumulator()
+        dg_next[lamval] = monitors[MonitorName("delta_g^{next}")][-1].accumulator()
+        dg_prev[lamval] = monitors[MonitorName("delta_g^{prev}")][-1].accumulator()
+        dg_bound_f[lamval] = monitors[MonitorName("delta_bound_g^{F}")][-1].accumulator()
+        dg_bound_b[lamval] = monitors[MonitorName("delta_bound_g^{B}")][-1].accumulator()
+        dg_free_f[lamval] = monitors[MonitorName("delta_free_g^{F}")][-1].accumulator()
+        dg_free_b[lamval] = monitors[MonitorName("delta_free_g^{B}")][-1].accumulator()
 
-        dg = monitors[MonitorName("delta_g^{B}")][-1]
-        dg_b[lamval] = dg.accumulator().average() / delta_lambda
-        dg_accum_b[lamval] = dg.accumulator()
-
-        dg = monitors[MonitorName("delta_g^{next}")][-1]
-        dg_accum_next[lamval] = dg.accumulator()
-
-        dg = monitors[MonitorName("delta_g^{prev}")][-1]
-        dg_accum_prev[lamval] = dg.accumulator()
-
-        ligand_protein_nrgmon = monitors[MonitorName("ligand_protein_solute_nrgmon")][-1]
-        ligand_boundwater_nrgmon = monitors[MonitorName("ligand_boundwater_nrgmon")][-1]
-        ligand_freewater_nrgmon = monitors[MonitorName("ligand_freewater_nrgmon")][-1]
-
-        swapwater_protein_nrgmon = monitors[MonitorName("swapwater_protein_solute_nrgmon")][-1]
-        swapwater_boundwater_nrgmon = monitors[MonitorName("swapwater_boundwater_nrgmon")][-1]
-        swapwater_freewater_nrgmon = monitors[MonitorName("swapwater_freewater_nrgmon")][-1]
-
-        # the ligand and swapwater monitors use the same views
-        # and are the same for all lambda values
-        if proteinbox_views is None:
-            proteinbox_views = []
-            waterbox_views = []
-
-            for view in ligand_protein_nrgmon.views1():
-                proteinbox_views.append(view)
-
-            for view in ligand_boundwater_nrgmon.views1():
-                proteinbox_views.append(view)
-
-            for view in ligand_freewater_nrgmon.views1():
-                waterbox_views.append(view)
-
-        ligand_nrgs = extractEnergies(ligand_protein_nrgmon, 
-                                      ligand_boundwater_nrgmon,
-                                      ligand_freewater_nrgmon)
-
-        swapwater_nrgs = extractEnergies(swapwater_protein_nrgmon, 
-                                         swapwater_boundwater_nrgmon,
-                                         swapwater_freewater_nrgmon)
-
-        delta_nrgs = subtractEnergies( swapwater_nrgs, ligand_nrgs)
-
-        proteinbox_dg_coul[lamval] = delta_nrgs[0][0]
-        proteinbox_dg_lj[lamval] = delta_nrgs[0][1]
-        proteinbox_dg[lamval] = delta_nrgs[0][2]
-
-        waterbox_dg_coul[lamval] = delta_nrgs[1][0]
-        waterbox_dg_lj[lamval] = delta_nrgs[1][1]
-        waterbox_dg[lamval] = delta_nrgs[1][2]
-
-
-    freenrgs_file = "%s/freenrgs.s3" % outdir.val
-
-    if not os.path.exists(freenrgs_file):
-        bennetts_freenrgs = Bennetts()
-        fep_freenrgs = FEP()
-        ti_freenrgs = TI()
-    else:
-        [bennetts_freenrgs, fep_freenrgs, ti_freenrgs] = Sire.Stream.load(freenrgs_file)
+        dg_residue[lamval] = monitors[MonitorName("residue_nrgmon")][-1]
+        dg_boundwater[lamval] = monitors[MonitorName("boundwater_nrgmon")][-1]
+        dg_freewater[lamval] = monitors[MonitorName("freewater_nrgmon")][-1]
 
     windows = copy.deepcopy(lambda_values)
     windows.sort()
@@ -1884,136 +1704,51 @@ def analyseWSRC(replicas, iteration):
     if windows[0] != 0:
         windows.insert(0,0)
 
-    bennetts_freenrgs.add( windows, dg_accum_next, dg_accum_prev )
-    fep_freenrgs.add( windows, dg_accum_next, dg_accum_prev )
-    ti_freenrgs.add( dg_accum_f, dg_accum_b, delta_lambda )
+    bennetts_freenrgs.set( iteration, windows, dg_next, dg_prev )
+    fep_freenrgs.set( iteration, windows, dg_next, dg_prev )
+    ti_freenrgs.set( iteration, dg_f, dg_b, delta_lambda )
 
-    # save the old file to a backup
-    try:
-        shutil.copy(freenrgs_file, "%s.bak" % freenrgs_file)
-    except:
-        pass
+    bound_freenrgs.set( iteration, dg_bound_f, dg_bound_b, delta_lambda )
+    free_freenrgs.set( iteration, dg_free_f, dg_free_b, delta_lambda )
 
-    Sire.Stream.save( [bennetts_freenrgs, fep_freenrgs, ti_freenrgs], freenrgs_file )
+    print("\nTOTAL BINDING FREE ENERGY\n", file=FILE)
+    printFreeEnergy(ti_freenrgs[iteration], bound_freenrgs[iteration], free_freenrgs[iteration], FILE)
 
-    pmf_f = calculatePMF(dg_f)
-    pmf_b = calculatePMF(dg_b)
+    res_freenrgs.set( iteration, dg_residue )
+    bound_water_freenrgs.set( iteration, dg_boundwater )
+    free_water_freenrgs.set( iteration, dg_freewater )
 
-    proteinbox_pmfs = calculatePMFs(proteinbox_dg)
-    proteinbox_pmfs_coul = calculatePMFs(proteinbox_dg_coul)
-    proteinbox_pmfs_lj = calculatePMFs(proteinbox_dg_lj)
+    print("\nRESIDUE FREE ENERGY COMPONENTS\n", file=FILE)
+    printComponents(res_freenrgs[iteration], FILE)
 
-    waterbox_pmfs = calculatePMFs(waterbox_dg)
-    waterbox_pmfs_coul = calculatePMFs(waterbox_dg_coul)
-    waterbox_pmfs_lj = calculatePMFs(waterbox_dg_lj)
+    print("\nPROTEIN BOX WATER FREE ENERGY COMPONENTS\n", file=FILE)
+    printComponents(bound_water_freenrgs[iteration], FILE)
 
-    # First, output the potential of mean force along the WSRC
-    print("\nPotential of mean force (binding free energy) (plus gradients)", file=FILE)
+    print("\nWATER BOX WATER FREE ENERGY COMPONENTS\n", file=FILE)
+    printComponents(free_water_freenrgs[iteration], FILE)
 
-    lamvals = list(pmf_f.keys())
-    lamvals.sort()
-
-    print("Lambda    Forwards    Backwards   dG_F      dG_B", file=FILE)
-
-    for lamval in lamvals:
-        print("%f   %f   %f   %f   %f" % (lamval, pmf_f[lamval], pmf_b[lamval],
-                                                         dg_f[lamval], dg_b[lamval]), file=FILE)
-
-    bind_f = pmf_f[lamvals[-1]]
-    bind_b = pmf_b[lamvals[-1]]
-
-    proteinbox_bind = []
-    proteinbox_bind_coul = []
-    proteinbox_bind_lj = []
-
-    waterbox_bind = []
-    waterbox_bind_coul = []
-    waterbox_bind_lj = []
-
-    #print >>FILE,"\n==============================="
-    #print >>FILE,"PROTEIN BOX FREE ENERGIES"
-    #print >>FILE,"===============================\n"
-    #
-    #Now output the group-decomposed RDFs
-    for i in range(0,len(proteinbox_views)):
-    #    print >>FILE,"\nPotential of mean force for protein box group %d | %s" \
-    #                                % (i+1, getName(proteinbox_views[i]))
-    #
-    #    print >>FILE,"Lambda   Total   Coulomb   LJ"
-    #
-        lamvals = list(proteinbox_pmfs[i].keys())
-        lamvals.sort()
-    
-    #    for lamval in lamvals:
-    #        print >>FILE,"%f    %f    %f    %f" % \
-    #           (lamval, proteinbox_pmfs[i][lamval], proteinbox_pmfs_coul[i][lamval],
-    #                    proteinbox_pmfs_lj[i][lamval])
-    #
-        proteinbox_bind.append( proteinbox_pmfs[i][lamvals[-1]] )
-        proteinbox_bind_coul.append( proteinbox_pmfs_coul[i][lamvals[-1]] )
-        proteinbox_bind_lj.append( proteinbox_pmfs_lj[i][lamvals[-1]] )
-
-    #print >>FILE,"\n==============================="
-    #print >>FILE,"WATER BOX FREE ENERGIES"
-    #print >>FILE,"===============================\n"
-    #
-    # Now output the group-decomposed RDFs
-    for i in range(0,len(waterbox_views)):
-    #    print >>FILE,"\nPotential of mean force for water box group %d | %s" \
-    #                                % (i+1, getName(waterbox_views[i]))
-    #
-    #    print >>FILE,"Lambda   Total   Coulomb   LJ"
-    
-        lamvals = list(waterbox_pmfs[i].keys())
-        lamvals.sort()
-
-    #    for lamval in lamvals:
-    #        print >>FILE,"%f    %f    %f    %f" % \
-    #           (lamval, waterbox_pmfs[i][lamval], waterbox_pmfs_coul[i][lamval],
-    #                    waterbox_pmfs_lj[i][lamval])
-
-        waterbox_bind.append( waterbox_pmfs[i][lamvals[-1]] )
-        waterbox_bind_coul.append( waterbox_pmfs_coul[i][lamvals[-1]] )
-        waterbox_bind_lj.append( waterbox_pmfs_lj[i][lamvals[-1]] )
-
-
-    # Now write out the final binding free energies
-    print("\n===================================", file=FILE)
-    print("  BINDING FREE ENERGIES", file=FILE)
-    print("===================================\n", file=FILE)       
-
-    print("Protein box binding free energies\n", file=FILE)
-
-    for i in range(0,len(proteinbox_views)):
-        print("%s : %f kcal mol-1 (Coulomb = %f , LJ = %f )" \
-                 % (getName(proteinbox_views[i]), -proteinbox_bind[i], \
-                    -proteinbox_bind_coul[i], -proteinbox_bind_lj[i]), file=FILE)
-
-    print("\nWater box binding free energies\n", file=FILE)
-
-    for i in range(0,len(waterbox_views)):
-        print("%s : %f kcal mol-1 (Coulomb = %f , LJ = %f )" \
-                 % (getName(waterbox_views[i]), -waterbox_bind[i], \
-                    -waterbox_bind_coul[i], -waterbox_bind_lj[i]), file=FILE)
-
-    bind = -0.5 * (bind_f + bind_b)
-    error = abs( 0.5*(bind_f - bind_b) )
-
-    print("\nTotal Binding Free Energy = %f +/- %f kcal mol-1" \
-                 % (bind, error), file=FILE)
-
-    print("\n===================================", file=FILE)
+    print("\n=============", file=FILE)
+    print("Binding free energy for iteration %d equals %s" % (iteration, \
+                        -ti_freenrgs[iteration].integrate().values()[-1].y()), file=FILE)
+    print("==============", file=FILE)
 
 
 @resolveParameters
 def run():
     """This is a very high level function that does everything to run a WSRC simulation"""
 
+    t = QTime()
+    total_t = QTime()
+    total_t.start()
+
     if os.path.exists(restart_file.val):
+        t.start()
         (wsrc_system, wsrc_moves) = Sire.Stream.load(restart_file.val)
+        print("Loading the restart file took %d ms" % t.elapsed())
     else:
         # Load the WSRC protein and water boxes from the topology and coordinate
         # files and merge together into the WSRC system and moves object
+        t.start()
         if os.path.exists(sysmoves_file.val):
             (wsrc_system, wsrc_moves) = Sire.Stream.load(sysmoves_file.val)
         else:
@@ -2035,12 +1770,45 @@ def run():
 
         Sire.Stream.save( (wsrc_system, wsrc_moves), restart_file.val )
 
+        print("Initialising the simulation took %d ms" % t.elapsed())
+
     # see how many blocks of moves we still need to perform...
     nattempted = wsrc_moves.nMoves()
 
     print("Number of iterations to perform: %d. Number of iterations completed: %d." % (nmoves.val, nattempted))
 
+    # See if we have any existing free energy statistics files...
+    t.start()
+    freenrgs_file = "%s/freenrgs.s3" % outdir.val
+
+    if not os.path.exists(freenrgs_file):
+        bennetts_freenrgs = Bennetts()
+        fep_freenrgs = FEP()
+        ti_freenrgs = TI()
+    else:
+        [bennetts_freenrgs, fep_freenrgs, ti_freenrgs] = Sire.Stream.load(freenrgs_file)
+
+    freenrg_parts_file = "%s/freenrg_parts.s3" % outdir.val
+
+    if not os.path.exists(freenrg_parts_file):
+        bound_freenrgs = TI()
+        free_freenrgs = TI()
+    else:
+        [bound_freenrgs, free_freenrgs] = Sire.Stream.load(freenrg_parts_file)
+
+    freenrg_components_file = "%s/freenrg_components.s3" % outdir.val
+
+    if not os.path.exists(freenrg_components_file):
+        res_freenrgs = TIComponents()
+        bound_water_freenrgs = TIComponents()
+        free_water_freenrgs = TIComponents()
+    else:
+        [res_freenrgs, bound_water_freenrgs, free_water_freenrgs] = Sire.Stream.load(freenrg_components_file)
+
+    print("Initialising / loading the free energy files took %d ms" % t.elapsed())
+
     for i in range(nattempted+1, nmoves.val+1):
+        t.start()
         print("Performing iteration %d..." % i)
         sim = SupraSim.run( wsrc_system, wsrc_moves, 1, True )
         sim.wait()
@@ -2048,13 +1816,12 @@ def run():
         wsrc_system = sim.system()
         wsrc_moves = sim.moves()
 
-        print("...iteration complete")
-        analyseWSRC(wsrc_system, i)
-        wsrc_system.clearAllStatistics()
+        print("...iteration complete (took %d ms)" % t.elapsed())
 
-        # write a restart file every 5 moves in case of crash or run out of time
+        # write a restart file every N moves in case of crash or run out of time
         if i % restart_frequency.val == 0 or i == nmoves.val:
-            print("Saving the restart file from iteration %d." % i)
+            t.start()
+            print("Saving the restart file from iteration %d..." % i)
             # save the old file to a backup
             try:
                 shutil.copy(restart_file.val, "%s.bak" % restart_file.val)
@@ -2062,5 +1829,37 @@ def run():
                 pass
 
             Sire.Stream.save( (wsrc_system, wsrc_moves), restart_file.val )
+            print("...save complete (took %d ms)" % t.elapsed())
 
-    print("All iterations complete.")
+        t.start()
+        print("Analysing iteration %d..." % i)
+        analyseWSRC(wsrc_system, i, bennetts_freenrgs, fep_freenrgs, ti_freenrgs, bound_freenrgs, free_freenrgs,
+                    res_freenrgs, bound_water_freenrgs, free_water_freenrgs)
+        wsrc_system.clearAllStatistics()
+        print("...analysis complete (took %d ms)" % t.elapsed())
+
+        if i % restart_frequency.val == 0 or i == nmoves.val:
+            t.start()
+            print("Saving the free energy analysis files from iteration %d..." % i)
+            # save the old file to a backup
+            try:
+                shutil.copy(freenrgs_file, "%s.bak" % freenrgs_file)
+            except:
+                pass
+
+            try:
+                shutil.copy(freenrg_components_file, "%s.bak" % freenrg_components_file)
+            except:
+                pass
+
+            try:
+                shutil.copy(freenrg_parts_file, "%s.bak" % freenrg_parts_file)
+            except:
+                pass
+
+            Sire.Stream.save( [bennetts_freenrgs, fep_freenrgs, ti_freenrgs], freenrgs_file )
+            Sire.Stream.save( [bound_freenrgs, free_freenrgs], freenrg_parts_file )
+            Sire.Stream.save( [res_freenrgs, bound_water_freenrgs, free_water_freenrgs], freenrg_components_file )
+            print("...save complete (took %d ms)" % t.elapsed())
+
+    print("All iterations complete. Total runtime was %d ms" % total_t.elapsed())

@@ -43,6 +43,7 @@
 #include "SireSystem/systemmonitor.h"
 #include "SireSystem/constraint.h"
 #include "SireSystem/monitorname.h"
+#include "SireSystem/freeenergymonitor.h"
 
 using namespace SireSystem;
 
@@ -54,5 +55,6 @@ void register_SireSystem_containers()
     register_list< QList<MonitorName> >();
     register_list< QList<ConstraintPtr> >();
     register_list< QVector<ConstraintPtr> >();
-}
 
+    register_dict< QMap<double,FreeEnergyMonitor> >();
+}

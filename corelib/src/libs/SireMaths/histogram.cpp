@@ -246,27 +246,33 @@ Histogram::Histogram()
             binwidth(1), avgval(0), avgval2(0), sum_of_bins(0)
 {}
 
-/** Construct an empty histogram with specified bin width */
+/** Construct an empty histogram with specified bin width. Note that
+    if the binwidth is less than or equal to zero, then a histogram
+    will not be collected, and only the mean and standard deviation
+    will be recorded */
 Histogram::Histogram(double width)
           : ConcreteProperty<Histogram,Property>(),
             binwidth(width), avgval(0), avgval2(0), sum_of_bins(0)
 {
     if (width <= 0)
-        width = 0.1;
+        binwidth = 0;
     else if (width > 1e20)
-        width = 1e20;
+        binwidth = 1e20;
 }
 
 /** Construct a histogram of specified bin width, and populating it with 
-    the passed values (which are all assumed to have weight "1") */
+    the passed values (which are all assumed to have weight "1")
+    Note that if the binwidth is less than or equal to zero, then a histogram
+    will not be collected, and only the mean and standard deviation
+    will be recorded */
 Histogram::Histogram(double width, const QVector<double> &values)
           : ConcreteProperty<Histogram,Property>(),
             binwidth(width), avgval(0), avgval2(0), sum_of_bins(0)
 {
     if (width <= 0)
-        width = 0.1;
+        binwidth = 0;
     else if (width > 1e20)
-        width = 1e20;
+        binwidth = 1e20;
 
     this->operator+=(values);
 }
@@ -540,10 +546,13 @@ void Histogram::accumulate(double value, double weight)
         sum_of_bins += weight;
     }
     
-    //now histogram the data
-    qint64 bin = getBin(value, binwidth);
+    if (binwidth > 0)
+    {
+        //now histogram the data
+        qint64 bin = getBin(value, binwidth);
     
-    binvals.insert(bin, binvals.value(bin,0) + weight);
+        binvals.insert(bin, binvals.value(bin,0) + weight);
+    }
 }
 
 /** Accumulate the passed values onto this histogram */
@@ -558,13 +567,30 @@ void Histogram::accumulate(const QVector<double> &values)
 /** Accumulate the data from the passed histogram onto this histogram */
 void Histogram::accumulate(const Histogram &other)
 {
-    Histogram resized = other.resize( this->binWidth() );
-    
-    for (QHash<qint64,double>::const_iterator it = resized.binvals.constBegin();
-         it != resized.binvals.constEnd();
-         ++it)
+    if (this->binWidth() > 0 and other.binWidth() > 0)
     {
-        this->accumulate( (it.key() + 0.5)*resized.binwidth, it.value() );
+        Histogram resized = other.resize( this->binWidth() );
+    
+        for (QHash<qint64,double>::const_iterator it = resized.binvals.constBegin();
+             it != resized.binvals.constEnd();
+             ++it)
+        {
+            this->accumulate( (it.key() + 0.5)*resized.binwidth, it.value() );
+        }
+    }
+    else
+    {
+        //one of the histograms has a binwidth of 0. This destroys the
+        //histogram data, leaving only the mean and standard deviation
+        binvals.clear();
+        binwidth = 0;
+
+        const double bigratio = sum_of_bins / (sum_of_bins + other.sum_of_bins);
+        const double smallratio = 1.0 - bigratio;
+    
+        avgval = bigratio*avgval + smallratio*other.avgval;
+        avgval2 = bigratio*avgval2 + smallratio*other.avgval2;
+        sum_of_bins += other.sum_of_bins;
     }
 }
 
@@ -899,9 +925,6 @@ Histogram Histogram::normalise() const
 /** Return a resized copy of this histogram with the passed new binwidth */
 Histogram Histogram::resize(double width) const
 {
-    if (width <= 0)
-        width = 0.1;
-
     if (width == binwidth)
         return *this;
 
@@ -910,6 +933,17 @@ Histogram Histogram::resize(double width) const
     ret.avgval = avgval;
     ret.avgval2 = avgval2;
     ret.sum_of_bins = sum_of_bins;
+
+    if (width <= 0)
+    {
+        ret.binwidth = 0;
+        return ret;
+    }
+
+    if (width > 1e20)
+    {
+        ret.binwidth = 1e20;
+    }
     
     for (QHash<qint64,double>::const_iterator it = binvals.constBegin();
          it != binvals.constEnd();

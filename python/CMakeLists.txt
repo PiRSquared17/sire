@@ -311,7 +311,10 @@ install( FILES __init__.py
          DESTINATION ${SIRE_PYTHON}/Sire 
        )
 
-# Create the sire_python2_config.h to tell Sire where the
+# Finally, write the version header file and finish off the component dependencies file
+include( GetSvnVersion )
+
+# Create the sire_python_config.h to tell Sire where the
 # python libraries will be installed
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/sire_python_config.h.in"
@@ -327,10 +330,3 @@ configure_file(
 
 add_custom_target(uninstall
   "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/Config__init__.py.in
-               ${CMAKE_CURRENT_BINARY_DIR}/__init__.py)
-
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/__init__.py
-         DESTINATION ${SIRE_PYTHON}/Sire/Config/)
-

@@ -27,19 +27,7 @@ namespace bp = boost::python;
 
 #include "sire_config.h"
 
-#include <QDebug>
-
-#include <QDir>
-
-#include <QFileInfo>
-
-#include "getinstalldir.h"
-
-#include "SireError/errors.h"
-
-#include "getinstalldir.h"
-
-#include "sire_config.h"
+#include "sire_version.h"
 
 #include <QDebug>
 
@@ -55,19 +43,7 @@ namespace bp = boost::python;
 
 #include "sire_config.h"
 
-#include <QDebug>
-
-#include <QDir>
-
-#include <QFileInfo>
-
-#include "getinstalldir.h"
-
-#include "SireError/errors.h"
-
-#include "getinstalldir.h"
-
-#include "sire_config.h"
+#include "sire_version.h"
 
 #include <QDebug>
 
@@ -83,6 +59,8 @@ namespace bp = boost::python;
 
 #include "sire_config.h"
 
+#include "sire_version.h"
+
 #include <QDebug>
 
 #include <QDir>
@@ -96,6 +74,72 @@ namespace bp = boost::python;
 #include "getinstalldir.h"
 
 #include "sire_config.h"
+
+#include "sire_version.h"
+
+#include <QDebug>
+
+#include <QDir>
+
+#include <QFileInfo>
+
+#include "getinstalldir.h"
+
+#include "SireError/errors.h"
+
+#include "getinstalldir.h"
+
+#include "sire_config.h"
+
+#include "sire_version.h"
+
+#include <QDebug>
+
+#include <QDir>
+
+#include <QFileInfo>
+
+#include "getinstalldir.h"
+
+#include "SireError/errors.h"
+
+#include "getinstalldir.h"
+
+#include "sire_config.h"
+
+#include "sire_version.h"
+
+#include <QDebug>
+
+#include <QDir>
+
+#include <QFileInfo>
+
+#include "getinstalldir.h"
+
+#include "SireError/errors.h"
+
+#include "getinstalldir.h"
+
+#include "sire_config.h"
+
+#include "sire_version.h"
+
+#include <QDebug>
+
+#include <QDir>
+
+#include <QFileInfo>
+
+#include "getinstalldir.h"
+
+#include "SireError/errors.h"
+
+#include "getinstalldir.h"
+
+#include "sire_config.h"
+
+#include "sire_version.h"
 
 #include <QDebug>
 
@@ -114,6 +158,8 @@ namespace bp = boost::python;
 #include "getinstalldir.h"
 
 #include "sire_config.h"
+
+#include "sire_version.h"
 
 #include <QDebug>
 
@@ -376,6 +422,28 @@ void register_free_functions(){
         bp::def( 
             "getLibDir"
             , getLibDir_function_value );
+    
+    }
+
+    { //::SireBase::getRepositoryURL
+    
+        typedef ::QString ( *getRepositoryURL_function_type )(  );
+        getRepositoryURL_function_type getRepositoryURL_function_value( &::SireBase::getRepositoryURL );
+        
+        bp::def( 
+            "getRepositoryURL"
+            , getRepositoryURL_function_value );
+    
+    }
+
+    { //::SireBase::getRepositoryVersion
+    
+        typedef ::QString ( *getRepositoryVersion_function_type )(  );
+        getRepositoryVersion_function_type getRepositoryVersion_function_value( &::SireBase::getRepositoryVersion );
+        
+        bp::def( 
+            "getRepositoryVersion"
+            , getRepositoryVersion_function_value );
     
     }
 
