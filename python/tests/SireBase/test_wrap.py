@@ -6,6 +6,12 @@ from Sire.Base import *
 
 from nose.tools import assert_equal
 
+def assert_array_equal( array0, array1 ):
+    assert( len(array0) == len(array1) )
+
+    for i in range(0, len(array0)):
+        assert( array0[i] == array1[i] )
+
 def test_wrap():
     water = PDB().readMolecule("../io/water.pdb")
 
@@ -26,10 +32,10 @@ def test_wrap():
                         .setProperty("copies", wrap(1)).commit()
 
     assert_equal( water.property("center"), center )
-    assert_equal( water.proprety("dblarray"), dblarray )
-    assert_equal( water.property("intarray"), intarray )
-    assert_equal( water.property("vecarray"), vecarray )
-    assert_equal( water.property("strarray"), strarray )
+    assert_array_equal( water.property("dblarray"), dblarray )
+    assert_array_equal( water.property("intarray"), intarray )
+    assert_array_equal( water.property("vecarray"), vecarray )
+    assert_array_equal( water.property("strarray"), strarray )
     assert_equal( water.property("type"), "ligand" )
     assert_equal( water.property("alpha"), 0.5 )
     assert_equal( water.property("copies"), 1 )
