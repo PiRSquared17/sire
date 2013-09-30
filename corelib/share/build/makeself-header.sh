@@ -366,7 +366,7 @@ for s in \$filesizes
 do
     if MS_dd "\$0" \$offset \$s | eval "$GUNZIP_CMD" | ( cd "\$tmpdir"; UnTAR x ) | MS_Progress; then
 		if test x"\$ownership" = xy; then
-			(PATH=/usr/xpg4/bin:\$PATH; cd "\$tmpdir"; chown -R \`id -u\` tmp_sire.app;  chgrp -R \`id -g\` .)
+			(PATH=/usr/xpg4/bin:\$PATH; cd "\$tmpdir"; chown -R \`id -u\` tmp_sire.app;  chgrp -R \`id -g\` tmp_sire.app)
 		fi
     else
 		echo
