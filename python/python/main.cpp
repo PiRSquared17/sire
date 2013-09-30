@@ -12,6 +12,8 @@
 #include "SireBase/getinstalldir.h"
 #include "SireBase/cpuid.h"
 
+#include "SireCluster/cluster.h"
+
 #include "sire_config.h"
 #include "sire_python_config.h"
 
@@ -20,6 +22,7 @@
 using std::printf;
 
 using namespace SireBase;
+using namespace SireCluster;
 
 #include <QDebug>
 
@@ -174,6 +177,7 @@ int main(int argc, char **argv)
             }
         }
 
+        Cluster::start(ppn);
         printf("Starting %ls: number of threads equals %d\n", python_argv[0], ppn);
 
         if (not ignore_ipython)
@@ -221,6 +225,7 @@ int main(int argc, char **argv)
         status = -1;
     }
 
+    Cluster::shutdown();
     SireBase::Process::killAll();
 
     return status;
