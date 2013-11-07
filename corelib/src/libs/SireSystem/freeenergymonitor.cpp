@@ -653,15 +653,15 @@ inline pair<double,double> getSoftCLJEnergy(
     
     bool arithmetic_combining_rules = true;
 
-    const double alpha_a = 1 - lamval;
-    const double alpha_a_f = 1 - lamval - delta_lambda;
+    const double alpha_a = lamval;
+    const double alpha_a_f = lamval + delta_lambda;
     double one_minus_alpha_a_to_n = 1;
     double one_minus_alpha_a_to_n_f = 1;
     const double delta_a = shift_delta * alpha_a;
     const double delta_a_f = shift_delta * alpha_a_f;
 
-    const double alpha_b = lamval;
-    const double alpha_b_f = lamval + delta_lambda;
+    const double alpha_b = 1 - lamval;
+    const double alpha_b_f = 1 - lamval - delta_lambda;
     double one_minus_alpha_b_to_n = 1;
     double one_minus_alpha_b_to_n_f = 1;
     const double delta_b = shift_delta * alpha_b;
@@ -735,9 +735,9 @@ inline pair<double,double> getSoftCLJEnergy(
         }
         
         cnrg += (1-lamval) * icnrg;
-        cnrg_f += (1-lamval+delta_lambda) * icnrg_f;
+        cnrg_f += (1-lamval-delta_lambda) * icnrg_f;
         ljnrg += (1-lamval) * iljnrg;
-        ljnrg_f += (1-lamval+delta_lambda) * iljnrg_f;
+        ljnrg_f += (1-lamval-delta_lambda) * iljnrg_f;
         
         icnrg = 0;
         iljnrg = 0;
