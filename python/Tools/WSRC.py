@@ -957,65 +957,65 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     bound_swap_fixed_nrg = bound_swap_fixed.components().total()
     free_swap_fixed_nrg = free_swap_fixed.components().total()
 
+    ligand_int_nrg_sym = Symbol("E_{ligand:internal}")
+    ligand_int_nrg = ligand_intraclj.components().total() + \
+                     ligand_intraff.components().total()
+
+    ligand_int_nrg_f_sym = Symbol("E_{ligand:internal_{f}}")
+    ligand_int_nrg_f = ligand_intraclj.components().total() + \
+                       ligand_intraff.components().total()
+
+    ligand_int_nrg_b_sym = Symbol("E_{ligand:internal_{b}}")
+    ligand_int_nrg_b = ligand_intraclj.components().total() + \
+                       ligand_intraff.components().total()
+
+    ligand_int_nrg_next_sym = Symbol("E_{ligand:internal_{next}}")
+    ligand_int_nrg_next = ligand_intraclj.components().total() + \
+                          ligand_intraff.components().total()
+
+    ligand_int_nrg_prev_sym = Symbol("E_{ligand:internal_{prev}}")
+    ligand_int_nrg_prev = ligand_intraclj.components().total() + \
+                          ligand_intraff.components().total()
+
     ligand_bound_nrg_sym = Symbol("E_{ligand:bound}")
 
-    ligand_bound_nrg = ligand_intraclj.components().total() + \
-                       ligand_intraff.components().total() + \
-                       bound_ligand_mobile.components().total(0) + \
+    ligand_bound_nrg = bound_ligand_mobile.components().total(0) + \
                        bound_ligand_fixed_nrg
 
     ligand_bound_nrg_f_sym = Symbol("E_{ligand:bound_{f}}")
-    ligand_bound_nrg_f = ligand_intraclj.components().total() + \
-                         ligand_intraff.components().total() + \
-                         bound_ligand_mobile.components().total(1) + \
+    ligand_bound_nrg_f = bound_ligand_mobile.components().total(1) + \
                          bound_ligand_fixed_nrg
 
     ligand_bound_nrg_b_sym = Symbol("E_{ligand:bound_{b}}")
-    ligand_bound_nrg_b = ligand_intraclj.components().total() + \
-                         ligand_intraff.components().total() + \
-                         bound_ligand_mobile.components().total(2) + \
+    ligand_bound_nrg_b = bound_ligand_mobile.components().total(2) + \
                          bound_ligand_fixed_nrg
 
     ligand_bound_nrg_next_sym = Symbol("E_{ligand:bound_{next}}")
-    ligand_bound_nrg_next = ligand_intraclj.components().total() + \
-                            ligand_intraff.components().total() + \
-                            bound_ligand_mobile.components().total(3) + \
+    ligand_bound_nrg_next = bound_ligand_mobile.components().total(3) + \
                             bound_ligand_fixed_nrg
 
     ligand_bound_nrg_prev_sym = Symbol("E_{ligand:bound_{prev}}")
-    ligand_bound_nrg_prev = ligand_intraclj.components().total() + \
-                            ligand_intraff.components().total() + \
-                            bound_ligand_mobile.components().total(4) + \
+    ligand_bound_nrg_prev = bound_ligand_mobile.components().total(4) + \
                             bound_ligand_fixed_nrg
 
     ligand_free_nrg_sym = Symbol("E_{ligand:free}")
-    ligand_free_nrg = ligand_intraclj.components().total() + \
-                      ligand_intraff.components().total() + \
-                      free_ligand_mobile.components().total(0) + \
+    ligand_free_nrg = free_ligand_mobile.components().total(0) + \
                       free_ligand_fixed_nrg
 
     ligand_free_nrg_f_sym = Symbol("E_{ligand:free_{f}}")
-    ligand_free_nrg_f = ligand_intraclj.components().total() + \
-                        ligand_intraff.components().total() + \
-                        free_ligand_mobile.components().total(1) + \
+    ligand_free_nrg_f = free_ligand_mobile.components().total(1) + \
                         free_ligand_fixed_nrg
 
     ligand_free_nrg_b_sym = Symbol("E_{ligand:free_{b}}")
-    ligand_free_nrg_b = ligand_intraclj.components().total() + \
-                        ligand_intraff.components().total() + \
-                        free_ligand_mobile.components().total(2) + \
+    ligand_free_nrg_b = free_ligand_mobile.components().total(2) + \
                         free_ligand_fixed_nrg
 
     ligand_free_nrg_next_sym = Symbol("E_{ligand:free_{next}}")
-    ligand_free_nrg_next = ligand_intraclj.components().total() + \
-                           ligand_intraff.components().total() + \
-                           free_ligand_mobile.components().total(3) + \
+    ligand_free_nrg_next = free_ligand_mobile.components().total(3) + \
                            free_ligand_fixed_nrg
 
     ligand_free_nrg_prev_sym = Symbol("E_{ligand:free_{prev}}")
-    ligand_free_nrg_prev = ligand_intraclj.components().total() + \
-                           ligand_intraff.components().total() + \
-                           free_ligand_mobile.components().total(4) + \
+    ligand_free_nrg_prev = free_ligand_mobile.components().total(4) + \
                            free_ligand_fixed_nrg
 
     lam = Symbol("lambda")
@@ -1031,65 +1031,65 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     S_scl_next = S_sym - 4*(S_sym-1)*(lam_next-0.5)**2
     S_scl_prev = S_sym - 4*(S_sym-1)*(lam_prev-0.5)**2
 
+    swap_int_nrg_sym = Symbol("E_{swap:internal}")
+    swap_int_nrg = ((S_scl) * swap_interclj.components().coulomb()) + \
+                              swap_interclj.components().lj()
+
+    swap_int_nrg_f_sym = Symbol("E_{swap:internal_{f}}")
+    swap_int_nrg_f = ((S_scl_f) * swap_interclj.components().coulomb()) + \
+                              swap_interclj.components().lj()
+
+    swap_int_nrg_b_sym = Symbol("E_{swap:internal_{b}}")
+    swap_int_nrg_b = ((S_scl_b) * swap_interclj.components().coulomb()) + \
+                              swap_interclj.components().lj()
+
+    swap_int_nrg_next_sym = Symbol("E_{swap:internal_{next}}")
+    swap_int_nrg_next = ((S_scl_next) * swap_interclj.components().coulomb()) + \
+                              swap_interclj.components().lj()
+
+    swap_int_nrg_prev_sym = Symbol("E_{swap:internal_{prev}}")
+    swap_int_nrg_prev = ((S_scl_prev) * swap_interclj.components().coulomb()) + \
+                              swap_interclj.components().lj()
+
     swap_bound_nrg_sym = Symbol("E_{swap:bound}")
-    swap_bound_nrg = ((S_scl) * swap_interclj.components().coulomb()) + \
-                                 swap_interclj.components().lj() + \
-                     bound_swap_mobile.components().total(0) + \
+    swap_bound_nrg = bound_swap_mobile.components().total(0) + \
                      bound_swap_fixed_nrg
 
     swap_bound_nrg_f_sym = Symbol("E_{swap:bound_{f}}")
-    swap_bound_nrg_f = ((S_scl_f) * swap_interclj.components().coulomb()) + \
-                                     swap_interclj.components().lj() + \
-                         bound_swap_mobile.components().total(1) + \
-                         bound_swap_fixed_nrg
+    swap_bound_nrg_f = bound_swap_mobile.components().total(1) + \
+                       bound_swap_fixed_nrg
 
     swap_bound_nrg_b_sym = Symbol("E_{swap:bound_{b}}")
-    swap_bound_nrg_b = ((S_scl_b) * swap_interclj.components().coulomb()) + \
-                                     swap_interclj.components().lj() + \
-                        bound_swap_mobile.components().total(2) + \
-                        bound_swap_fixed_nrg
+    swap_bound_nrg_b = bound_swap_mobile.components().total(2) + \
+                       bound_swap_fixed_nrg
 
     swap_bound_nrg_next_sym = Symbol("E_{swap:bound_{next}}")
-    swap_bound_nrg_next = ((S_scl_next) * swap_interclj.components().coulomb()) + \
-                                          swap_interclj.components().lj() + \
-                             bound_swap_mobile.components().total(3) + \
-                             bound_swap_fixed_nrg
+    swap_bound_nrg_next = bound_swap_mobile.components().total(3) + \
+                          bound_swap_fixed_nrg
 
     swap_bound_nrg_prev_sym = Symbol("E_{swap:bound_{prev}}")
-    swap_bound_nrg_prev = ((S_scl_prev) * swap_interclj.components().coulomb()) + \
-                                          swap_interclj.components().lj() + \
-                            bound_swap_mobile.components().total(4) + \
-                            bound_swap_fixed_nrg
+    swap_bound_nrg_prev = bound_swap_mobile.components().total(4) + \
+                          bound_swap_fixed_nrg
 
     swap_free_nrg_sym = Symbol("E_{swap:free}")
-    swap_free_nrg = ((S_scl) * swap_interclj.components().coulomb()) + \
-                                swap_interclj.components().lj() + \
-                     free_swap_mobile.components().total(0) + \
-                     free_swap_fixed_nrg
+    swap_free_nrg = free_swap_mobile.components().total(0) + \
+                    free_swap_fixed_nrg
 
     swap_free_nrg_f_sym = Symbol("E_{swap:free_{f}}")
-    swap_free_nrg_f = ((S_scl_f) * swap_interclj.components().coulomb()) + \
-                                    swap_interclj.components().lj() + \
-                         free_swap_mobile.components().total(1) + \
-                         free_swap_fixed_nrg
+    swap_free_nrg_f = free_swap_mobile.components().total(1) + \
+                      free_swap_fixed_nrg
 
     swap_free_nrg_b_sym = Symbol("E_{swap:free_{b}}")
-    swap_free_nrg_b = ((S_scl_b) * swap_interclj.components().coulomb()) + \
-                                    swap_interclj.components().lj() + \
-                        free_swap_mobile.components().total(2) + \
-                        free_swap_fixed_nrg
+    swap_free_nrg_b = free_swap_mobile.components().total(2) + \
+                      free_swap_fixed_nrg
 
     swap_free_nrg_next_sym = Symbol("E_{swap:free_{next}}")
-    swap_free_nrg_next = ((S_scl_next) * swap_interclj.components().coulomb()) + \
-                                         swap_interclj.components().lj() + \
-                             free_swap_mobile.components().total(3) + \
-                             free_swap_fixed_nrg
+    swap_free_nrg_next = free_swap_mobile.components().total(3) + \
+                         free_swap_fixed_nrg
 
     swap_free_nrg_prev_sym = Symbol("E_{swap:free_{prev}}")
-    swap_free_nrg_prev = ((S_scl_b) * swap_interclj.components().coulomb()) + \
-                                      swap_interclj.components().lj() + \
-                            free_swap_mobile.components().total(4) + \
-                            free_swap_fixed_nrg
+    swap_free_nrg_prev = free_swap_mobile.components().total(4) + \
+                         free_swap_fixed_nrg
 
     system.add(ligand_intraclj)
     system.add(ligand_intraff)
@@ -1111,6 +1111,12 @@ def mergeSystems(protein_system, water_system, ligand_mol):
 
     system.setComponent(S_sym, soften_water.val)
 
+    system.setComponent(ligand_int_nrg_sym, ligand_int_nrg)
+    system.setComponent(ligand_int_nrg_f_sym, ligand_int_nrg_f)
+    system.setComponent(ligand_int_nrg_b_sym, ligand_int_nrg_b)
+    system.setComponent(ligand_int_nrg_next_sym, ligand_int_nrg_next)
+    system.setComponent(ligand_int_nrg_prev_sym, ligand_int_nrg_prev)
+
     system.setComponent(ligand_bound_nrg_sym, ligand_bound_nrg)
     system.setComponent(ligand_bound_nrg_f_sym, ligand_bound_nrg_f)
     system.setComponent(ligand_bound_nrg_b_sym, ligand_bound_nrg_b)
@@ -1122,6 +1128,12 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     system.setComponent(ligand_free_nrg_b_sym, ligand_free_nrg_b)
     system.setComponent(ligand_free_nrg_next_sym, ligand_free_nrg_next)
     system.setComponent(ligand_free_nrg_prev_sym, ligand_free_nrg_prev)
+
+    system.setComponent(swap_int_nrg_sym, swap_int_nrg)
+    system.setComponent(swap_int_nrg_f_sym, swap_int_nrg_f)
+    system.setComponent(swap_int_nrg_b_sym, swap_int_nrg_b)
+    system.setComponent(swap_int_nrg_next_sym, swap_int_nrg_next)
+    system.setComponent(swap_int_nrg_prev_sym, swap_int_nrg_prev)
 
     system.setComponent(swap_bound_nrg_sym, swap_bound_nrg)
     system.setComponent(swap_bound_nrg_f_sym, swap_bound_nrg_f)
@@ -1162,49 +1174,64 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     system.setComponent(free_free_nrg_sym, free_free_nrg)
 
     bound_nrg_sym = Symbol("E_{bound}")
-    bound_nrg = bound_bound_nrg_sym + ((1-lam) * ligand_bound_nrg_sym) + (lam * swap_bound_nrg_sym)
+    bound_nrg = ((1-lam) * ligand_bound_nrg_sym) + (lam * swap_bound_nrg_sym)
 
     bound_nrg_f_sym = Symbol("E_{bound_{f}}")
-    bound_nrg_f = bound_bound_nrg_sym + ((1-lam_f) * ligand_bound_nrg_f_sym) + (lam_f * swap_bound_nrg_f_sym)
+    bound_nrg_f = ((1-lam_f) * ligand_bound_nrg_f_sym) + (lam_f * swap_bound_nrg_f_sym)
 
     bound_nrg_b_sym = Symbol("E_{bound_{b}}")
-    bound_nrg_b = bound_bound_nrg_sym + ((1-lam_b) * ligand_bound_nrg_b_sym) + (lam_b * swap_bound_nrg_b_sym)
+    bound_nrg_b = ((1-lam_b) * ligand_bound_nrg_b_sym) + (lam_b * swap_bound_nrg_b_sym)
 
     bound_nrg_next_sym = Symbol("E_{bound_{next}}")
-    bound_nrg_next = bound_bound_nrg_sym + ((1-lam_next) * ligand_bound_nrg_next_sym) + (lam_next * swap_bound_nrg_next_sym)
+    bound_nrg_next = ((1-lam_next) * ligand_bound_nrg_next_sym) + (lam_next * swap_bound_nrg_next_sym)
 
     bound_nrg_prev_sym = Symbol("E_{bound_{prev}}")
-    bound_nrg_prev = bound_bound_nrg_sym + ((1-lam_prev) * ligand_bound_nrg_prev_sym) + (lam_prev * swap_bound_nrg_prev_sym)
+    bound_nrg_prev = ((1-lam_prev) * ligand_bound_nrg_prev_sym) + (lam_prev * swap_bound_nrg_prev_sym)
     
     free_nrg_sym = Symbol("E_{free}")
-    free_nrg = free_free_nrg_sym + (lam * ligand_free_nrg_sym) + ((1-lam) * swap_free_nrg_sym)
+    free_nrg = (lam * ligand_free_nrg_sym) + ((1-lam) * swap_free_nrg_sym)
 
     free_nrg_f_sym = Symbol("E_{free_{f}}")
-    free_nrg_f = free_free_nrg_sym + (lam_f * ligand_free_nrg_f_sym) + ((1-lam_f) * swap_free_nrg_f_sym)
+    free_nrg_f = (lam_f * ligand_free_nrg_f_sym) + ((1-lam_f) * swap_free_nrg_f_sym)
 
     free_nrg_b_sym = Symbol("E_{free_{b}}")
-    free_nrg_b = free_free_nrg_sym + (lam_b * ligand_free_nrg_b_sym) + ((1-lam_b) * swap_free_nrg_b_sym)
+    free_nrg_b = (lam_b * ligand_free_nrg_b_sym) + ((1-lam_b) * swap_free_nrg_b_sym)
 
     free_nrg_next_sym = Symbol("E_{free_{next}}")
-    free_nrg_next = free_free_nrg_sym + (lam_next * ligand_free_nrg_next_sym) + ((1-lam_next) * swap_free_nrg_next_sym)
+    free_nrg_next = (lam_next * ligand_free_nrg_next_sym) + ((1-lam_next) * swap_free_nrg_next_sym)
 
     free_nrg_prev_sym = Symbol("E_{free_{prev}}")
-    free_nrg_prev = free_free_nrg_sym + (lam_prev * ligand_free_nrg_prev_sym) + ((1-lam_prev) * swap_free_nrg_prev_sym)
+    free_nrg_prev = (lam_prev * ligand_free_nrg_prev_sym) + ((1-lam_prev) * swap_free_nrg_prev_sym)
+
+    box_nrg_sym = Symbol("E_{box}")
+    box_nrg = bound_bound_nrg_sym + free_free_nrg_sym + ligand_int_nrg_sym + swap_int_nrg_sym
+
+    box_nrg_f_sym = Symbol("E_{box_{f}}")
+    box_nrg_f = bound_bound_nrg_sym + free_free_nrg_sym + ligand_int_nrg_f_sym + swap_int_nrg_f_sym
+
+    box_nrg_b_sym = Symbol("E_{box_{b}}")
+    box_nrg_b = bound_bound_nrg_sym + free_free_nrg_sym + ligand_int_nrg_b_sym + swap_int_nrg_b_sym
+
+    box_nrg_next_sym = Symbol("E_{box_{next}}")
+    box_nrg_next = bound_bound_nrg_sym + free_free_nrg_sym + ligand_int_nrg_next_sym + swap_int_nrg_next_sym
+
+    box_nrg_prev_sym = Symbol("E_{box_{prev}}")
+    box_nrg_prev = bound_bound_nrg_sym + free_free_nrg_sym + ligand_int_nrg_prev_sym + swap_int_nrg_prev_sym
 
     total_nrg_sym = system.totalComponent()
-    total_nrg = bound_nrg_sym + free_nrg_sym
+    total_nrg = bound_nrg_sym + free_nrg_sym + box_nrg_sym
 
     total_nrg_f_sym = Symbol("E_{total_{f}}")
-    total_nrg_f = bound_nrg_f_sym + free_nrg_f_sym
+    total_nrg_f = bound_nrg_f_sym + free_nrg_f_sym + box_nrg_f_sym
 
     total_nrg_b_sym = Symbol("E_{total_{b}}")
-    total_nrg_b = bound_nrg_b_sym + free_nrg_b_sym
+    total_nrg_b = bound_nrg_b_sym + free_nrg_b_sym + box_nrg_b_sym
 
     total_nrg_next_sym = Symbol("E_{total_{next}}")
-    total_nrg_next = bound_nrg_next_sym + free_nrg_next_sym
+    total_nrg_next = bound_nrg_next_sym + free_nrg_next_sym + box_nrg_next_sym
 
     total_nrg_prev_sym = Symbol("E_{total_{prev}}")
-    total_nrg_prev = bound_nrg_prev_sym + free_nrg_prev_sym
+    total_nrg_prev = bound_nrg_prev_sym + free_nrg_prev_sym + box_nrg_prev_sym
 
     system.setComponent(bound_nrg_sym, bound_nrg)
     system.setComponent(bound_nrg_f_sym, bound_nrg_f)
@@ -1217,6 +1244,12 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     system.setComponent(free_nrg_b_sym, free_nrg_b)
     system.setComponent(free_nrg_next_sym, free_nrg_next)
     system.setComponent(free_nrg_prev_sym, free_nrg_prev)
+
+    system.setComponent(box_nrg_sym, box_nrg)
+    system.setComponent(box_nrg_f_sym, box_nrg_f)
+    system.setComponent(box_nrg_b_sym, box_nrg_b)
+    system.setComponent(box_nrg_next_sym, box_nrg_next)
+    system.setComponent(box_nrg_prev_sym, box_nrg_prev)
 
     system.setComponent(total_nrg_sym, total_nrg)
     system.setComponent(total_nrg_f_sym, total_nrg_f)
@@ -1244,8 +1277,8 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     dlam = delta_lambda.val
 
     if dlam > 1 or dlam < 0.0000001:
-        print("WARNING: Weird value of delta_lambda (%s). Setting it to 0.01" % dlam)
-        dlam = 0.01
+        print("WARNING: Weird value of delta_lambda (%s). Setting it to 0.001" % dlam)
+        dlam = 0.001
 
     # Constrain lam_f and lam_b to lie with delta_lambda of lambda
     dlam_sym = Symbol("delta_lambda")
@@ -1514,6 +1547,10 @@ def makeRETI(system, moves):
     for i in range(0, len(lambda_values.val)):
         # set the initial lambda value for this replica
         replicas.setLambdaValue(i, lambda_values.val[i])
+
+    for i in range(0, len(lambda_values.val)):
+        print(lambda_values.val[i])
+        print(replicas[i].subSystem().constants())
 
     # Now add monitors for each replica that will copy back
     nrgmons = [ "delta_g^{F}", "delta_g^{B}", "delta_g^{next}", "delta_g^{prev}",
