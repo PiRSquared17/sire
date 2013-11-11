@@ -1277,7 +1277,7 @@ bool WindowedComponent::fullApply(Delta &delta)
 
     BOOST_ASSERT( Constraint::wasLastSystem(delta.deltaSystem()) and
                   Constraint::wasLastSubVersion(delta.deltaSystem()) );
-
+    
     return delta.update(constrained_component, target_value);
 }
 
@@ -1338,12 +1338,12 @@ bool WindowedComponent::deltaApply(Delta &delta, quint32 last_subversion)
                 constrained_value = 0;
                 changed_comp = true;
             }
+        }
 
-            if ( (changed_target or changed_comp) and not 
-                 (has_constrained_value and (constrained_value == target_value)) )
-            {
-                return delta.update(constrained_component, target_value);
-            }
+        if ( (changed_target or changed_comp) and not
+             (has_constrained_value and (constrained_value == target_value)) )
+        {
+            return delta.update(constrained_component, target_value);
         }
     }
     

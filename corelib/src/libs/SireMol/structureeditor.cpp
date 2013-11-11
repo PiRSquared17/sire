@@ -1204,7 +1204,7 @@ void EditMolData::extractProperties(const Properties &props)
 /** Construct from a MoleculeData */
 EditMolData::EditMolData(const MoleculeData &moldata)
             : molname(moldata.name()), molnum(moldata.number()),
-              cached_molinfo(moldata.info())
+              cached_molinfo(moldata.info()), last_uid(0)
 {
     const MoleculeInfoData &molinfo = moldata.info();
     
