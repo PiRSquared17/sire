@@ -50,7 +50,7 @@ grid_buffer = Parameter("grid buffer", 2*angstrom,
 disable_grid = Parameter("disable grid", False, """Whether or not to disable use of the grid""")
 
 coul_power = Parameter("coulomb power", 0, """Soft-core coulomb power parameter""") 
-shift_delta = Parameter("shift delta", 0.25, """Soft-core LJ shift delta parameter""")
+shift_delta = Parameter("shift delta", 1.2, """Soft-core LJ shift delta parameter""")
 
 temperature = Parameter("temperature", 25*celsius, """Simulation temperature""")
 random_seed = Parameter("random seed", None, """Random number seed. Set this if you
@@ -74,7 +74,7 @@ water_monitor_distance = Parameter("water monitor distance", 5.0*angstrom,
                                    """The distance up to which the free energy of water molecules
                                       interacting with the ligand should be recorded.""")
 
-waterbox_only = Parameter("waterbox only", True,
+waterbox_only = Parameter("waterbox only", False,
                           """Whether or not to select water molecules only from the water box.""")
 
 nrgmon_frequency = Parameter("energy monitor frequency", 1000, 
@@ -129,7 +129,7 @@ sysmoves_file = Parameter("sysmoves file", "wsrc_sysmoves.s3",
 nequilmoves = Parameter("nequilmoves", 50000,
                         """Number of equilibration moves to perform before setting up the free energy simulation.""")
 
-nmoves = Parameter("nmoves", 600, """Number of RETI moves to perform during the simulation.""")
+nmoves = Parameter("nmoves", 1000, """Number of RETI moves to perform during the simulation.""")
 
 coulomb_power = Parameter("coulomb power", 0,
                           """The soft-core coulomb power parameter""")
@@ -1462,7 +1462,7 @@ def mergeSystems(protein_system, water_system, ligand_mol):
         monitor_prosol.add(mobile_solutes)
         system.add(monitor_prosol)
 
-    residue_nrgmon = FreeEnergyMonitor(monitor_prosol, ligand_group, swap_water_group)
+    residue_nrgmon = FreeEnergyMonitor(monitor_prosol, ligand_group, mobile_swap)
 
     nrgmons = {}
     nrgmons["residue_nrgmon"] = residue_nrgmon
@@ -1503,8 +1503,8 @@ def mergeSystems(protein_system, water_system, ligand_mol):
 
         freewater_assigner.update(system)
 
-        boundwater_nrgmon = FreeEnergyMonitor(boundwater_assigner, ligand_group, swap_water_group)
-        freewater_nrgmon = FreeEnergyMonitor(freewater_assigner, ligand_group, swap_water_group)
+        boundwater_nrgmon = FreeEnergyMonitor(boundwater_assigner, ligand_group, mobile_swap)
+        freewater_nrgmon = FreeEnergyMonitor(freewater_assigner, ligand_group, mobile_swap)
 
         nrgmons["boundwater_nrgmon"] = boundwater_nrgmon
         nrgmons["freewater_nrgmon"] = freewater_nrgmon

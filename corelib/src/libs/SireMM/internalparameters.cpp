@@ -1435,7 +1435,7 @@ const StretchBendTorsionSymbols& InternalSymbols::stretchBendTorsion() const
 ////////// Implementation of InternalParameters
 //////////
 
-static const RegisterMetaType<InternalParameters> r_params;
+static const RegisterMetaType<InternalParameters> r_params(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
@@ -3158,7 +3158,7 @@ const char* InternalParameters::typeName()
 ////////// Implementation of InternalParameters3D
 //////////
 
-static const RegisterMetaType<InternalParameters3D> r_params3d;
+static const RegisterMetaType<InternalParameters3D> r_params3d(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,

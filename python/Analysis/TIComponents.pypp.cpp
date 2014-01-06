@@ -25,6 +25,8 @@ SireAnalysis::TIComponents __copy__(const SireAnalysis::TIComponents &other){ re
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_TIComponents_class(){
 
     { //::SireAnalysis::TIComponents
@@ -319,6 +321,7 @@ void register_TIComponents_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         TIComponents_exposer.def( "__str__", &__str__< ::SireAnalysis::TIComponents > );
         TIComponents_exposer.def( "__repr__", &__str__< ::SireAnalysis::TIComponents > );
+        TIComponents_exposer.def( "__len__", &__len_size< ::SireAnalysis::TIComponents > );
     }
 
 }

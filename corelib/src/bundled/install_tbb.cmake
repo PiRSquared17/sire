@@ -62,13 +62,13 @@ else()
     message( STATUS "TBB will be built in the directory ${TBB_INSTALL_DIR}" )
 
     message( STATUS "Patience... Compiling TBB from source...")
-    execute_process( COMMAND ${CMAKE_MAKE_PROGRAM} ${TBB_OPTIONS} tbb
+    execute_process( COMMAND ${CMAKE_MAKE_PROGRAM} -j ${NCORES} ${TBB_OPTIONS} tbb
                      WORKING_DIRECTORY ${TBB_BUILD_DIR}
                    )
     message( STATUS "...complete" )
 
     message( STATUS "Patience... Compiling TBB malloc from source...")
-    execute_process( COMMAND ${CMAKE_MAKE_PROGRAM} ${TBB_OPTIONS} tbbmalloc
+    execute_process( COMMAND ${CMAKE_MAKE_PROGRAM} -j ${NCORES} ${TBB_OPTIONS} tbbmalloc
                      WORKING_DIRECTORY ${TBB_BUILD_DIR}
                     )
     message( STATUS "...complete" )

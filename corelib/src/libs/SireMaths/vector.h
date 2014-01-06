@@ -177,10 +177,13 @@ public:
 
     void set(int i, const double &v);
 
-    const double& operator[](unsigned int i) const;
+    double operator[](int i) const;
 
-    unsigned int count() const;
-    const double& at(unsigned int i) const;
+    int count() const;
+
+    double at(int i) const;
+
+    double getitem(int i) const;
 
     double manhattanLength() const;
     

@@ -1792,6 +1792,27 @@ bool MolGroupsBase::remove(const QSet<MolNum> &molnums)
         return false;
 }
 
+/** Remove all molecules that match 'molid' from all groups */
+bool MolGroupsBase::remove(const MolID &molid)
+{
+    try
+    {
+        QList<MolNum> molnums = this->map(molid);
+        
+        return MolGroupsBase::remove( molnums.toSet() );
+    }
+    catch(...)
+    {}
+    
+    return false;
+}
+
+/** Remove all groups (and molecules) that match the ID 'mgid' */
+bool MolGroupsBase::remove(const MGID &mgid)
+{
+    return this->removeAll(mgid);
+}
+
 /** Completely clear all of the groups in this set */
 bool MolGroupsBase::removeAll()
 {
@@ -2250,13 +2271,16 @@ void MoleculeGroups::update(const MoleculeGroup &molgroup)
 
 /** Completely remove the group with number 'mgnum'. This 
     does nothing if there is no such group in this set */
-void MoleculeGroups::remove(MGNum mgnum)
+bool MoleculeGroups::_pvt_remove(MGNum mgnum)
 {
     if (mgroups.contains(mgnum))
     {
         mgroups.remove(mgnum);
         this->removeFromIndex(mgnum);
+        return true;
     }
+    
+    return false;
 }
 
 /** Remove the molecules contained in 'molgroup' from this set. 
@@ -2270,19 +2294,28 @@ bool MoleculeGroups::remove(const MoleculeGroup &molgroup)
 
 /** Remove the groups that match the ID 'mgid' from this set. This
     does nothing if there are no such groups. */
-void MoleculeGroups::remove(const MGID &mgid)
+bool MoleculeGroups::remove(const MGID &mgid)
 {
     try
     {
         QList<MGNum> mgnums = this->map(mgid);
     
+        bool removed = false;
+    
         foreach (MGNum mgnum, mgnums)
         {
-            this->remove(mgnum);
+            if (this->_pvt_remove(mgnum))
+            {
+                removed = true;
+            }
         }
+        
+        return removed;
     }
     catch(...)
     {}
+    
+    return false;
 }
 
 /** Remove the molecules that match the ID 'molid' from this set.

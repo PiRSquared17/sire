@@ -3,6 +3,8 @@ from Sire.Mol import *
 from Sire.MM import *
 from Sire.IO import *
 
+from nose.tools import assert_almost_equal
+
 (molecules, space) = Amber().readCrdTop("../io/proteinbox.crd", "../io/proteinbox.top")
 
 molnums = molecules.molNums()
@@ -34,7 +36,7 @@ def test_internal_same():
     internal1.add(partial)
     internal1.setStrict(True)
     internal2.add(extract)
-    assert( internal1.energy() == internal2.energy() )
+    assert_almost_equal( internal1.energy(), internal2.energy(), 3 )
 
 def test_intra_different():
     intra1 = IntraCLJFF("1")
@@ -48,4 +50,4 @@ def test_intra_same():
     intra2 = IntraCLJFF("2")
     intra1.add(partial)
     intra2.add(extract)
-    assert( intra1.energy() == intra2.energy() )
+    assert_almost_equal( intra1.energy(), intra2.energy(), 3 )

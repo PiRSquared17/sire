@@ -38,7 +38,7 @@
 using namespace SireStream;
 using namespace SireVol;
 
-static const RegisterMetaType<AABox> r_aabox;
+static const RegisterMetaType<AABox> r_aabox(NO_ROOT);
 
 /** Serialise an AABox to a binary datastream */
 QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const AABox &aabox)

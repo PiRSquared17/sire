@@ -19,6 +19,8 @@ SireFF::Intra2B3DFF<SireMM::CoulombPotentialInterface<SireMM::IntraCoulombPotent
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_IntraCoulombFF_class(){
 
     { //::SireFF::Intra2B3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >
@@ -190,6 +192,7 @@ void register_IntraCoulombFF_class(){
         IntraCoulombFF_exposer.def( "clone", &__copy__);
         IntraCoulombFF_exposer.def( "__str__", &__str__< ::SireFF::Intra2B3DFF<SireMM::CoulombPotentialInterface<SireMM::IntraCoulombPotential> > > );
         IntraCoulombFF_exposer.def( "__repr__", &__str__< ::SireFF::Intra2B3DFF<SireMM::CoulombPotentialInterface<SireMM::IntraCoulombPotential> > > );
+        IntraCoulombFF_exposer.def( "__len__", &__len_count< ::SireFF::Intra2B3DFF<SireMM::CoulombPotentialInterface<SireMM::IntraCoulombPotential> > > );
     }
 
 }

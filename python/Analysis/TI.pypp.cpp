@@ -31,6 +31,8 @@ SireAnalysis::TI __copy__(const SireAnalysis::TI &other){ return SireAnalysis::T
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_TI_class(){
 
     { //::SireAnalysis::TI
@@ -339,6 +341,7 @@ void register_TI_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         TI_exposer.def( "__str__", &__str__< ::SireAnalysis::TI > );
         TI_exposer.def( "__repr__", &__str__< ::SireAnalysis::TI > );
+        TI_exposer.def( "__len__", &__len_size< ::SireAnalysis::TI > );
     }
 
 }

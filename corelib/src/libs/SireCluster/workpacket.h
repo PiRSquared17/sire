@@ -78,6 +78,8 @@ friend QDataStream& ::operator<<(QDataStream&, const WorkPacketBase&);
 friend QDataStream& ::operator>>(QDataStream&, WorkPacketBase&);
 
 public:
+    typedef WorkPacketBase ROOT;
+
     WorkPacketBase();
     WorkPacketBase(const WorkPacketBase &other);
     

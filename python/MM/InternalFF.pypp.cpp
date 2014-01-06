@@ -50,6 +50,8 @@ SireMM::InternalFF __copy__(const SireMM::InternalFF &other){ return SireMM::Int
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_InternalFF_class(){
 
     { //::SireMM::InternalFF
@@ -311,6 +313,7 @@ void register_InternalFF_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         InternalFF_exposer.def( "__str__", &__str__< ::SireMM::InternalFF > );
         InternalFF_exposer.def( "__repr__", &__str__< ::SireMM::InternalFF > );
+        InternalFF_exposer.def( "__len__", &__len_count< ::SireMM::InternalFF > );
     }
 
 }

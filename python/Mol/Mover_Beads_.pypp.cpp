@@ -59,6 +59,8 @@ SireMol::Mover<SireMol::Beads> __copy__(const SireMol::Mover<SireMol::Beads> &ot
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_Mover_Beads__class(){
 
     { //::SireMol::Mover< SireMol::Beads >
@@ -380,6 +382,7 @@ void register_Mover_Beads__class(){
         Mover_Beads__exposer.def( "clone", &__copy__);
         Mover_Beads__exposer.def( "__str__", &__str__< ::SireMol::Mover<SireMol::Beads> > );
         Mover_Beads__exposer.def( "__repr__", &__str__< ::SireMol::Mover<SireMol::Beads> > );
+        Mover_Beads__exposer.def( "__len__", &__len_size< ::SireMol::Mover<SireMol::Beads> > );
     }
 
 }

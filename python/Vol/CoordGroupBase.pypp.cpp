@@ -31,6 +31,8 @@ namespace bp = boost::python;
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_CoordGroupBase_class(){
 
     { //::SireVol::CoordGroupBase
@@ -191,6 +193,7 @@ void register_CoordGroupBase_class(){
         CoordGroupBase_exposer.staticmethod( "typeName" );
         CoordGroupBase_exposer.def( "__str__", &__str__< ::SireVol::CoordGroupBase > );
         CoordGroupBase_exposer.def( "__repr__", &__str__< ::SireVol::CoordGroupBase > );
+        CoordGroupBase_exposer.def( "__len__", &__len_size< ::SireVol::CoordGroupBase > );
     }
 
 }

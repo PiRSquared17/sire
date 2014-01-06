@@ -55,6 +55,8 @@ SireMol::Mover<SireMol::Selector<SireMol::CutGroup> > __copy__(const SireMol::Mo
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_Mover_Selector_CutGroup__class(){
 
     { //::SireMol::Mover< SireMol::Selector< SireMol::CutGroup > >
@@ -376,6 +378,7 @@ void register_Mover_Selector_CutGroup__class(){
         Mover_Selector_CutGroup__exposer.def( "clone", &__copy__);
         Mover_Selector_CutGroup__exposer.def( "__str__", &__str__< ::SireMol::Mover<SireMol::Selector<SireMol::CutGroup> > > );
         Mover_Selector_CutGroup__exposer.def( "__repr__", &__str__< ::SireMol::Mover<SireMol::Selector<SireMol::CutGroup> > > );
+        Mover_Selector_CutGroup__exposer.def( "__len__", &__len_count< ::SireMol::Mover<SireMol::Selector<SireMol::CutGroup> > > );
     }
 
 }

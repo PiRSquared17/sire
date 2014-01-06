@@ -350,7 +350,7 @@ float AbortPacket::chunk()
 /////////// Implementation of WorkPacket
 ///////////
 
-static const RegisterMetaType<WorkPacket> r_workpacket;
+static const RegisterMetaType<WorkPacket> r_workpacket(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIRECLUSTER_EXPORT &operator<<(QDataStream &ds, 

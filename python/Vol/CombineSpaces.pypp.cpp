@@ -25,6 +25,8 @@ SireVol::CombineSpaces __copy__(const SireVol::CombineSpaces &other){ return Sir
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_CombineSpaces_class(){
 
     { //::SireVol::CombineSpaces
@@ -83,6 +85,7 @@ void register_CombineSpaces_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         CombineSpaces_exposer.def( "__str__", &__str__< ::SireVol::CombineSpaces > );
         CombineSpaces_exposer.def( "__repr__", &__str__< ::SireVol::CombineSpaces > );
+        CombineSpaces_exposer.def( "__len__", &__len_size< ::SireVol::CombineSpaces > );
     }
 
 }

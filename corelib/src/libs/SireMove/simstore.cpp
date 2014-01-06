@@ -43,7 +43,7 @@ using namespace SireMove;
 using namespace SireSystem;
 using namespace SireStream;
 
-static const RegisterMetaType<SimStore> r_simstore;
+static const RegisterMetaType<SimStore> r_simstore(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const SimStore &simstore)

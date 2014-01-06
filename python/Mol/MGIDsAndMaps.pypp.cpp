@@ -23,6 +23,8 @@ SireMol::MGIDsAndMaps __copy__(const SireMol::MGIDsAndMaps &other){ return SireM
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_MGIDsAndMaps_class(){
 
     { //::SireMol::MGIDsAndMaps
@@ -131,6 +133,7 @@ void register_MGIDsAndMaps_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         MGIDsAndMaps_exposer.def( "__str__", &__str__< ::SireMol::MGIDsAndMaps > );
         MGIDsAndMaps_exposer.def( "__repr__", &__str__< ::SireMol::MGIDsAndMaps > );
+        MGIDsAndMaps_exposer.def( "__len__", &__len_count< ::SireMol::MGIDsAndMaps > );
     }
 
 }

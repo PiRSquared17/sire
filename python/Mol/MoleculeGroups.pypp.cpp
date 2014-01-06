@@ -78,6 +78,8 @@ SireMol::MoleculeGroups __copy__(const SireMol::MoleculeGroups &other){ return S
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_MoleculeGroups_class(){
 
     { //::SireMol::MoleculeGroups
@@ -214,18 +216,7 @@ void register_MoleculeGroups_class(){
         MoleculeGroups_exposer.def( bp::self == bp::self );
         { //::SireMol::MoleculeGroups::remove
         
-            typedef void ( ::SireMol::MoleculeGroups::*remove_function_type )( ::SireMol::MGNum ) ;
-            remove_function_type remove_function_value( &::SireMol::MoleculeGroups::remove );
-            
-            MoleculeGroups_exposer.def( 
-                "remove"
-                , remove_function_value
-                , ( bp::arg("mgnum") ) );
-        
-        }
-        { //::SireMol::MoleculeGroups::remove
-        
-            typedef void ( ::SireMol::MoleculeGroups::*remove_function_type )( ::SireMol::MGID const & ) ;
+            typedef bool ( ::SireMol::MoleculeGroups::*remove_function_type )( ::SireMol::MGID const & ) ;
             remove_function_type remove_function_value( &::SireMol::MoleculeGroups::remove );
             
             MoleculeGroups_exposer.def( 
@@ -474,6 +465,7 @@ void register_MoleculeGroups_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         MoleculeGroups_exposer.def( "__str__", &__str__< ::SireMol::MoleculeGroups > );
         MoleculeGroups_exposer.def( "__repr__", &__str__< ::SireMol::MoleculeGroups > );
+        MoleculeGroups_exposer.def( "__len__", &__len_count< ::SireMol::MoleculeGroups > );
     }
 
 }

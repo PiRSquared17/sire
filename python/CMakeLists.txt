@@ -23,6 +23,15 @@ if ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
   message( FATAL_ERROR "You must run CMake in a different directory to the source!" ) 
 endif ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
 
+# get the number of cores on this machine - useful for
+# compiling dependencies
+include(ProcessorCount)
+ProcessorCount(NCORES)
+if (NCORES EQUAL 0)
+    set( NCORES 1 )
+endif()
+message(STATUS "Configuring on a machine with number of cores = ${NCORES}")
+
 # Option to set the install directory of Sire
 set( SIRE_APP "$ENV{HOME}/sire.app" CACHE PATH
         "The full path to the sire.app installed Sire application." )
@@ -161,7 +170,6 @@ set (BUILD_SHARED_LIBS ON)
 # (or run 'make VERBOSE=1')
 # set (CMAKE_VERBOSE_MAKEFILE ON)
 
-
 # We will use the small compiler flags (as the wrappers are too big and don't need optimising)
 message( STATUS "Compiling the python 2 wrappers using a SMALL build." )
 set( CMAKE_C_FLAGS ${SIRE_C_FLAGS_SMALL} )
@@ -174,14 +182,14 @@ set( CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS} ${SIRE_EXE_LINK_FLAGS}
 include (CheckCXXCompilerFlag)
 
 CHECK_CXX_COMPILER_FLAG( "-Wno-unused-variable" SIRE_HAS_NO_UNUSED_VARIABLE )
-CHECK_CXX_COMPILER_FLAG( "-Woverloaded-virtual" SIRE_HAS_NO_OVERLOADED_VIRTUAL )
+CHECK_CXX_COMPILER_FLAG( "-Wno-overloaded-virtual" SIRE_HAS_NO_OVERLOADED_VIRTUAL )
 
 if (SIRE_HAS_NO_UNUSED_VARIABLE)
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-variable")
 endif()
 
 if (SIRE_HAS_NO_OVERLOADED_VIRTUAL)
-  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Woverloaded-virtual")
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-overloaded-virtual")
 endif()
 
 message( STATUS  "CMAKE_SYSTEM_NAME      == ${CMAKE_SYSTEM_NAME}" )

@@ -22,6 +22,8 @@ SireFF::Inter2BFF<SireMM::LJPotentialInterface<SireMM::InterLJPotential> > __cop
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_InterLJFFBase_class(){
 
     { //::SireFF::Inter2BFF< SireMM::LJPotentialInterface< SireMM::InterLJPotential > >
@@ -149,6 +151,7 @@ void register_InterLJFFBase_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         InterLJFFBase_exposer.def( "__str__", &__str__< ::SireFF::Inter2BFF<SireMM::LJPotentialInterface<SireMM::InterLJPotential> > > );
         InterLJFFBase_exposer.def( "__repr__", &__str__< ::SireFF::Inter2BFF<SireMM::LJPotentialInterface<SireMM::InterLJPotential> > > );
+        InterLJFFBase_exposer.def( "__len__", &__len_count< ::SireFF::Inter2BFF<SireMM::LJPotentialInterface<SireMM::InterLJPotential> > > );
     }
 
 }

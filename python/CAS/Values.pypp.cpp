@@ -23,6 +23,8 @@ SireCAS::Values __copy__(const SireCAS::Values &other){ return SireCAS::Values(o
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_Values_class(){
 
     { //::SireCAS::Values
@@ -408,6 +410,7 @@ void register_Values_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         Values_exposer.def( "__str__", &__str__< ::SireCAS::Values > );
         Values_exposer.def( "__repr__", &__str__< ::SireCAS::Values > );
+        Values_exposer.def( "__len__", &__len_count< ::SireCAS::Values > );
     }
 
 }

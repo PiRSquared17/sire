@@ -13,43 +13,7 @@ namespace bp = boost::python;
 
 #include "SireStream/version_error.h"
 
-#include "shareddatastream.h"
-
-#include "streamdata.hpp"
-
-#include "tostring.h"
-
-#include <QByteArray>
-
-#include <QDataStream>
-
-#include <QDebug>
-
-#include <QFile>
-
-#include <QList>
-
-#include <QMutex>
-
-#include <QProcess>
-
-#include <QSysInfo>
-
-#include <QtGlobal>
-
-#include <cstdlib>
-
-#include <sys/utsname.h>
-
-#include <unistd.h>
-
-#include "streamdata.hpp"
-
-#include "SireError/errors.h"
-
-#include "SireStream/errors.h"
-
-#include "SireStream/version_error.h"
+#include "registeralternativename.h"
 
 #include "shareddatastream.h"
 
@@ -89,6 +53,8 @@ namespace bp = boost::python;
 
 #include "SireStream/version_error.h"
 
+#include "registeralternativename.h"
+
 #include "shareddatastream.h"
 
 #include "streamdata.hpp"
@@ -126,6 +92,48 @@ namespace bp = boost::python;
 #include "SireStream/errors.h"
 
 #include "SireStream/version_error.h"
+
+#include "registeralternativename.h"
+
+#include "shareddatastream.h"
+
+#include "streamdata.hpp"
+
+#include "tostring.h"
+
+#include <QByteArray>
+
+#include <QDataStream>
+
+#include <QDebug>
+
+#include <QFile>
+
+#include <QList>
+
+#include <QMutex>
+
+#include <QProcess>
+
+#include <QSysInfo>
+
+#include <QtGlobal>
+
+#include <cstdlib>
+
+#include <sys/utsname.h>
+
+#include <unistd.h>
+
+#include "streamdata.hpp"
+
+#include "SireError/errors.h"
+
+#include "SireStream/errors.h"
+
+#include "SireStream/version_error.h"
+
+#include "registeralternativename.h"
 
 #include "shareddatastream.h"
 

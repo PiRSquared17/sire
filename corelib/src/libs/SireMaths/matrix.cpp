@@ -52,7 +52,7 @@ using namespace SireStream;
 
 using boost::tuple;
 
-static const RegisterMetaType<Matrix> r_matrix;
+static const RegisterMetaType<Matrix> r_matrix(NO_ROOT);
 
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Matrix &matrix)

@@ -67,6 +67,8 @@ friend QDataStream& ::operator<<(QDataStream&, const exception&);
 friend QDataStream& ::operator>>(QDataStream&, exception&);
 
 public:
+    typedef SireError::exception ROOT;
+
     exception();
     exception(QString error, QString place = QString::null);
 

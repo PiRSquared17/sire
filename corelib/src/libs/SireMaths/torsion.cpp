@@ -36,7 +36,7 @@ using namespace SireStream;
 using namespace SireUnits;
 using namespace SireMaths;
 
-static RegisterMetaType<Torsion> r_torsion;
+static RegisterMetaType<Torsion> r_torsion(NO_ROOT);
 
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Torsion &torsion)

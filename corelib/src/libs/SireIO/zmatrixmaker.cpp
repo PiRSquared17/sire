@@ -302,7 +302,7 @@ static int processVersionLine( QString& line)
 //
 // Implementation of ZmatrixMaker
 //
-static const RegisterMetaType<ZmatrixMaker> r_zmatrixmaker;
+static const RegisterMetaType<ZmatrixMaker> r_zmatrixmaker(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds, const ZmatrixMaker &zmatrixmaker)

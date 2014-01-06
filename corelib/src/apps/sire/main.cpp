@@ -260,7 +260,7 @@ WorkPacket createWorkPacket(const QString &filename,
     
     printOut( QObject::tr("Number of loaded objects equals %1").arg(objects.count()) );
     
-    if (not objects.count() == 2)
+    if (objects.count() != 2)
         throw SireError::file_error( QObject::tr(
             "The restart file may be corrupted as despite the header claiming "
             "there were two objects, the number of objects is actually equal "

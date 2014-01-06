@@ -386,7 +386,7 @@ bool SegInfo::operator!=(const SegInfo &other) const
 //////// Implementation of MoleculeInfoData
 ////////
 
-static const RegisterMetaType<MoleculeInfoData> r_molinfo;
+static const RegisterMetaType<MoleculeInfoData> r_molinfo(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,

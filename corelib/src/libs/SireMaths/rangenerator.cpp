@@ -238,7 +238,7 @@ QDataStream& operator>>(QDataStream &ds,
 //////////// Implementation of RanGenerator
 ////////////
 
-static const RegisterMetaType<RanGenerator> r_rangen;
+static const RegisterMetaType<RanGenerator> r_rangen(NO_ROOT);
 
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const RanGenerator &rangen)

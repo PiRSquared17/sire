@@ -11,6 +11,8 @@ namespace bp = boost::python;
 
 #include <QByteArray>
 
+#include <QDataStream>
+
 #include <QFile>
 
 #include <QRegExp>

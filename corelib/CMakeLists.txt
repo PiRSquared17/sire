@@ -10,12 +10,21 @@
 ############ SETTING INITIAL SIRE VARIABLES
 ############
 
-# require cmake >= 2.8.11
-cmake_minimum_required(VERSION 2.8.11 FATAL_ERROR)
+# require cmake >= 2.8.12
+cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 cmake_policy(VERSION 2.8)
 
 # use loose loop syntax in CMakeLists files
 set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
+
+# get the number of cores on this machine - useful for
+# compiling dependencies
+include(ProcessorCount)
+ProcessorCount(NCORES)
+if (NCORES EQUAL 0)
+    set( NCORES 1 )
+endif()
+message(STATUS "Configuring on a machine with number of cores = ${NCORES}")
 
 # Option to set the install directory of Sire
 set( SIRE_INSTALL_PREFIX "$ENV{HOME}/sire.app" CACHE PATH
@@ -33,6 +42,10 @@ endif()
 
 # name the project
 project (SIRE CXX C)
+
+# Whether or not to build the parts of Sire that depend on
+# a graphical environment (e.g. inquire)
+option ( SIRE_BUILD_GUI "Build graphical applications" OFF )
 
 # Create a file in which we can save the values of all useful variables.
 # This will mean that projects using Sire won't have to set these variables
@@ -541,7 +554,7 @@ if ( ${SIRE_ENABLE_BUNDLING} )
     endif()
 
     if ( ${SIRE_BUNDLE_QT} )
-      include( "src/bundled/install_qtbase.cmake" )
+      include( "src/bundled/install_qt5.cmake" )
     endif()
 
     if ( NOT ${BUNDLE_STAGEDIR} STREQUAL "${CMAKE_INSTALL_PREFIX}/${SIRE_BUNDLED_DIR}" )
@@ -633,6 +646,20 @@ endif()
 ###########
 ########### PRINTING OUT SETTINGS AND FINALISING COMPILE FLAGS
 ###########
+
+set( SIRE_DISABLE_WARNINGS ON )
+
+if (SIRE_DISABLE_WARNINGS)
+  # Disable some of the unnecessary compiler warnings...
+  CHECK_CXX_COMPILER_FLAG( "-Wno-attributes" SIRE_HAS_WNO_ATTRIBUTES )
+
+  if (SIRE_HAS_WNO_ATTRIBUTES)
+    list( APPEND SIRE_DISABLE_WARNING_FLAGS "-Wno-attributes" )
+  endif()
+
+  set( SIRE_WARNALL_FLAGS "${SIRE_WARNALL_FLAGS} ${SIRE_DISABLE_WARNING_FLAGS}" )
+
+endif()
 
 message( STATUS  "CMAKE_SYSTEM_NAME      == ${CMAKE_SYSTEM_NAME}" )
 message( STATUS  "CMAKE_C_COMPILER       == ${CMAKE_C_COMPILER}" )

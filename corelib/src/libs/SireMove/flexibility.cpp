@@ -59,7 +59,7 @@ using namespace SireStream;
 ////// Implementation of DofID
 //////
 
-static const RegisterMetaType<DofID> r_dofid;
+static const RegisterMetaType<DofID> r_dofid(NO_ROOT);
 
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const DofID &dofid)
 {

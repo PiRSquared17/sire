@@ -21,6 +21,8 @@ SireMaths::MultiDouble __copy__(const SireMaths::MultiDouble &other){ return Sir
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_MultiDouble_class(){
 
     { //::SireMaths::MultiDouble
@@ -478,6 +480,7 @@ void register_MultiDouble_class(){
         MultiDouble_exposer.def( "clone", &__copy__);
         MultiDouble_exposer.def( "__str__", &__str__< ::SireMaths::MultiDouble > );
         MultiDouble_exposer.def( "__repr__", &__str__< ::SireMaths::MultiDouble > );
+        MultiDouble_exposer.def( "__len__", &__len_size< ::SireMaths::MultiDouble > );
     }
 
 }

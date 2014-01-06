@@ -1762,7 +1762,7 @@ const Vector& CoordGroupBase::operator[](quint32 i) const
 //////// Implementation of CoordGroup
 ////////
 
-static const RegisterMetaType<CoordGroup> r_cgroup;
+static const RegisterMetaType<CoordGroup> r_cgroup(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
@@ -2221,7 +2221,7 @@ const char* CoordGroupEditor::typeName()
 //////// Implementation of CoordGroupArray
 ////////
 
-static const RegisterMetaType<CoordGroupArray> r_cgarray;
+static const RegisterMetaType<CoordGroupArray> r_cgarray(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
@@ -3105,7 +3105,7 @@ const char* CoordGroupArray::typeName()
 //////// Implementation of CoordGroupArrayArray
 ////////
 
-static const RegisterMetaType<CoordGroupArrayArray> r_cgarrayarray;
+static const RegisterMetaType<CoordGroupArrayArray> r_cgarrayarray(NO_ROOT);
 
 QDataStream& operator<<(QDataStream &ds,
                         const CGSharedPtr<CGArrayArrayData> &d)

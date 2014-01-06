@@ -42,6 +42,8 @@ SireFF::NullFF __copy__(const SireFF::NullFF &other){ return SireFF::NullFF(othe
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_NullFF_class(){
 
     { //::SireFF::NullFF
@@ -171,6 +173,7 @@ void register_NullFF_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         NullFF_exposer.def( "__str__", &__str__< ::SireFF::NullFF > );
         NullFF_exposer.def( "__repr__", &__str__< ::SireFF::NullFF > );
+        NullFF_exposer.def( "__len__", &__len_count< ::SireFF::NullFF > );
     }
 
 }

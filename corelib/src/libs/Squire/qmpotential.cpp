@@ -67,7 +67,7 @@ namespace SireFF
 ///////// Implementation of QMComponent
 /////////
 
-static const RegisterMetaType<QMComponent> r_qmcomp;
+static const RegisterMetaType<QMComponent> r_qmcomp(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const QMComponent &qmcomp)
@@ -141,7 +141,7 @@ QString ElementParameterName::element_param("element");
 ///////// Implementation of QMPotential
 /////////
 
-static const RegisterMetaType<QMPotential> r_qmpot( MAGIC_ONLY,
+static const RegisterMetaType<QMPotential> r_qmpot( MAGIC_ONLY, NO_ROOT,
                                                     "Squire::QMPotential" );
                                                     
 /** Serialise to a binary datastream */

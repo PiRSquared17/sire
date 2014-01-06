@@ -103,6 +103,10 @@ namespace bp = boost::python;
 
 #include "SireBase/propertymap.h"
 
+#include "SireBase/stringproperty.h"
+
+#include "SireBase/numberproperty.h"
+
 #include <QString>
 
 BOOST_PYTHON_MODULE(_Base){
@@ -203,6 +207,14 @@ BOOST_PYTHON_MODULE(_Base){
     bp::implicitly_convertible< QString, SireBase::PropertyName >();
 
     bp::implicitly_convertible< SireBase::Property, SireBase::PropertyName >();
+
+    bp::implicitly_convertible< QString, SireBase::StringProperty >();
+
+    bp::implicitly_convertible< SireBase::StringProperty, QString >();
+
+    bp::implicitly_convertible< double, SireBase::NumberProperty >();
+
+    bp::implicitly_convertible< int, SireBase::NumberProperty >();
 
     bp::implicitly_convertible< QHash<QString,SireBase::PropertyName>, SireBase::PropertyMap >();
 

@@ -53,7 +53,7 @@ using namespace SireStream;
 ///////// Implementation of MolFieldTable
 /////////
 
-static const RegisterMetaType<MolFieldTable> r_moltable;
+static const RegisterMetaType<MolFieldTable> r_moltable(NO_ROOT);
 
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, 
                                       const MolFieldTable &moltable)
@@ -873,7 +873,7 @@ void MolFieldTable::subtract(const MolFieldTable &other)
 ///////// Implementation of GridFieldTable
 /////////
 
-static const RegisterMetaType<GridFieldTable> r_gridtable;
+static const RegisterMetaType<GridFieldTable> r_gridtable(NO_ROOT);
 
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const GridFieldTable &gridtable)
 {
@@ -1304,7 +1304,7 @@ GridFieldTable::const_iterator GridFieldTable::constEnd() const
 ///////// Implementation of FieldTable
 /////////
 
-static const RegisterMetaType<FieldTable> r_fieldtable;
+static const RegisterMetaType<FieldTable> r_fieldtable(NO_ROOT);
 
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const FieldTable &fieldtable)
 {

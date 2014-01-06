@@ -36,7 +36,7 @@ else()
                      WORKING_DIRECTORY ${GSL_BUILD_DIR} )
 
     message( STATUS "Patience... Compiling GSL..." )
-    execute_process( COMMAND ${CMAKE_MAKE_PROGRAM}
+    execute_process( COMMAND ${CMAKE_MAKE_PROGRAM} -k -j ${NCORES}
                      WORKING_DIRECTORY ${GSL_BUILD_DIR} )
 
     message( STATUS "Patience... Installing GSL..." )

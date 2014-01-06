@@ -50,7 +50,7 @@ using namespace SireStream;
 ///////// Implementation of MolForceTable
 /////////
 
-static const RegisterMetaType<MolForceTable> r_molforcetable;
+static const RegisterMetaType<MolForceTable> r_molforcetable(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,
@@ -905,7 +905,7 @@ const char* MolForceTable::typeName()
 //////// Implementation of ForceTable
 ////////
 
-static const RegisterMetaType<ForceTable> r_forcetable;
+static const RegisterMetaType<ForceTable> r_forcetable(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,

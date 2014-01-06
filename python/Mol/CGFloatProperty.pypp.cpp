@@ -19,6 +19,8 @@ SireMol::CGProperty<double> __copy__(const SireMol::CGProperty<double> &other){ 
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_CGFloatProperty_class(){
 
     { //::SireMol::CGProperty< double >
@@ -255,6 +257,7 @@ void register_CGFloatProperty_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         CGFloatProperty_exposer.def( "__str__", &__str__< ::SireMol::CGProperty<double> > );
         CGFloatProperty_exposer.def( "__repr__", &__str__< ::SireMol::CGProperty<double> > );
+        CGFloatProperty_exposer.def( "__len__", &__len_size< ::SireMol::CGProperty<double> > );
     }
 
 }

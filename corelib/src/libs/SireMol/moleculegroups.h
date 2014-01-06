@@ -294,6 +294,9 @@ public:
     virtual bool remove(MolNum molnum);
     virtual bool remove(const QSet<MolNum> &molnums);
 
+    virtual bool remove(const MolID &molid);
+    virtual bool remove(const MGID &mgid);
+
     virtual bool removeAll(const MGID &mgid)=0;
     
     virtual bool removeAll();
@@ -432,9 +435,8 @@ public:
     MoleculeGroups& operator-=(const MolID &molid);
 
     void add(const MoleculeGroup &molgroup);
-    void remove(MGNum mgnum);
 
-    void remove(const MGID &mgid);
+    bool remove(const MGID &mgid);
     
     ///////////////////////////////////////////////
     /// Pure virtual functions of MoleculeGroupsBase ///
@@ -490,6 +492,8 @@ protected:
     QHash<MGNum,const MoleculeGroup*> getGroups() const;
 
     void reindex();
+
+    bool _pvt_remove(MGNum mgnum);
 
 private:
     /** All of the MoleculeGroup objects in this collection, 

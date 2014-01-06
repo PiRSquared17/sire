@@ -20,6 +20,8 @@ SireMol::AtomProperty<SireMol::BeadNum> __copy__(const SireMol::AtomProperty<Sir
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_AtomBeads_class(){
 
     { //::SireMol::AtomProperty< SireMol::BeadNum >
@@ -428,6 +430,7 @@ void register_AtomBeads_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         AtomBeads_exposer.def( "__str__", &__str__< ::SireMol::AtomProperty<SireMol::BeadNum> > );
         AtomBeads_exposer.def( "__repr__", &__str__< ::SireMol::AtomProperty<SireMol::BeadNum> > );
+        AtomBeads_exposer.def( "__len__", &__len_size< ::SireMol::AtomProperty<SireMol::BeadNum> > );
     }
 
 }

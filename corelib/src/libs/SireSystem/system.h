@@ -338,7 +338,7 @@ public:
     void remove(const FFID &ffid);
     void remove(const FF &ff);
 
-    void remove(const MGID &mgid);
+    bool remove(const MGID &mgid);
 
     bool remove(const MoleculeGroup &molgroup);
     bool remove(const MolID &molid);

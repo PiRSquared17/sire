@@ -23,6 +23,8 @@ SireBase::TrigArray2D<double> __copy__(const SireBase::TrigArray2D<double> &othe
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_TrigArray2D_double__class(){
 
     { //::SireBase::TrigArray2D< double >
@@ -153,6 +155,7 @@ void register_TrigArray2D_double__class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         TrigArray2D_double__exposer.def( "__str__", &__str__< ::SireBase::TrigArray2D<double> > );
         TrigArray2D_double__exposer.def( "__repr__", &__str__< ::SireBase::TrigArray2D<double> > );
+        TrigArray2D_double__exposer.def( "__len__", &__len_size< ::SireBase::TrigArray2D<double> > );
     }
 
 }

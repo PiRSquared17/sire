@@ -232,7 +232,7 @@ getChargeParameters(const PartialMolecule &molecule,
 ///////////// Implementation of CoulombPotential
 /////////////
 
-static const RegisterMetaType<CoulombPotential> r_coulpot( MAGIC_ONLY,
+static const RegisterMetaType<CoulombPotential> r_coulpot( MAGIC_ONLY, NO_ROOT,
                                                            "SireMM::CoulombPotential" );
 
 /** Serialise to a binary datastream */
@@ -439,7 +439,7 @@ bool CoulombPotential::shiftElectrostatics() const
 ///////////// Implementation of InterCoulombPotential
 /////////////
 
-static const RegisterMetaType<InterCoulombPotential> r_intercoul( MAGIC_ONLY,
+static const RegisterMetaType<InterCoulombPotential> r_intercoul( MAGIC_ONLY, NO_ROOT,
                                             InterCoulombPotential::typeName() );
 
 /** Serialise to a binary datastream */
@@ -1634,7 +1634,7 @@ void InterCoulombPotential::_pvt_calculateCoulombField(
 ///////////// Implementation of IntraCoulombPotential
 /////////////
 
-static const RegisterMetaType<IntraCoulombPotential> r_intracoul( MAGIC_ONLY,
+static const RegisterMetaType<IntraCoulombPotential> r_intracoul( MAGIC_ONLY, NO_ROOT,
                                             IntraCoulombPotential::typeName() );
 
 /** Serialise to a binary datastream */

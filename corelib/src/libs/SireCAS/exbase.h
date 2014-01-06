@@ -90,6 +90,8 @@ friend QDataStream& ::operator<<(QDataStream&, const ExBase&);
 friend QDataStream& ::operator>>(QDataStream&, ExBase&);
 
 public:
+    typedef ExBase ROOT;
+
     ExBase();
 
     ExBase(const ExBase &other);

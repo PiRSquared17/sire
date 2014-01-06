@@ -135,6 +135,8 @@ friend class MoleculeData; //so can call query functions when converting
 friend class EditMolInfo; //so can see d pointer
 
 public:
+    typedef StructureEditor ROOT;
+
     virtual ~StructureEditor();
 
     virtual StructureEditor* clone() const=0;

@@ -37,7 +37,7 @@ using namespace SireStream;
 using namespace SireUnits::Dimension;
 using namespace SireMM;
 
-static const RegisterMetaType<LJParameter> r_ljparam;
+static const RegisterMetaType<LJParameter> r_ljparam(NO_ROOT);
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const LJParameter &ljparam)

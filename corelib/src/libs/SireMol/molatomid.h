@@ -99,9 +99,12 @@ public:
     
     QList<AtomIdx> map(const MolInfo &molinfo) const;
 
-    QHash< MolNum,Selector<Atom> > selectAllFrom(const Molecules &molecules) const;
-    QHash< MolNum,Selector<Atom> > selectAllFrom(const MoleculeGroup &molgroup) const;
-    QHash< MolNum,Selector<Atom> > selectAllFrom(const MolGroupsBase &molgroups) const;
+    QHash< MolNum,Selector<Atom> > selectAllFrom(const Molecules &molecules,
+                                                 const PropertyMap &map = PropertyMap()) const;
+    QHash< MolNum,Selector<Atom> > selectAllFrom(const MoleculeGroup &molgroup,
+                                                 const PropertyMap &map = PropertyMap()) const;
+    QHash< MolNum,Selector<Atom> > selectAllFrom(const MolGroupsBase &molgroups,
+                                                 const PropertyMap &map = PropertyMap()) const;
 
 private:
     void collapse();

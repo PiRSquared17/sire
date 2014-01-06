@@ -49,7 +49,7 @@ using namespace SireStream;
 using namespace SireMol;
 using namespace SireBase;
 
-static const RegisterMetaType<MoleculeData> r_moldata;
+static const RegisterMetaType<MoleculeData> r_moldata(NO_ROOT);
 
 /////////
 ///////// Implementation of MoleculeData::PropVersions

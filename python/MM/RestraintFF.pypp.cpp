@@ -40,6 +40,8 @@ SireMM::RestraintFF __copy__(const SireMM::RestraintFF &other){ return SireMM::R
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_RestraintFF_class(){
 
     { //::SireMM::RestraintFF
@@ -440,6 +442,7 @@ void register_RestraintFF_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         RestraintFF_exposer.def( "__str__", &__str__< ::SireMM::RestraintFF > );
         RestraintFF_exposer.def( "__repr__", &__str__< ::SireMM::RestraintFF > );
+        RestraintFF_exposer.def( "__len__", &__len_count< ::SireMM::RestraintFF > );
     }
 
 }

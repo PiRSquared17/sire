@@ -35,6 +35,8 @@ SireFF::MolFieldTable __copy__(const SireFF::MolFieldTable &other){ return SireF
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_MolFieldTable_class(){
 
     { //::SireFF::MolFieldTable
@@ -331,6 +333,7 @@ void register_MolFieldTable_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         MolFieldTable_exposer.def( "__str__", &__str__< ::SireFF::MolFieldTable > );
         MolFieldTable_exposer.def( "__repr__", &__str__< ::SireFF::MolFieldTable > );
+        MolFieldTable_exposer.def( "__len__", &__len_size< ::SireFF::MolFieldTable > );
     }
 
 }

@@ -55,6 +55,8 @@ SireMol::Mover<SireMol::Selector<SireMol::Chain> > __copy__(const SireMol::Mover
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_Mover_Selector_Chain__class(){
 
     { //::SireMol::Mover< SireMol::Selector< SireMol::Chain > >
@@ -376,6 +378,7 @@ void register_Mover_Selector_Chain__class(){
         Mover_Selector_Chain__exposer.def( "clone", &__copy__);
         Mover_Selector_Chain__exposer.def( "__str__", &__str__< ::SireMol::Mover<SireMol::Selector<SireMol::Chain> > > );
         Mover_Selector_Chain__exposer.def( "__repr__", &__str__< ::SireMol::Mover<SireMol::Selector<SireMol::Chain> > > );
+        Mover_Selector_Chain__exposer.def( "__len__", &__len_count< ::SireMol::Mover<SireMol::Selector<SireMol::Chain> > > );
     }
 
 }

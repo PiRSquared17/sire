@@ -35,7 +35,7 @@
 using namespace SireMaths;
 using namespace SireStream;
 
-static const RegisterMetaType<AxisSet> r_axisset;
+static const RegisterMetaType<AxisSet> r_axisset(NO_ROOT);
 
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const AxisSet &ax)

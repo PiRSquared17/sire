@@ -269,7 +269,7 @@ CLJPotential::getCLJParameters(const PartialMolecule &molecule,
 ///////////// Implementation of CLJPotential
 /////////////
 
-static const RegisterMetaType<CLJPotential> r_cljpot( MAGIC_ONLY,
+static const RegisterMetaType<CLJPotential> r_cljpot( MAGIC_ONLY, NO_ROOT,
                                                       "SireMM::CLJPotential" );
 
 /** Serialise to a binary datastream */
@@ -718,7 +718,7 @@ double CLJPotential::reactionFieldDielectric() const
 ///////////// Implementation of InterCLJPotential
 /////////////
 
-static const RegisterMetaType<InterCLJPotential> r_interclj( MAGIC_ONLY,
+static const RegisterMetaType<InterCLJPotential> r_interclj( MAGIC_ONLY, NO_ROOT,
                                             InterCLJPotential::typeName() );
 
 /** Serialise to a binary datastream */
@@ -4667,7 +4667,7 @@ void InterCLJPotential::_pvt_calculateLJField(
 ///////////// Implementation of IntraCLJPotential
 /////////////
 
-static const RegisterMetaType<IntraCLJPotential> r_intraclj( MAGIC_ONLY,
+static const RegisterMetaType<IntraCLJPotential> r_intraclj( MAGIC_ONLY, NO_ROOT,
                                             IntraCLJPotential::typeName() );
 
 /** Serialise to a binary datastream */

@@ -36,6 +36,8 @@ SireFF::GridPotentialTable __copy__(const SireFF::GridPotentialTable &other){ re
 
 const char* pvt_get_name(const SireFF::GridPotentialTable&){ return "SireFF::GridPotentialTable";}
 
+#include "Helpers/len.hpp"
+
 void register_GridPotentialTable_class(){
 
     { //::SireFF::GridPotentialTable
@@ -283,6 +285,7 @@ void register_GridPotentialTable_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         GridPotentialTable_exposer.def( "__str__", &pvt_get_name);
         GridPotentialTable_exposer.def( "__repr__", &pvt_get_name);
+        GridPotentialTable_exposer.def( "__len__", &__len_count< ::SireFF::GridPotentialTable > );
     }
 
 }

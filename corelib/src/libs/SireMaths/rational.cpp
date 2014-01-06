@@ -34,7 +34,7 @@
 using namespace SireStream;
 using namespace SireMaths;
 
-static const RegisterMetaType<Rational> r_rational;
+static const RegisterMetaType<Rational> r_rational(NO_ROOT);
 
 /** Serialise a rational number to a binary datastream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Rational &val)

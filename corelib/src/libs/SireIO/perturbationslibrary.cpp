@@ -80,7 +80,7 @@ using namespace SireUnits;
 // Implementation of PerturbationsTemplate
 //
 
-static RegisterMetaType<PerturbationsTemplate> r_pertstemplate;
+static RegisterMetaType<PerturbationsTemplate> r_pertstemplate(NO_ROOT);
 
 QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds,
                                       const PerturbationsTemplate &pertstemplate)
@@ -643,7 +643,7 @@ static int processVersionLine( QString& line)
 //
 // Implementation of PerturbationsLibrary
 //
-static const RegisterMetaType<PerturbationsLibrary> r_pertslibrary;
+static const RegisterMetaType<PerturbationsLibrary> r_pertslibrary(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds,

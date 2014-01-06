@@ -51,7 +51,7 @@ using namespace SireStream;
 ///////// Implementation of DataPoint
 /////////
 
-static const RegisterMetaType<DataPoint> r_dp;
+static const RegisterMetaType<DataPoint> r_dp(NO_ROOT);
 static const RegisterAlternativeName<DataPoint> r_altdp("Soiree::DataPoint");
 
 QDataStream SIREANALYSIS_EXPORT &operator<<(QDataStream &ds, const DataPoint &dp)

@@ -32,6 +32,7 @@
 #include "nvector.h"
 
 #include "SireBase/quickcopy.hpp"
+#include "SireID/index.h"
 
 #include "SireUnits/units.h"
 #include "SireStream/datastream.h"
@@ -46,11 +47,12 @@
 #include <QDebug>
 
 using namespace SireMaths;
+using namespace SireID;
 using namespace SireBase;
 using namespace SireUnits;
 using namespace SireStream;
 
-static const RegisterMetaType<Vector> r_vector;
+static const RegisterMetaType<Vector> r_vector(NO_ROOT);
 
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const SireMaths::Vector &vec)
@@ -150,20 +152,27 @@ double Vector::invDistance2(const Vector &v1, const Vector &v2)
 }
 
 /** Access the elements of the array via an index operator */
-const double& Vector::operator[](unsigned int i) const
+double Vector::operator[](int i) const
 {
-    return sc[i%3];
+    i = Index(i).map(3);
+    return sc[i];
 }
 
 /** Return the size of the Vector (always 3 - unless you disagree
     with me that we should be living in a 3-dimensional space!) */
-unsigned int Vector::count() const
+int Vector::count() const
 {
     return 3;
 }
 
 /** Access elements by index */
-const double& Vector::at(unsigned int i) const
+double Vector::at(int i) const
+{
+    return this->operator[](i);
+}
+
+/** Access elements by index (used by python) */
+double Vector::getitem(int i) const
 {
     return this->operator[](i);
 }
@@ -531,18 +540,18 @@ Vector Vector::cross(const Vector &v0, const Vector &v1)
             {
                 //do this by creating a copy of v0 with two elements swapped
                 if ( SireMaths::isZero(v1.x()) )
-                    return Vector(v1.x(),v1.z(),v1.y()).normalise();
+                    return Vector(0,v1.z(),-v1.y()).normalise();
                 else
-                    return Vector(v1.y(),v1.x(),v1.z()).normalise();
+                    return Vector(v1.y(),-v1.x(),0).normalise();
             }
         }
         else
         {
             //do this by creating a copy of v0 with two elements swapped
             if ( SireMaths::isZero(v0.x()) )
-                return Vector(v0.x(),v0.z(),v0.y()).normalise();
+                return Vector(0,v0.z(),-v0.y()).normalise();
             else
-                return Vector(v0.y(),v0.x(),v0.z()).normalise();
+                return Vector(v0.y(),-v0.x(),0).normalise();
         }
     }
     else
@@ -569,18 +578,18 @@ Vector Vector::cross(const Vector &v0, const Vector &v1)
                 {
                     //do this by creating a copy of v0 with two elements swapped
                     if ( SireMaths::isZero(v1.x()) )
-                        normal = Vector(v1.x(),v1.z(),v1.y()).normalise();
+                        normal = Vector(0,v1.z(),-v1.y()).normalise();
                     else
-                        normal = Vector(v1.y(),v1.x(),v1.z()).normalise();
+                        normal = Vector(v1.y(),-v1.x(),0).normalise();
                 }
             }
             else
             {
                 //do this by creating a copy of v0 with two elements swapped
                 if ( SireMaths::isZero(v0.x()) )
-                    normal = Vector(v0.x(),v0.z(),v0.y()).normalise();
+                    normal = Vector(0,v0.z(),-v0.y()).normalise();
                 else
-                    normal =Vector(v0.y(),v0.x(),v0.z()).normalise();
+                    normal =Vector(v0.y(),-v0.x(),0).normalise();
             }
 
             qDebug() << "Fixed cross product of vectors" << v0.toString() << ":" << v1.toString();

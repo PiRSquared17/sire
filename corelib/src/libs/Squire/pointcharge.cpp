@@ -37,7 +37,7 @@ using namespace SireUnits;
 using namespace SireUnits::Dimension;
 using namespace SireStream;
 
-static const RegisterMetaType<PointCharge> r_pointcharge;
+static const RegisterMetaType<PointCharge> r_pointcharge(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const PointCharge &q)

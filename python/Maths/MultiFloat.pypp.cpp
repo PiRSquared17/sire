@@ -23,6 +23,8 @@ SireMaths::MultiFloat __copy__(const SireMaths::MultiFloat &other){ return SireM
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_MultiFloat_class(){
 
     { //::SireMaths::MultiFloat
@@ -480,6 +482,7 @@ void register_MultiFloat_class(){
         MultiFloat_exposer.def( "clone", &__copy__);
         MultiFloat_exposer.def( "__str__", &__str__< ::SireMaths::MultiFloat > );
         MultiFloat_exposer.def( "__repr__", &__str__< ::SireMaths::MultiFloat > );
+        MultiFloat_exposer.def( "__len__", &__len_size< ::SireMaths::MultiFloat > );
     }
 
 }

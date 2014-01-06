@@ -48,7 +48,7 @@ using namespace SireMaths;
 using namespace SireBase;
 using namespace SireStream;
 
-static const RegisterMetaType<NMatrix> r_nmatrix;
+static const RegisterMetaType<NMatrix> r_nmatrix(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const NMatrix &matrix)

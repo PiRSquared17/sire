@@ -33,6 +33,8 @@ SireFF::ForceTable __copy__(const SireFF::ForceTable &other){ return SireFF::For
 
 const char* pvt_get_name(const SireFF::ForceTable&){ return "SireFF::ForceTable";}
 
+#include "Helpers/len.hpp"
+
 void register_ForceTable_class(){
 
     { //::SireFF::ForceTable
@@ -290,6 +292,7 @@ void register_ForceTable_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         ForceTable_exposer.def( "__str__", &pvt_get_name);
         ForceTable_exposer.def( "__repr__", &pvt_get_name);
+        ForceTable_exposer.def( "__len__", &__len_count< ::SireFF::ForceTable > );
     }
 
 }

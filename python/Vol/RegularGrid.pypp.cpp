@@ -27,6 +27,8 @@ SireVol::RegularGrid __copy__(const SireVol::RegularGrid &other){ return SireVol
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_RegularGrid_class(){
 
     { //::SireVol::RegularGrid
@@ -179,6 +181,7 @@ void register_RegularGrid_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         RegularGrid_exposer.def( "__str__", &__str__< ::SireVol::RegularGrid > );
         RegularGrid_exposer.def( "__repr__", &__str__< ::SireVol::RegularGrid > );
+        RegularGrid_exposer.def( "__len__", &__len_count< ::SireVol::RegularGrid > );
     }
 
 }

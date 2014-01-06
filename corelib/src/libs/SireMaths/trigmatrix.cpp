@@ -46,7 +46,7 @@ using namespace SireMaths;
 using namespace SireBase;
 using namespace SireStream;
 
-static const RegisterMetaType<TrigMatrix> r_trigmatrix;
+static const RegisterMetaType<TrigMatrix> r_trigmatrix(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const TrigMatrix &matrix)

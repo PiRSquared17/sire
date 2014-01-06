@@ -31,6 +31,8 @@ SireMaths::RecordValues __copy__(const SireMaths::RecordValues &other){ return S
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_RecordValues_class(){
 
     { //::SireMaths::RecordValues
@@ -243,6 +245,7 @@ void register_RecordValues_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         RecordValues_exposer.def( "__str__", &__str__< ::SireMaths::RecordValues > );
         RecordValues_exposer.def( "__repr__", &__str__< ::SireMaths::RecordValues > );
+        RecordValues_exposer.def( "__len__", &__len_size< ::SireMaths::RecordValues > );
     }
 
 }

@@ -31,6 +31,8 @@ SireBase::StringArrayProperty __copy__(const SireBase::StringArrayProperty &othe
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_StringArrayProperty_class(){
 
     { //::SireBase::StringArrayProperty
@@ -75,6 +77,8 @@ void register_StringArrayProperty_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         StringArrayProperty_exposer.def( "__str__", &__str__< ::SireBase::StringArrayProperty > );
         StringArrayProperty_exposer.def( "__repr__", &__str__< ::SireBase::StringArrayProperty > );
+        StringArrayProperty_exposer.def( "__len__", &__len_size< ::SireBase::StringArrayProperty > );
+        StringArrayProperty_exposer.def( "__getitem__", &::SireBase::StringArrayProperty::getitem );
     }
 
 }

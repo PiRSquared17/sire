@@ -34,7 +34,7 @@ using namespace SireBase;
 using namespace SireBase::detail;
 using namespace SireStream;
 
-static const RegisterMetaType<Version> r_version;
+static const RegisterMetaType<Version> r_version(NO_ROOT);
 
 QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const Version &version)
 {

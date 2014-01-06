@@ -21,6 +21,8 @@ namespace bp = boost::python;
 
 const char* pvt_get_name(const SireBase::TrigArray2DBase&){ return "SireBase::TrigArray2DBase";}
 
+#include "Helpers/len.hpp"
+
 void register_TrigArray2DBase_class(){
 
     { //::SireBase::TrigArray2DBase
@@ -117,6 +119,7 @@ void register_TrigArray2DBase_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         TrigArray2DBase_exposer.def( "__str__", &pvt_get_name);
         TrigArray2DBase_exposer.def( "__repr__", &pvt_get_name);
+        TrigArray2DBase_exposer.def( "__len__", &__len_size< ::SireBase::TrigArray2DBase > );
     }
 
 }

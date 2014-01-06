@@ -125,7 +125,7 @@ PropertyName ProtoMSParameters::perts_property( "perturbations" );
 /////////// Implementation of ProtoMS
 ///////////
 
-static const RegisterMetaType<ProtoMS> r_protoms;
+static const RegisterMetaType<ProtoMS> r_protoms(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds, const ProtoMS &protoms)

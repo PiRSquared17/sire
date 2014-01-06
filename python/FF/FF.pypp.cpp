@@ -50,6 +50,8 @@ namespace bp = boost::python;
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_FF_class(){
 
     { //::SireFF::FF
@@ -728,6 +730,7 @@ void register_FF_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         FF_exposer.def( "__str__", &__str__< ::SireFF::FF > );
         FF_exposer.def( "__repr__", &__str__< ::SireFF::FF > );
+        FF_exposer.def( "__len__", &__len_count< ::SireFF::FF > );
     }
 
 }

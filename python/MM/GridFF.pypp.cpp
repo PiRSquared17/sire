@@ -37,6 +37,8 @@ SireMM::GridFF __copy__(const SireMM::GridFF &other){ return SireMM::GridFF(othe
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_GridFF_class(){
 
     { //::SireMM::GridFF
@@ -260,6 +262,7 @@ void register_GridFF_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         GridFF_exposer.def( "__str__", &__str__< ::SireMM::GridFF > );
         GridFF_exposer.def( "__repr__", &__str__< ::SireMM::GridFF > );
+        GridFF_exposer.def( "__len__", &__len_count< ::SireMM::GridFF > );
     }
 
 }

@@ -19,6 +19,8 @@ SireMol::SegProperty<QString> __copy__(const SireMol::SegProperty<QString> &othe
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_SegStringProperty_class(){
 
     { //::SireMol::SegProperty< QString >
@@ -255,6 +257,7 @@ void register_SegStringProperty_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         SegStringProperty_exposer.def( "__str__", &__str__< ::SireMol::SegProperty<QString> > );
         SegStringProperty_exposer.def( "__repr__", &__str__< ::SireMol::SegProperty<QString> > );
+        SegStringProperty_exposer.def( "__len__", &__len_size< ::SireMol::SegProperty<QString> > );
     }
 
 }

@@ -19,6 +19,8 @@ SireMol::BeadProperty<long long> __copy__(const SireMol::BeadProperty<long long>
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_BeadIntProperty_class(){
 
     { //::SireMol::BeadProperty< long long >
@@ -255,6 +257,7 @@ void register_BeadIntProperty_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         BeadIntProperty_exposer.def( "__str__", &__str__< ::SireMol::BeadProperty<long long> > );
         BeadIntProperty_exposer.def( "__repr__", &__str__< ::SireMol::BeadProperty<long long> > );
+        BeadIntProperty_exposer.def( "__len__", &__len_size< ::SireMol::BeadProperty<long long> > );
     }
 
 }

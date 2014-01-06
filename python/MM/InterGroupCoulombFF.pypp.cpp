@@ -19,6 +19,8 @@ SireFF::Inter2B2G3DFF<SireMM::CoulombPotentialInterface<SireMM::InterCoulombPote
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_InterGroupCoulombFF_class(){
 
     { //::SireFF::Inter2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::InterCoulombPotential > >
@@ -190,6 +192,7 @@ void register_InterGroupCoulombFF_class(){
         InterGroupCoulombFF_exposer.def( "clone", &__copy__);
         InterGroupCoulombFF_exposer.def( "__str__", &__str__< ::SireFF::Inter2B2G3DFF<SireMM::CoulombPotentialInterface<SireMM::InterCoulombPotential> > > );
         InterGroupCoulombFF_exposer.def( "__repr__", &__str__< ::SireFF::Inter2B2G3DFF<SireMM::CoulombPotentialInterface<SireMM::InterCoulombPotential> > > );
+        InterGroupCoulombFF_exposer.def( "__len__", &__len_count< ::SireFF::Inter2B2G3DFF<SireMM::CoulombPotentialInterface<SireMM::InterCoulombPotential> > > );
     }
 
 }

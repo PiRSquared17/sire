@@ -44,7 +44,7 @@ using namespace SireMol;
 using namespace SireVol;
 using namespace SireStream;
 
-static const RegisterMetaType<CloseMols> r_closemols;
+static const RegisterMetaType<CloseMols> r_closemols(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const CloseMols &closemols)

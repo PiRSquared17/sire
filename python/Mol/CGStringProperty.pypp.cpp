@@ -19,6 +19,8 @@ SireMol::CGProperty<QString> __copy__(const SireMol::CGProperty<QString> &other)
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_CGStringProperty_class(){
 
     { //::SireMol::CGProperty< QString >
@@ -255,6 +257,7 @@ void register_CGStringProperty_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         CGStringProperty_exposer.def( "__str__", &__str__< ::SireMol::CGProperty<QString> > );
         CGStringProperty_exposer.def( "__repr__", &__str__< ::SireMol::CGProperty<QString> > );
+        CGStringProperty_exposer.def( "__len__", &__len_size< ::SireMol::CGProperty<QString> > );
     }
 
 }

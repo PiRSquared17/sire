@@ -22,6 +22,8 @@ SireMol::Beads __copy__(const SireMol::Beads &other){ return SireMol::Beads(othe
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_Beads_class(){
 
     { //::SireMol::Beads
@@ -337,6 +339,7 @@ void register_Beads_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         Beads_exposer.def( "__str__", &__str__< ::SireMol::Beads > );
         Beads_exposer.def( "__repr__", &__str__< ::SireMol::Beads > );
+        Beads_exposer.def( "__len__", &__len_size< ::SireMol::Beads > );
     }
 
 }

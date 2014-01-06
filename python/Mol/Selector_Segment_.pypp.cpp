@@ -37,6 +37,8 @@ SireMol::Selector<SireMol::Segment> __copy__(const SireMol::Selector<SireMol::Se
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_Selector_Segment__class(){
 
     { //::SireMol::Selector< SireMol::Segment >
@@ -617,6 +619,7 @@ void register_Selector_Segment__class(){
         Selector_Segment__exposer.def( "clone", &__copy__);
         Selector_Segment__exposer.def( "__str__", &__str__< ::SireMol::Selector<SireMol::Segment> > );
         Selector_Segment__exposer.def( "__repr__", &__str__< ::SireMol::Selector<SireMol::Segment> > );
+        Selector_Segment__exposer.def( "__len__", &__len_count< ::SireMol::Selector<SireMol::Segment> > );
     }
 
 }

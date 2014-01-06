@@ -36,7 +36,7 @@
 using namespace SireBase;
 using namespace SireStream;
 
-static const RegisterMetaType<TrigArray2DBase> r_array2d( MAGIC_ONLY,
+static const RegisterMetaType<TrigArray2DBase> r_array2d( MAGIC_ONLY, NO_ROOT,
                                                           "SireBase::TrigArray2D<T>" );
                                                       
 /** Serialise to a binary datastream */

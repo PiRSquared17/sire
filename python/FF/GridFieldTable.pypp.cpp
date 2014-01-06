@@ -36,6 +36,8 @@ SireFF::GridFieldTable __copy__(const SireFF::GridFieldTable &other){ return Sir
 
 const char* pvt_get_name(const SireFF::GridFieldTable&){ return "SireFF::GridFieldTable";}
 
+#include "Helpers/len.hpp"
+
 void register_GridFieldTable_class(){
 
     { //::SireFF::GridFieldTable
@@ -283,6 +285,7 @@ void register_GridFieldTable_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         GridFieldTable_exposer.def( "__str__", &pvt_get_name);
         GridFieldTable_exposer.def( "__repr__", &pvt_get_name);
+        GridFieldTable_exposer.def( "__len__", &__len_count< ::SireFF::GridFieldTable > );
     }
 
 }

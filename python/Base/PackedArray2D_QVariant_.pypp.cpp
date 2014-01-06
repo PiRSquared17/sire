@@ -17,6 +17,8 @@ SireBase::PackedArray2D<QVariant> __copy__(const SireBase::PackedArray2D<QVarian
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_PackedArray2D_QVariant__class(){
 
     { //::SireBase::PackedArray2D< QVariant >
@@ -349,6 +351,7 @@ void register_PackedArray2D_QVariant__class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         PackedArray2D_QVariant__exposer.def( "__str__", &__str__< ::SireBase::PackedArray2D<QVariant> > );
         PackedArray2D_QVariant__exposer.def( "__repr__", &__str__< ::SireBase::PackedArray2D<QVariant> > );
+        PackedArray2D_QVariant__exposer.def( "__len__", &__len_size< ::SireBase::PackedArray2D<QVariant> > );
     }
 
 }

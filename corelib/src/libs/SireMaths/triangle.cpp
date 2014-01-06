@@ -38,7 +38,7 @@ using namespace SireStream;
 using namespace SireUnits;
 using namespace SireMaths;
 
-static const RegisterMetaType<Triangle> r_triangle;
+static const RegisterMetaType<Triangle> r_triangle(NO_ROOT);
 
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Triangle &triangle)

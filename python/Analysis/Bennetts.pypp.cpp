@@ -29,6 +29,8 @@ SireAnalysis::Bennetts __copy__(const SireAnalysis::Bennetts &other){ return Sir
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_Bennetts_class(){
 
     { //::SireAnalysis::Bennetts
@@ -313,6 +315,7 @@ void register_Bennetts_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         Bennetts_exposer.def( "__str__", &__str__< ::SireAnalysis::Bennetts > );
         Bennetts_exposer.def( "__repr__", &__str__< ::SireAnalysis::Bennetts > );
+        Bennetts_exposer.def( "__len__", &__len_size< ::SireAnalysis::Bennetts > );
     }
 
 }

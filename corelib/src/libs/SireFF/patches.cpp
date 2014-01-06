@@ -44,7 +44,7 @@ using namespace SireStream;
 //////////// Implementation of FFBead
 ////////////
 
-static const RegisterMetaType<FFBead> r_ffbead;
+static const RegisterMetaType<FFBead> r_ffbead(NO_ROOT);
 
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const FFBead &ffbead)
 {
@@ -122,7 +122,7 @@ const char* FFBead::typeName()
 //////////// Implementation of FFBeadChange
 ////////////
 
-static const RegisterMetaType<FFBeadChange> r_ffbeadchange;
+static const RegisterMetaType<FFBeadChange> r_ffbeadchange(NO_ROOT);
 
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const FFBeadChange &bead)
 {

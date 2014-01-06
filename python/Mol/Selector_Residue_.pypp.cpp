@@ -43,6 +43,8 @@ SireMol::Selector<SireMol::Residue> __copy__(const SireMol::Selector<SireMol::Re
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_Selector_Residue__class(){
 
     { //::SireMol::Selector< SireMol::Residue >
@@ -623,6 +625,7 @@ void register_Selector_Residue__class(){
         Selector_Residue__exposer.def( "clone", &__copy__);
         Selector_Residue__exposer.def( "__str__", &__str__< ::SireMol::Selector<SireMol::Residue> > );
         Selector_Residue__exposer.def( "__repr__", &__str__< ::SireMol::Selector<SireMol::Residue> > );
+        Selector_Residue__exposer.def( "__len__", &__len_count< ::SireMol::Selector<SireMol::Residue> > );
     }
 
 }

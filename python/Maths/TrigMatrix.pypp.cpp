@@ -37,6 +37,8 @@ SireMaths::TrigMatrix __copy__(const SireMaths::TrigMatrix &other){ return SireM
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_TrigMatrix_class(){
 
     { //::SireMaths::TrigMatrix
@@ -438,6 +440,7 @@ void register_TrigMatrix_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         TrigMatrix_exposer.def( "__str__", &__str__< ::SireMaths::TrigMatrix > );
         TrigMatrix_exposer.def( "__repr__", &__str__< ::SireMaths::TrigMatrix > );
+        TrigMatrix_exposer.def( "__len__", &__len_size< ::SireMaths::TrigMatrix > );
     }
 
 }

@@ -49,7 +49,7 @@ else()
                      WORKING_DIRECTORY ${PYTHON_BUILD_DIR} )
 
     message( STATUS "Patience... Compiling Python..." )
-    execute_process( COMMAND ${CMAKE_MAKE_PROGRAM}
+    execute_process( COMMAND ${CMAKE_MAKE_PROGRAM} -k -j ${NCORES}
                      WORKING_DIRECTORY ${PYTHON_BUILD_DIR} )
 
     message( STATUS "Patience... Installing Python..." )

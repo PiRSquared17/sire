@@ -57,7 +57,7 @@ namespace Squire
     template class QMMMPotential<QMPotential,InterCoulombPotential>;
 }
 
-static const RegisterMetaType<QMMMElecEmbedPotential> r_qmmm( MAGIC_ONLY,
+static const RegisterMetaType<QMMMElecEmbedPotential> r_qmmm( MAGIC_ONLY, NO_ROOT,
                                                 "Squire::QMMMElecEmbedPotential" );
                                                 
 /** Serialise to a binary datastream */

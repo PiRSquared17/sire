@@ -87,6 +87,8 @@ SireMol::Mover<SireMol::ViewsOfMol> __copy__(const SireMol::Mover<SireMol::Views
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_Mover_ViewsOfMol__class(){
 
     { //::SireMol::Mover< SireMol::ViewsOfMol >
@@ -408,6 +410,7 @@ void register_Mover_ViewsOfMol__class(){
         Mover_ViewsOfMol__exposer.def( "clone", &__copy__);
         Mover_ViewsOfMol__exposer.def( "__str__", &__str__< ::SireMol::Mover<SireMol::ViewsOfMol> > );
         Mover_ViewsOfMol__exposer.def( "__repr__", &__str__< ::SireMol::Mover<SireMol::ViewsOfMol> > );
+        Mover_ViewsOfMol__exposer.def( "__len__", &__len_count< ::SireMol::Mover<SireMol::ViewsOfMol> > );
     }
 
 }

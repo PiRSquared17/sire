@@ -31,6 +31,8 @@ SireBase::DoubleArrayProperty __copy__(const SireBase::DoubleArrayProperty &othe
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_DoubleArrayProperty_class(){
 
     { //::SireBase::DoubleArrayProperty
@@ -75,6 +77,8 @@ void register_DoubleArrayProperty_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         DoubleArrayProperty_exposer.def( "__str__", &__str__< ::SireBase::DoubleArrayProperty > );
         DoubleArrayProperty_exposer.def( "__repr__", &__str__< ::SireBase::DoubleArrayProperty > );
+        DoubleArrayProperty_exposer.def( "__len__", &__len_size< ::SireBase::DoubleArrayProperty > );
+        DoubleArrayProperty_exposer.def( "__getitem__", &::SireBase::DoubleArrayProperty::getitem );
     }
 
 }

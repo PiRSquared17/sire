@@ -36,7 +36,7 @@
 using namespace SireStream;
 using namespace SireMaths;
 
-static const RegisterMetaType<Complex> r_complex;
+static const RegisterMetaType<Complex> r_complex(NO_ROOT);
 
 /** Serialise a Complex to a binary datastream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const SireMaths::Complex &z)

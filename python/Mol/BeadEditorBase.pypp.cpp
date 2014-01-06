@@ -59,6 +59,8 @@ SireMol::BeadEditorBase& set_Metadata_SireMol_BeadVariantProperty_function2(
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_BeadEditorBase_class(){
 
     { //::SireMol::Editor< SireMol::BeadEditor, SireMol::Bead >
@@ -334,6 +336,7 @@ void register_BeadEditorBase_class(){
         BeadEditorBase_exposer.def( "_set_metadata_QVariant", &set_Metadata_SireMol_BeadVariantProperty_function2, bp::return_self< >());
         BeadEditorBase_exposer.def( "__str__", &__str__< ::SireMol::Editor<SireMol::BeadEditor, SireMol::Bead> > );
         BeadEditorBase_exposer.def( "__repr__", &__str__< ::SireMol::Editor<SireMol::BeadEditor, SireMol::Bead> > );
+        BeadEditorBase_exposer.def( "__len__", &__len_size< ::SireMol::Editor<SireMol::BeadEditor, SireMol::Bead> > );
     }
 
 }

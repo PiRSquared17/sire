@@ -19,6 +19,8 @@ SireMol::ResProperty<long long> __copy__(const SireMol::ResProperty<long long> &
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_ResIntProperty_class(){
 
     { //::SireMol::ResProperty< long long >
@@ -255,6 +257,7 @@ void register_ResIntProperty_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         ResIntProperty_exposer.def( "__str__", &__str__< ::SireMol::ResProperty<long long> > );
         ResIntProperty_exposer.def( "__repr__", &__str__< ::SireMol::ResProperty<long long> > );
+        ResIntProperty_exposer.def( "__len__", &__len_size< ::SireMol::ResProperty<long long> > );
     }
 
 }

@@ -19,6 +19,8 @@ SireBase::ChunkedVector<double, 100> __copy__(const SireBase::ChunkedVector<doub
 
 const char* pvt_get_name(const SireBase::ChunkedVector<double, 100>&){ return "SireBase::ChunkedVector<double, 100>";}
 
+#include "Helpers/len.hpp"
+
 void register_ChunkedVector_double__class(){
 
     { //::SireBase::ChunkedVector< double, 100 >
@@ -431,6 +433,7 @@ void register_ChunkedVector_double__class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         ChunkedVector_double__exposer.def( "__str__", &pvt_get_name);
         ChunkedVector_double__exposer.def( "__repr__", &pvt_get_name);
+        ChunkedVector_double__exposer.def( "__len__", &__len_size< ::SireBase::ChunkedVector<double, 100> > );
     }
 
 }

@@ -29,6 +29,8 @@ SireMove::Replicas __copy__(const SireMove::Replicas &other){ return SireMove::R
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_Replicas_class(){
 
     { //::SireMove::Replicas
@@ -437,6 +439,7 @@ void register_Replicas_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         Replicas_exposer.def( "__str__", &__str__< ::SireMove::Replicas > );
         Replicas_exposer.def( "__repr__", &__str__< ::SireMove::Replicas > );
+        Replicas_exposer.def( "__len__", &__len_size< ::SireMove::Replicas > );
     }
 
 }

@@ -17,6 +17,8 @@ SireBase::detail::PackedArray2D_Array<int> __copy__(const SireBase::detail::Pack
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_PackedArray2D_int_Array_class(){
 
     { //::SireBase::detail::PackedArray2D_Array< int >
@@ -180,6 +182,7 @@ void register_PackedArray2D_int_Array_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         PackedArray2D_int_Array_exposer.def( "__str__", &__str__< ::SireBase::detail::PackedArray2D_Array<int> > );
         PackedArray2D_int_Array_exposer.def( "__repr__", &__str__< ::SireBase::detail::PackedArray2D_Array<int> > );
+        PackedArray2D_int_Array_exposer.def( "__len__", &__len_size< ::SireBase::detail::PackedArray2D_Array<int> > );
     }
 
 }

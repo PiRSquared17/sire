@@ -35,7 +35,7 @@
 using namespace SireStream;
 using namespace SireCAS;
 
-static const RegisterMetaType<Values> r_values;
+static const RegisterMetaType<Values> r_values(NO_ROOT);
 
 /** Serialise to a binary data stream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Values &values)

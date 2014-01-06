@@ -44,7 +44,7 @@ using namespace SireMol;
 using namespace SireUnits;
 using namespace SireUnits::Dimension;
 
-static const RegisterMetaType<Element> r_element;
+static const RegisterMetaType<Element> r_element(NO_ROOT);
 
 /** Serialise to a binary data stream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Element &element)

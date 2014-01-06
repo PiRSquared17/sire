@@ -382,6 +382,18 @@ def export_class(mb, classname, aliases, includes, special_code, auto_str_functi
            c.add_registration_code("def( \"__str__\", &pvt_get_name)")
            c.add_registration_code("def( \"__repr__\", &pvt_get_name)")
            
+   #is there a "count" or "size" function for this class?
+   if has_function(c, "size"):
+       c.add_declaration_code( "#include \"Helpers/len.hpp\"" )
+       c.add_registration_code("def( \"__len__\", &__len_size< %s > )" % c.decl_string )
+   elif has_function(c, "count"):
+       c.add_declaration_code( "#include \"Helpers/len.hpp\"" )
+       c.add_registration_code("def( \"__len__\", &__len_count< %s > )" % c.decl_string )
+
+   #is there a python-style getitem function?
+   if has_function(c, "getitem"):
+       c.add_registration_code("def( \"__getitem__\", &%s::getitem )" % c.decl_string )
+
    #provide an alias for this class
    if (classname in aliases):
       c.alias = string.join( aliases[classname].split("::")[1:] )

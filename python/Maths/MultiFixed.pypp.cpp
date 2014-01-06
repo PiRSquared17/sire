@@ -21,6 +21,8 @@ SireMaths::MultiFixed __copy__(const SireMaths::MultiFixed &other){ return SireM
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_MultiFixed_class(){
 
     { //::SireMaths::MultiFixed
@@ -388,6 +390,7 @@ void register_MultiFixed_class(){
         MultiFixed_exposer.def( "clone", &__copy__);
         MultiFixed_exposer.def( "__str__", &__str__< ::SireMaths::MultiFixed > );
         MultiFixed_exposer.def( "__repr__", &__str__< ::SireMaths::MultiFixed > );
+        MultiFixed_exposer.def( "__len__", &__len_size< ::SireMaths::MultiFixed > );
     }
 
 }

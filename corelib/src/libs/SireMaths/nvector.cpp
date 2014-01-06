@@ -39,7 +39,7 @@
 using namespace SireMaths;
 using namespace SireStream;
 
-static const RegisterMetaType<NVector> r_nvector;
+static const RegisterMetaType<NVector> r_nvector(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const NVector &vector)

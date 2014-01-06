@@ -40,6 +40,8 @@ SireSystem::Constraints __copy__(const SireSystem::Constraints &other){ return S
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_Constraints_class(){
 
     { //::SireSystem::Constraints
@@ -244,6 +246,7 @@ void register_Constraints_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         Constraints_exposer.def( "__str__", &__str__< ::SireSystem::Constraints > );
         Constraints_exposer.def( "__repr__", &__str__< ::SireSystem::Constraints > );
+        Constraints_exposer.def( "__len__", &__len_size< ::SireSystem::Constraints > );
     }
 
 }

@@ -33,6 +33,8 @@ SireVol::CoordGroupEditor __copy__(const SireVol::CoordGroupEditor &other){ retu
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_CoordGroupEditor_class(){
 
     { //::SireVol::CoordGroupEditor
@@ -269,6 +271,7 @@ void register_CoordGroupEditor_class(){
         CoordGroupEditor_exposer.def( "clone", &__copy__);
         CoordGroupEditor_exposer.def( "__str__", &__str__< ::SireVol::CoordGroupEditor > );
         CoordGroupEditor_exposer.def( "__repr__", &__str__< ::SireVol::CoordGroupEditor > );
+        CoordGroupEditor_exposer.def( "__len__", &__len_size< ::SireVol::CoordGroupEditor > );
     }
 
 }

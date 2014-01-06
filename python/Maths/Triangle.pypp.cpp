@@ -23,6 +23,8 @@ SireMaths::Triangle __copy__(const SireMaths::Triangle &other){ return SireMaths
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_Triangle_class(){
 
     { //::SireMaths::Triangle
@@ -227,6 +229,7 @@ void register_Triangle_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         Triangle_exposer.def( "__str__", &__str__< ::SireMaths::Triangle > );
         Triangle_exposer.def( "__repr__", &__str__< ::SireMaths::Triangle > );
+        Triangle_exposer.def( "__len__", &__len_count< ::SireMaths::Triangle > );
     }
 
 }

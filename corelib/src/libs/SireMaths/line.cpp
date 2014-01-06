@@ -35,7 +35,7 @@
 using namespace SireMaths;
 using namespace SireStream;
 
-static const RegisterMetaType<Line> r_line;
+static const RegisterMetaType<Line> r_line(NO_ROOT);
 
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const SireMaths::Line &line)

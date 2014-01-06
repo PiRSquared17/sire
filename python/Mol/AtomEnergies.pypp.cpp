@@ -19,6 +19,8 @@ SireMol::AtomProperty<SireUnits::Dimension::PhysUnit<1, 2, -2, 0, 0, -1, 0> > __
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_AtomEnergies_class(){
 
     { //::SireMol::AtomProperty< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, -1, 0 > >
@@ -427,6 +429,7 @@ void register_AtomEnergies_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         AtomEnergies_exposer.def( "__str__", &__str__< ::SireMol::AtomProperty<SireUnits::Dimension::PhysUnit<1, 2, -2, 0, 0, -1, 0> > > );
         AtomEnergies_exposer.def( "__repr__", &__str__< ::SireMol::AtomProperty<SireUnits::Dimension::PhysUnit<1, 2, -2, 0, 0, -1, 0> > > );
+        AtomEnergies_exposer.def( "__len__", &__len_size< ::SireMol::AtomProperty<SireUnits::Dimension::PhysUnit<1, 2, -2, 0, 0, -1, 0> > > );
     }
 
 }

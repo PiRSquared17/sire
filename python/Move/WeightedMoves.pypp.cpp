@@ -32,6 +32,8 @@ SireMove::WeightedMoves __copy__(const SireMove::WeightedMoves &other){ return S
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_WeightedMoves_class(){
 
     { //::SireMove::WeightedMoves
@@ -212,6 +214,7 @@ void register_WeightedMoves_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         WeightedMoves_exposer.def( "__str__", &__str__< ::SireMove::WeightedMoves > );
         WeightedMoves_exposer.def( "__repr__", &__str__< ::SireMove::WeightedMoves > );
+        WeightedMoves_exposer.def( "__len__", &__len_size< ::SireMove::WeightedMoves > );
     }
 
 }

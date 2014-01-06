@@ -76,6 +76,8 @@ namespace bp = boost::python;
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_MolGroupsBase_class(){
 
     { //::SireMol::MolGroupsBase
@@ -1206,6 +1208,28 @@ void register_MolGroupsBase_class(){
         }
         { //::SireMol::MolGroupsBase::remove
         
+            typedef bool ( ::SireMol::MolGroupsBase::*remove_function_type )( ::SireMol::MolID const & ) ;
+            remove_function_type remove_function_value( &::SireMol::MolGroupsBase::remove );
+            
+            MolGroupsBase_exposer.def( 
+                "remove"
+                , remove_function_value
+                , ( bp::arg("molid") ) );
+        
+        }
+        { //::SireMol::MolGroupsBase::remove
+        
+            typedef bool ( ::SireMol::MolGroupsBase::*remove_function_type )( ::SireMol::MGID const & ) ;
+            remove_function_type remove_function_value( &::SireMol::MolGroupsBase::remove );
+            
+            MolGroupsBase_exposer.def( 
+                "remove"
+                , remove_function_value
+                , ( bp::arg("mgid") ) );
+        
+        }
+        { //::SireMol::MolGroupsBase::remove
+        
             typedef bool ( ::SireMol::MolGroupsBase::*remove_function_type )( ::SireMol::MoleculeView const &,::SireMol::MGID const & ) ;
             remove_function_type remove_function_value( &::SireMol::MolGroupsBase::remove );
             
@@ -1771,6 +1795,7 @@ void register_MolGroupsBase_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         MolGroupsBase_exposer.def( "__str__", &__str__< ::SireMol::MolGroupsBase > );
         MolGroupsBase_exposer.def( "__repr__", &__str__< ::SireMol::MolGroupsBase > );
+        MolGroupsBase_exposer.def( "__len__", &__len_count< ::SireMol::MolGroupsBase > );
     }
 
 }

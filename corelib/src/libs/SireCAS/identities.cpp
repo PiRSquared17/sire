@@ -36,7 +36,7 @@
 using namespace SireStream;
 using namespace SireCAS;
 
-static const RegisterMetaType<Identities> r_identities;
+static const RegisterMetaType<Identities> r_identities(NO_ROOT);
 
 /** Serialise to a binary data stream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Identities &ids)

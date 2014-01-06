@@ -1680,7 +1680,7 @@ void System::remove(const FF &ff)
     \throw SireError::invalid_index
     \throw SireError::invalid_arg
 */
-void System::remove(const MGID &mgid)
+bool System::remove(const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
@@ -1688,6 +1688,8 @@ void System::remove(const MGID &mgid)
     
     try
     {
+        bool removed = false;
+    
         foreach (MGNum mgnum, mgnums)
         {
             if (mgroups_by_num.value(mgnum) == 0)
@@ -1708,16 +1710,21 @@ void System::remove(const MGID &mgid)
             this->_pvt_moleculeGroups().remove(mgnum);
             this->removeFromIndex(mgnum);
             mgroups_by_num.remove(mgnum);
+            removed = true;
         }
         
         sysversion.incrementMajor();
         this->applyAllConstraints();
+        
+        return true;
     }
     catch(...)
     {
         old_state.restore(*this);
         throw;
     }
+    
+    return false;
 }
 
 /** Remove the molecules contained in the molecule group 'molgroup'.

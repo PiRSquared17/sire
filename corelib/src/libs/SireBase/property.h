@@ -106,6 +106,8 @@ friend QDataStream& ::operator<<(QDataStream&, const Property&);
 friend QDataStream& ::operator>>(QDataStream&, Property&);
 
 public:
+    typedef Property ROOT;
+
     Property();
 
     Property(const Property &other);

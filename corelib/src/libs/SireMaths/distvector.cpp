@@ -46,7 +46,7 @@ using namespace SireUnits;
 using namespace SireBase;
 using namespace SireStream;
 
-static const RegisterMetaType<DistVector> r_distvector;
+static const RegisterMetaType<DistVector> r_distvector(NO_ROOT);
 
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, 

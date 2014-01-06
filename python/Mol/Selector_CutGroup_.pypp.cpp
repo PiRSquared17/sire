@@ -41,6 +41,8 @@ SireMol::Selector<SireMol::CutGroup> __copy__(const SireMol::Selector<SireMol::C
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_Selector_CutGroup__class(){
 
     { //::SireMol::Selector< SireMol::CutGroup >
@@ -621,6 +623,7 @@ void register_Selector_CutGroup__class(){
         Selector_CutGroup__exposer.def( "clone", &__copy__);
         Selector_CutGroup__exposer.def( "__str__", &__str__< ::SireMol::Selector<SireMol::CutGroup> > );
         Selector_CutGroup__exposer.def( "__repr__", &__str__< ::SireMol::Selector<SireMol::CutGroup> > );
+        Selector_CutGroup__exposer.def( "__len__", &__len_count< ::SireMol::Selector<SireMol::CutGroup> > );
     }
 
 }

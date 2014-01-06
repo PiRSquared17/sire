@@ -19,6 +19,8 @@ SireMol::SegProperty<double> __copy__(const SireMol::SegProperty<double> &other)
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_SegFloatProperty_class(){
 
     { //::SireMol::SegProperty< double >
@@ -255,6 +257,7 @@ void register_SegFloatProperty_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         SegFloatProperty_exposer.def( "__str__", &__str__< ::SireMol::SegProperty<double> > );
         SegFloatProperty_exposer.def( "__repr__", &__str__< ::SireMol::SegProperty<double> > );
+        SegFloatProperty_exposer.def( "__len__", &__len_size< ::SireMol::SegProperty<double> > );
     }
 
 }

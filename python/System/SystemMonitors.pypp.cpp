@@ -32,6 +32,8 @@ SireSystem::SystemMonitors __copy__(const SireSystem::SystemMonitors &other){ re
 
 const char* pvt_get_name(const SireSystem::SystemMonitors&){ return "SireSystem::SystemMonitors";}
 
+#include "Helpers/len.hpp"
+
 void register_SystemMonitors_class(){
 
     { //::SireSystem::SystemMonitors
@@ -373,6 +375,7 @@ void register_SystemMonitors_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         SystemMonitors_exposer.def( "__str__", &pvt_get_name);
         SystemMonitors_exposer.def( "__repr__", &pvt_get_name);
+        SystemMonitors_exposer.def( "__len__", &__len_size< ::SireSystem::SystemMonitors > );
     }
 
 }

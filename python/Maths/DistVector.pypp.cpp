@@ -33,6 +33,8 @@ SireMaths::DistVector __copy__(const SireMaths::DistVector &other){ return SireM
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_DistVector_class(){
 
     { //::SireMaths::DistVector
@@ -511,6 +513,8 @@ void register_DistVector_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         DistVector_exposer.def( "__str__", &__str__< ::SireMaths::DistVector > );
         DistVector_exposer.def( "__repr__", &__str__< ::SireMaths::DistVector > );
+        DistVector_exposer.def( "__len__", &__len_count< ::SireMaths::DistVector > );
+        DistVector_exposer.def( "__getitem__", &::SireMaths::DistVector::getitem );
     }
 
 }

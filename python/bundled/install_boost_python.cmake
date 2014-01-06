@@ -45,7 +45,7 @@ else()
 
   message( STATUS "Patience... Building boost::python" )
   execute_process(
-          COMMAND ${CMAKE_MAKE_PROGRAM}
+          COMMAND ${CMAKE_MAKE_PROGRAM} -k -j ${NCORES}
           WORKING_DIRECTORY ${BOOST_PYTHON_BUILD_DIR}
   )
 

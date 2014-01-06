@@ -117,35 +117,35 @@ void register_MolAtomID_class(){
         MolAtomID_exposer.def( bp::self == bp::self );
         { //::SireMol::MolAtomID::selectAllFrom
         
-            typedef ::QHash< SireMol::MolNum, SireMol::Selector< SireMol::Atom > > ( ::SireMol::MolAtomID::*selectAllFrom_function_type )( ::SireMol::Molecules const & ) const;
+            typedef ::QHash< SireMol::MolNum, SireMol::Selector< SireMol::Atom > > ( ::SireMol::MolAtomID::*selectAllFrom_function_type )( ::SireMol::Molecules const &,::SireBase::PropertyMap const & ) const;
             selectAllFrom_function_type selectAllFrom_function_value( &::SireMol::MolAtomID::selectAllFrom );
             
             MolAtomID_exposer.def( 
                 "selectAllFrom"
                 , selectAllFrom_function_value
-                , ( bp::arg("molecules") ) );
+                , ( bp::arg("molecules"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         { //::SireMol::MolAtomID::selectAllFrom
         
-            typedef ::QHash< SireMol::MolNum, SireMol::Selector< SireMol::Atom > > ( ::SireMol::MolAtomID::*selectAllFrom_function_type )( ::SireMol::MoleculeGroup const & ) const;
+            typedef ::QHash< SireMol::MolNum, SireMol::Selector< SireMol::Atom > > ( ::SireMol::MolAtomID::*selectAllFrom_function_type )( ::SireMol::MoleculeGroup const &,::SireBase::PropertyMap const & ) const;
             selectAllFrom_function_type selectAllFrom_function_value( &::SireMol::MolAtomID::selectAllFrom );
             
             MolAtomID_exposer.def( 
                 "selectAllFrom"
                 , selectAllFrom_function_value
-                , ( bp::arg("molgroup") ) );
+                , ( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         { //::SireMol::MolAtomID::selectAllFrom
         
-            typedef ::QHash< SireMol::MolNum, SireMol::Selector< SireMol::Atom > > ( ::SireMol::MolAtomID::*selectAllFrom_function_type )( ::SireMol::MolGroupsBase const & ) const;
+            typedef ::QHash< SireMol::MolNum, SireMol::Selector< SireMol::Atom > > ( ::SireMol::MolAtomID::*selectAllFrom_function_type )( ::SireMol::MolGroupsBase const &,::SireBase::PropertyMap const & ) const;
             selectAllFrom_function_type selectAllFrom_function_value( &::SireMol::MolAtomID::selectAllFrom );
             
             MolAtomID_exposer.def( 
                 "selectAllFrom"
                 , selectAllFrom_function_value
-                , ( bp::arg("molgroups") ) );
+                , ( bp::arg("molgroups"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         { //::SireMol::MolAtomID::toString

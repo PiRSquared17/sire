@@ -42,7 +42,7 @@ else()
                      WORKING_DIRECTORY ${CPUID_BUILD_DIR} )
 
     message( STATUS "Patience... Compiling libcpuid..." )
-    execute_process( COMMAND ${CMAKE_MAKE_PROGRAM}
+    execute_process( COMMAND ${CMAKE_MAKE_PROGRAM} -k -j ${NCORES}
                      WORKING_DIRECTORY ${CPUID_BUILD_DIR} )
 
     message( STATUS "Patience... Installing libcpuid..." )

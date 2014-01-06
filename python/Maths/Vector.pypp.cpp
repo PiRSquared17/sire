@@ -39,6 +39,8 @@ SireMaths::Vector __copy__(const SireMaths::Vector &other){ return SireMaths::Ve
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_Vector_class(){
 
     { //::SireMaths::Vector
@@ -74,14 +76,13 @@ void register_Vector_class(){
         }
         { //::SireMaths::Vector::at
         
-            typedef double const & ( ::SireMaths::Vector::*at_function_type )( unsigned int ) const;
+            typedef double ( ::SireMaths::Vector::*at_function_type )( int ) const;
             at_function_type at_function_value( &::SireMaths::Vector::at );
             
             Vector_exposer.def( 
                 "at"
                 , at_function_value
-                , ( bp::arg("i") )
-                , bp::return_value_policy< bp::copy_const_reference >() );
+                , ( bp::arg("i") ) );
         
         }
         { //::SireMaths::Vector::b
@@ -139,7 +140,7 @@ void register_Vector_class(){
         }
         { //::SireMaths::Vector::count
         
-            typedef unsigned int ( ::SireMaths::Vector::*count_function_type )(  ) const;
+            typedef int ( ::SireMaths::Vector::*count_function_type )(  ) const;
             count_function_type count_function_value( &::SireMaths::Vector::count );
             
             Vector_exposer.def( 
@@ -242,6 +243,17 @@ void register_Vector_class(){
                 "generate"
                 , generate_function_value
                 , ( bp::arg("dst"), bp::arg("v1"), bp::arg("ang"), bp::arg("v2"), bp::arg("dih"), bp::arg("v3") ) );
+        
+        }
+        { //::SireMaths::Vector::getitem
+        
+            typedef double ( ::SireMaths::Vector::*getitem_function_type )( int ) const;
+            getitem_function_type getitem_function_value( &::SireMaths::Vector::getitem );
+            
+            Vector_exposer.def( 
+                "getitem"
+                , getitem_function_value
+                , ( bp::arg("i") ) );
         
         }
         { //::SireMaths::Vector::invDistance
@@ -399,14 +411,13 @@ void register_Vector_class(){
         Vector_exposer.def( bp::self == bp::self );
         { //::SireMaths::Vector::operator[]
         
-            typedef double const & ( ::SireMaths::Vector::*__getitem___function_type )( unsigned int ) const;
+            typedef double ( ::SireMaths::Vector::*__getitem___function_type )( int ) const;
             __getitem___function_type __getitem___function_value( &::SireMaths::Vector::operator[] );
             
             Vector_exposer.def( 
                 "__getitem__"
                 , __getitem___function_value
-                , ( bp::arg("i") )
-                , bp::return_value_policy< bp::copy_const_reference >() );
+                , ( bp::arg("i") ) );
         
         }
         { //::SireMaths::Vector::r
@@ -615,6 +626,8 @@ void register_Vector_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         Vector_exposer.def( "__str__", &__str__< ::SireMaths::Vector > );
         Vector_exposer.def( "__repr__", &__str__< ::SireMaths::Vector > );
+        Vector_exposer.def( "__len__", &__len_count< ::SireMaths::Vector > );
+        Vector_exposer.def( "__getitem__", &::SireMaths::Vector::getitem );
     }
 
 }

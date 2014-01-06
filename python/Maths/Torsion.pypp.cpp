@@ -21,6 +21,8 @@ SireMaths::Torsion __copy__(const SireMaths::Torsion &other){ return SireMaths::
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_Torsion_class(){
 
     { //::SireMaths::Torsion
@@ -194,6 +196,7 @@ void register_Torsion_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         Torsion_exposer.def( "__str__", &__str__< ::SireMaths::Torsion > );
         Torsion_exposer.def( "__repr__", &__str__< ::SireMaths::Torsion > );
+        Torsion_exposer.def( "__len__", &__len_count< ::SireMaths::Torsion > );
     }
 
 }

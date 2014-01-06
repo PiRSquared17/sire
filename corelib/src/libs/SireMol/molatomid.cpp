@@ -212,7 +212,7 @@ QList<AtomIdx> MolAtomID::map(const MolInfo &molinfo) const
 }
 
 QHash< MolNum,Selector<Atom> > 
-MolAtomID::selectAllFrom(const Molecules &molecules) const
+MolAtomID::selectAllFrom(const Molecules &molecules, const PropertyMap &map) const
 {
     QHash< MolNum,Selector<Atom> > selected_atoms;
     
@@ -226,7 +226,7 @@ MolAtomID::selectAllFrom(const Molecules &molecules) const
         {
             //try to find this atom in this molecule
             selected_atoms.insert( molnum,
-                                   mol.selectAll(*this) );
+                                   mol.selectAll(*this,map) );
         }
         catch(...)
         {}
@@ -242,7 +242,7 @@ MolAtomID::selectAllFrom(const Molecules &molecules) const
 }
 
 QHash< MolNum,Selector<Atom> > 
-MolAtomID::selectAllFrom(const MoleculeGroup &molgroup) const
+MolAtomID::selectAllFrom(const MoleculeGroup &molgroup, const PropertyMap &map) const
 {
     QHash< MolNum,Selector<Atom> > selected_atoms;
     
@@ -256,7 +256,7 @@ MolAtomID::selectAllFrom(const MoleculeGroup &molgroup) const
         {
             //try to find this atom in this molecule
             selected_atoms.insert( molnum,
-                                   mol.selectAll(*this) );
+                                   mol.selectAll(*this,map) );
         }
         catch(...)
         {}
@@ -272,7 +272,7 @@ MolAtomID::selectAllFrom(const MoleculeGroup &molgroup) const
 }
 
 QHash< MolNum,Selector<Atom> > 
-MolAtomID::selectAllFrom(const MolGroupsBase &molgroups) const
+MolAtomID::selectAllFrom(const MolGroupsBase &molgroups, const PropertyMap &map) const
 {
     QHash< MolNum,Selector<Atom> > selected_atoms;
     
@@ -286,7 +286,7 @@ MolAtomID::selectAllFrom(const MolGroupsBase &molgroups) const
         {
             //try to find this atom in this molecule
             selected_atoms.insert( molnum,
-                                   mol.selectAll(*this) );
+                                   mol.selectAll(*this,map) );
         }
         catch(...)
         {}

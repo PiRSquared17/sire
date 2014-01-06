@@ -65,7 +65,7 @@ using namespace SireStream;
 ////////// Implementation of ZMatrixLine
 //////////
 
-static const RegisterMetaType<ZMatrixLine> r_zmatline;
+static const RegisterMetaType<ZMatrixLine> r_zmatline(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const ZMatrixLine &zmatline)
@@ -244,7 +244,7 @@ const char* ZMatrixLine::typeName()
 ////////// Implementation of ZMatrixCoordsLine
 //////////
 
-static const RegisterMetaType<ZMatrixCoordsLine> r_zmatcoordsline;
+static const RegisterMetaType<ZMatrixCoordsLine> r_zmatcoordsline(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, 

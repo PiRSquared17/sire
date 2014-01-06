@@ -35,6 +35,8 @@ SireVol::CoordGroupArrayArray __copy__(const SireVol::CoordGroupArrayArray &othe
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_CoordGroupArrayArray_class(){
 
     { //::SireVol::CoordGroupArrayArray
@@ -437,6 +439,7 @@ void register_CoordGroupArrayArray_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         CoordGroupArrayArray_exposer.def( "__str__", &__str__< ::SireVol::CoordGroupArrayArray > );
         CoordGroupArrayArray_exposer.def( "__repr__", &__str__< ::SireVol::CoordGroupArrayArray > );
+        CoordGroupArrayArray_exposer.def( "__len__", &__len_size< ::SireVol::CoordGroupArrayArray > );
     }
 
 }

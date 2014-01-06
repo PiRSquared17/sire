@@ -83,6 +83,8 @@ public:
     
     T at(int i) const;
     
+    T getitem(int i) const;
+
     void clear();
     
     bool empty() const;
@@ -296,6 +298,14 @@ SIRE_OUTOFLINE_TEMPLATE
 T ArrayProperty<T>::at(int i) const
 {
     return a.constData()[ detail::checkIndex(i,a.count()) ];
+}
+
+/** Return the ith element of the array */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T ArrayProperty<T>::getitem(int i) const
+{
+    return this->at(i);
 }
 
 /** Clear the array */

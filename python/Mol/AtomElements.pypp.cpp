@@ -19,6 +19,8 @@ SireMol::AtomProperty<SireMol::Element> __copy__(const SireMol::AtomProperty<Sir
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_AtomElements_class(){
 
     { //::SireMol::AtomProperty< SireMol::Element >
@@ -427,6 +429,7 @@ void register_AtomElements_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         AtomElements_exposer.def( "__str__", &__str__< ::SireMol::AtomProperty<SireMol::Element> > );
         AtomElements_exposer.def( "__repr__", &__str__< ::SireMol::AtomProperty<SireMol::Element> > );
+        AtomElements_exposer.def( "__len__", &__len_size< ::SireMol::AtomProperty<SireMol::Element> > );
     }
 
 }

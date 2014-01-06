@@ -27,6 +27,8 @@ SireVol::NullGrid __copy__(const SireVol::NullGrid &other){ return SireVol::Null
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_NullGrid_class(){
 
     { //::SireVol::NullGrid
@@ -123,6 +125,7 @@ void register_NullGrid_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         NullGrid_exposer.def( "__str__", &__str__< ::SireVol::NullGrid > );
         NullGrid_exposer.def( "__repr__", &__str__< ::SireVol::NullGrid > );
+        NullGrid_exposer.def( "__len__", &__len_count< ::SireVol::NullGrid > );
     }
 
 }

@@ -35,6 +35,8 @@ SireMol::AtomProperty<SireMaths::Vector> __copy__(const SireMol::AtomProperty<Si
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_AtomCoords_class(){
 
     { //::SireMol::AtomProperty< SireMaths::Vector >
@@ -541,6 +543,7 @@ void register_AtomCoords_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         AtomCoords_exposer.def( "__str__", &__str__< ::SireMol::AtomProperty<SireMaths::Vector> > );
         AtomCoords_exposer.def( "__repr__", &__str__< ::SireMol::AtomProperty<SireMaths::Vector> > );
+        AtomCoords_exposer.def( "__len__", &__len_size< ::SireMol::AtomProperty<SireMaths::Vector> > );
     }
 
 }

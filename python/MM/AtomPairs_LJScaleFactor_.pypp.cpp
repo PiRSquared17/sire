@@ -303,6 +303,18 @@ void register_AtomPairs_LJScaleFactor__class(){
         
         }
         AtomPairs_LJScaleFactor__exposer.def( bp::self == bp::self );
+        { //::SireMM::AtomPairs< SireMM::LJScaleFactor >::reserve
+        
+            typedef SireMM::AtomPairs< SireMM::LJScaleFactor > exported_class_t;
+            typedef void ( ::SireMM::AtomPairs< SireMM::LJScaleFactor >::*reserve_function_type )( int,int ) ;
+            reserve_function_type reserve_function_value( &::SireMM::AtomPairs< SireMM::LJScaleFactor >::reserve );
+            
+            AtomPairs_LJScaleFactor__exposer.def( 
+                "reserve"
+                , reserve_function_value
+                , ( bp::arg("dim_x"), bp::arg("dim_y") ) );
+        
+        }
         { //::SireMM::AtomPairs< SireMM::LJScaleFactor >::set
         
             typedef SireMM::AtomPairs< SireMM::LJScaleFactor > exported_class_t;
@@ -409,6 +421,17 @@ void register_AtomPairs_LJScaleFactor__class(){
                 "setAll"
                 , setAll_function_value
                 , ( bp::arg("cgid0"), bp::arg("cgid1"), bp::arg("value") ) );
+        
+        }
+        { //::SireMM::AtomPairs< SireMM::LJScaleFactor >::squeeze
+        
+            typedef SireMM::AtomPairs< SireMM::LJScaleFactor > exported_class_t;
+            typedef void ( ::SireMM::AtomPairs< SireMM::LJScaleFactor >::*squeeze_function_type )(  ) ;
+            squeeze_function_type squeeze_function_value( &::SireMM::AtomPairs< SireMM::LJScaleFactor >::squeeze );
+            
+            AtomPairs_LJScaleFactor__exposer.def( 
+                "squeeze"
+                , squeeze_function_value );
         
         }
         AtomPairs_LJScaleFactor__exposer.def( "__rlshift__", &__rlshift__QDataStream< ::SireMM::AtomPairs<SireMM::LJScaleFactor> >,

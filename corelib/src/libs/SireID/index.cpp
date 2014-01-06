@@ -142,7 +142,7 @@ qint32 IndexBase::map(qint32 n) const
 //////// Implementation of Index
 ////////
 
-static const RegisterMetaType<Index> r_index;
+static const RegisterMetaType<Index> r_index(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREID_EXPORT &operator<<(QDataStream &ds, const Index &index)

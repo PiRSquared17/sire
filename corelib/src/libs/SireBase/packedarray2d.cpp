@@ -74,7 +74,7 @@ void SIREBASE_EXPORT SireBase::detail::throwPackedArray2D_Array_incompatibleErro
             .arg(this_sz).arg(other_sz), CODELOC );
 }       
 
-static const RegisterMetaType<PackedArray2DDataBase> r_parray( MAGIC_ONLY,
+static const RegisterMetaType<PackedArray2DDataBase> r_parray( MAGIC_ONLY, NO_ROOT,
                                                       "SireBase::PackedArray2D<T>" );
 
 void SIREBASE_EXPORT 
@@ -94,7 +94,7 @@ SireBase::detail::readPackedArray2DHeader(QDataStream &ds)
     return v;
 }
 
-static const RegisterMetaType<PackedArray2D_ArrayDataBase> r_parrayarray( MAGIC_ONLY,
+static const RegisterMetaType<PackedArray2D_ArrayDataBase> r_parrayarray( MAGIC_ONLY, NO_ROOT,
                                                 "SireBase::PackedArray2D<T>::Array" );
 
 void SIREBASE_EXPORT 

@@ -44,7 +44,7 @@ using namespace SireCAS;
 /** This is the null ExpressionBase - it equals '1.0' */
 static const ExpressionBase one = Constant();
 
-static const RegisterMetaType<ExpressionBase> r_exbase;
+static const RegisterMetaType<ExpressionBase> r_exbase(NO_ROOT);
 
 /** Serialise an ExpressionBase to a binary datastream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ExpressionBase &ex)

@@ -33,7 +33,7 @@
 using namespace SireStream;
 using namespace SireCAS;
 
-static const RegisterMetaType<FunctionSignature> r_sig;
+static const RegisterMetaType<FunctionSignature> r_sig(NO_ROOT);
 
 /** Serialise to a binary data stream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const FunctionSignature &sig)

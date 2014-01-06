@@ -22,6 +22,8 @@ SireFF::Inter2BFF<SireMM::CoulombPotentialInterface<SireMM::InterCoulombPotentia
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_InterCoulombFFBase_class(){
 
     { //::SireFF::Inter2BFF< SireMM::CoulombPotentialInterface< SireMM::InterCoulombPotential > >
@@ -149,6 +151,7 @@ void register_InterCoulombFFBase_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         InterCoulombFFBase_exposer.def( "__str__", &__str__< ::SireFF::Inter2BFF<SireMM::CoulombPotentialInterface<SireMM::InterCoulombPotential> > > );
         InterCoulombFFBase_exposer.def( "__repr__", &__str__< ::SireFF::Inter2BFF<SireMM::CoulombPotentialInterface<SireMM::InterCoulombPotential> > > );
+        InterCoulombFFBase_exposer.def( "__len__", &__len_count< ::SireFF::Inter2BFF<SireMM::CoulombPotentialInterface<SireMM::InterCoulombPotential> > > );
     }
 
 }

@@ -19,6 +19,8 @@ SireFF::Inter2B2G3DFF<SireMM::SoftCLJPotentialInterface<SireMM::InterSoftCLJPote
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_InterGroupSoftCLJFF_class(){
 
     { //::SireFF::Inter2B2G3DFF< SireMM::SoftCLJPotentialInterface< SireMM::InterSoftCLJPotential > >
@@ -190,6 +192,7 @@ void register_InterGroupSoftCLJFF_class(){
         InterGroupSoftCLJFF_exposer.def( "clone", &__copy__);
         InterGroupSoftCLJFF_exposer.def( "__str__", &__str__< ::SireFF::Inter2B2G3DFF<SireMM::SoftCLJPotentialInterface<SireMM::InterSoftCLJPotential> > > );
         InterGroupSoftCLJFF_exposer.def( "__repr__", &__str__< ::SireFF::Inter2B2G3DFF<SireMM::SoftCLJPotentialInterface<SireMM::InterSoftCLJPotential> > > );
+        InterGroupSoftCLJFF_exposer.def( "__len__", &__len_count< ::SireFF::Inter2B2G3DFF<SireMM::SoftCLJPotentialInterface<SireMM::InterSoftCLJPotential> > > );
     }
 
 }

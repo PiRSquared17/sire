@@ -3,6 +3,9 @@
 # update from the devel branch. Every time you merge,
 # make sure that you update the revision numbers in these commands
 
+svn merge -r 2165:2199 ../corelib/branches/devel corelib
+svn merge -r 2165:2199 ../python/branches/devel python
+
 Made the mistake of editing trunk. Merged trunk back into devel.
 Commit of devel/corelib is 2164
 Commit of devel/python is 2165

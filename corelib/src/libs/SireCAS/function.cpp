@@ -42,7 +42,7 @@ using namespace SireCAS;
 //////////// Implementation of FunctionPvt
 ////////////
 
-static const RegisterMetaType<FunctionPvt> r_functionpvt(MAGIC_ONLY,
+static const RegisterMetaType<FunctionPvt> r_functionpvt(MAGIC_ONLY, NO_ROOT,
                                                          "SireCAS::FunctionPvt");
 
 /** Serialise to a binary datastream */

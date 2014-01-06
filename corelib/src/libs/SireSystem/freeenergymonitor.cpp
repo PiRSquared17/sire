@@ -60,7 +60,7 @@ using std::pair;
 ///////// Implementation of AssignerGroup
 /////////
 
-static const RegisterMetaType<AssignerGroup> r_assignergroup;
+static const RegisterMetaType<AssignerGroup> r_assignergroup(NO_ROOT);
 
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const AssignerGroup &group)
 {
@@ -564,25 +564,25 @@ inline pair<double,double> getCLJEnergy(
             double one_over_r6 = one_over_r2 * one_over_r2 * one_over_r2;
             double one_over_r12 = one_over_r6 * one_over_r6;
             
-            iljnrg = ljpair.A() * one_over_r12 - ljpair.B() * one_over_r6;
+            iljnrg += ljpair.A() * one_over_r12 - ljpair.B() * one_over_r6;
             
-            icnrg = chg0.value() * chg1.value() * one_over_r
-                                 * one_over_four_pi_eps0;
+            icnrg += chg0.value() * chg1.value() * one_over_r
+                                  * one_over_four_pi_eps0;
         }
         
         cnrg += (1-lamval) * icnrg;
-        cnrg_f += (1-lamval+delta_lambda) * icnrg;
+        cnrg_f += (1-lamval-delta_lambda) * icnrg;
         ljnrg += (1-lamval) * iljnrg;
-        ljnrg_f += (1-lamval+delta_lambda) * iljnrg;
+        ljnrg_f += (1-lamval-delta_lambda) * iljnrg;
         
         icnrg = 0;
         iljnrg = 0;
         
         for (int j=0; j<nats_b; ++j)
         {
-            const Vector &coord1 = coords_a.at(j);
-            const Charge &chg1 = chgs_a.at(j);
-            const LJParameter &lj1 = ljs_a.at(j);
+            const Vector &coord1 = coords_b.at(j);
+            const Charge &chg1 = chgs_b.at(j);
+            const LJParameter &lj1 = ljs_b.at(j);
             
             LJPair ljpair;
 
@@ -596,10 +596,10 @@ inline pair<double,double> getCLJEnergy(
             double one_over_r6 = one_over_r2 * one_over_r2 * one_over_r2;
             double one_over_r12 = one_over_r6 * one_over_r6;
             
-            iljnrg = ljpair.A() * one_over_r12 - ljpair.B() * one_over_r6;
+            iljnrg += ljpair.A() * one_over_r12 - ljpair.B() * one_over_r6;
             
-            icnrg = chg0.value() * chg1.value() * one_over_r
-                                 * one_over_four_pi_eps0;
+            icnrg += chg0.value() * chg1.value() * one_over_r
+                                  * one_over_four_pi_eps0;
         }
 
         cnrg += (lamval) * icnrg;

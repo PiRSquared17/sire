@@ -303,6 +303,18 @@ void register_AtomPairs_CoulombScaleFactor__class(){
         
         }
         AtomPairs_CoulombScaleFactor__exposer.def( bp::self == bp::self );
+        { //::SireMM::AtomPairs< SireMM::CoulombScaleFactor >::reserve
+        
+            typedef SireMM::AtomPairs< SireMM::CoulombScaleFactor > exported_class_t;
+            typedef void ( ::SireMM::AtomPairs< SireMM::CoulombScaleFactor >::*reserve_function_type )( int,int ) ;
+            reserve_function_type reserve_function_value( &::SireMM::AtomPairs< SireMM::CoulombScaleFactor >::reserve );
+            
+            AtomPairs_CoulombScaleFactor__exposer.def( 
+                "reserve"
+                , reserve_function_value
+                , ( bp::arg("dim_x"), bp::arg("dim_y") ) );
+        
+        }
         { //::SireMM::AtomPairs< SireMM::CoulombScaleFactor >::set
         
             typedef SireMM::AtomPairs< SireMM::CoulombScaleFactor > exported_class_t;
@@ -409,6 +421,17 @@ void register_AtomPairs_CoulombScaleFactor__class(){
                 "setAll"
                 , setAll_function_value
                 , ( bp::arg("cgid0"), bp::arg("cgid1"), bp::arg("value") ) );
+        
+        }
+        { //::SireMM::AtomPairs< SireMM::CoulombScaleFactor >::squeeze
+        
+            typedef SireMM::AtomPairs< SireMM::CoulombScaleFactor > exported_class_t;
+            typedef void ( ::SireMM::AtomPairs< SireMM::CoulombScaleFactor >::*squeeze_function_type )(  ) ;
+            squeeze_function_type squeeze_function_value( &::SireMM::AtomPairs< SireMM::CoulombScaleFactor >::squeeze );
+            
+            AtomPairs_CoulombScaleFactor__exposer.def( 
+                "squeeze"
+                , squeeze_function_value );
         
         }
         AtomPairs_CoulombScaleFactor__exposer.def( "__rlshift__", &__rlshift__QDataStream< ::SireMM::AtomPairs<SireMM::CoulombScaleFactor> >,

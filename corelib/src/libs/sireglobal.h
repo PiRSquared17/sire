@@ -211,6 +211,8 @@ MagicID getMagic(const char *type_name);
 enum MagicOnlyEnum{ MAGIC_ONLY = 1 };
 /** Enum used to register without using the streaming operators */
 enum NoStreamEnum{ NO_STREAM = 2 };
+/** Enum used to register a class without a root class */
+enum NoRootEnum{ NO_ROOT = 3 };
 
 class RegisterMetaTypeBase
 {
@@ -243,6 +245,14 @@ private:
     int id;
 };
 
+namespace detail
+{
+    void registerLeaf(const QString &type_name, const char *root_class);
+    void registerBranch(const QString &type_name, const char *root_class);
+
+    void registerRootless(const QString &type_name);
+}
+
 /** This is used to register the type 'T' - this
     needs to be called once for each public type.
 
@@ -261,12 +271,33 @@ public:
     {
         qRegisterMetaType<T>(this->typeName());
         qRegisterMetaTypeStreamOperators<T>(this->typeName());
+        detail::registerLeaf(this->typeName(), T::ROOT::typeName());
+    }
+
+    /** Use this constructor to register a concrete class with no root */
+    RegisterMetaType(NoRootEnum )
+        : RegisterMetaTypeBase( getMagic( QMetaType::typeName( qMetaTypeId<T>() ) ),
+                                QMetaType::typeName( qMetaTypeId<T>() ),
+                                qMetaTypeId<T>() )
+    {
+        qRegisterMetaType<T>(this->typeName());
+        qRegisterMetaTypeStreamOperators<T>(this->typeName());
+        detail::registerRootless(this->typeName());
     }
 
     /** Use this construct to register a pure-virtual class */
     RegisterMetaType(MagicOnlyEnum, const char *type_name)
         : RegisterMetaTypeBase( getMagic(type_name), type_name, 0 )
-    {}
+    {
+        detail::registerBranch(this->typeName(), T::ROOT::typeName());
+    }
+
+    /** Use this construct to register a pure-virtual class with no registered root */
+    RegisterMetaType(MagicOnlyEnum, NoRootEnum, const char *type_name)
+        : RegisterMetaTypeBase( getMagic(type_name), type_name, 0 )
+    {
+        detail::registerRootless(this->typeName());
+    }
 
     /** Use this constructor to register a class that cannot be streamed */
     RegisterMetaType(NoStreamEnum )
@@ -275,6 +306,18 @@ public:
                                 qMetaTypeId<T>() )
     {
         qRegisterMetaType<T>(this->typeName());
+        detail::registerLeaf(this->typeName(), T::ROOT::typeName());
+    }
+
+    /** Use this constructor to register a class that cannot be streamed
+        and that has no registered root */
+    RegisterMetaType(NoStreamEnum, NoRootEnum )
+        : RegisterMetaTypeBase( getMagic( QMetaType::typeName( qMetaTypeId<T>() ) ),
+                                QMetaType::typeName( qMetaTypeId<T>() ),
+                                qMetaTypeId<T>() )
+    {
+        qRegisterMetaType<T>(this->typeName());
+        detail::registerRootless(this->typeName());
     }
 
     /** Destructor */
@@ -294,6 +337,7 @@ using Sire::RegisterMetaTypeBase;
 using Sire::RegisterMetaType;
 using Sire::MAGIC_ONLY;
 using Sire::NO_STREAM;
+using Sire::NO_ROOT;
 using Sire::MagicID;
 using Sire::getMagic;
 using SireStream::XMLStream;

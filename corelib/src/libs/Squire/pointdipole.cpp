@@ -33,7 +33,7 @@
 using namespace Squire;
 using namespace SireStream;
 
-static const RegisterMetaType<PointDipole> r_pointdipole;
+static const RegisterMetaType<PointDipole> r_pointdipole(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const PointDipole &q)

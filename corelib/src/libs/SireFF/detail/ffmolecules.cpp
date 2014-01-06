@@ -80,7 +80,7 @@ SireFF::detail::assertCompatible(const FFMoleculeBase &mol0,
 ///////// Implementation of FFMoleculeBase
 /////////
 
-static const RegisterMetaType<FFMoleculeBase> r_ffmolbase(MAGIC_ONLY,
+static const RegisterMetaType<FFMoleculeBase> r_ffmolbase(MAGIC_ONLY, NO_ROOT,
                                                   "SireFF::detail::FFMoleculeBase");
 
 /** Serialise to a binary datastream */
@@ -320,7 +320,7 @@ void FFMoleculeBase::restore(const PartialMolecule &oldmol)
 //////// Implementation of FFMoleculesBase
 ////////
 
-static const RegisterMetaType<FFMoleculesBase> r_ffmolsbase( MAGIC_ONLY,
+static const RegisterMetaType<FFMoleculesBase> r_ffmolsbase( MAGIC_ONLY, NO_ROOT,
                                                 "SireFF::detail::FFMoleculesBase" );
                                                 
 /** Serialise to a binary datastream */

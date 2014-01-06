@@ -13,6 +13,8 @@ namespace bp = boost::python;
 
 #include "number.h"
 
+#include <QDebug>
+
 #include "id.h"
 
 #include "Helpers/str.hpp"

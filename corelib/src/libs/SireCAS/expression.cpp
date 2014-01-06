@@ -50,7 +50,7 @@ using namespace SireStream;
 using namespace SireCAS;
 using namespace SireMaths;
 
-static const RegisterMetaType<Expression> r_expression;
+static const RegisterMetaType<Expression> r_expression(NO_ROOT);
 
 /** Serialise an Expression to a binary datastream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Expression &ex)

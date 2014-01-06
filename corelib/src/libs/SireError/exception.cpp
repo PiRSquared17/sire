@@ -44,6 +44,59 @@ using namespace SireStream;
 Q_GLOBAL_STATIC( QThreadStorage<QString*>, pidStrings );
 Q_GLOBAL_STATIC( QString, processString );
 
+namespace Sire
+{
+namespace detail
+{
+    QHash< QString, QSet<QString> > branch_classes;
+    QHash< QString, QSet<QString> > leaf_classes;
+    QSet<QString> rootless_classes;
+
+    const QHash< QString, QSet<QString> > SIRE_EXPORT branchClasses()
+    {
+        return branch_classes;
+    }
+
+    const QHash< QString, QSet<QString> > SIRE_EXPORT leafClasses()
+    {
+        return leaf_classes;
+    }
+
+    const QSet<QString> SIRE_EXPORT rootlessClasses()
+    {
+        return rootless_classes;
+    }
+
+    void SIRE_EXPORT registerLeaf(const QString &type_name, const char *root)
+    {
+        QLatin1String r(root);
+        if (not leaf_classes.contains(r))
+        {
+            leaf_classes.insert(r, QSet<QString>());
+        }
+        
+        leaf_classes[r].insert(type_name);
+    }
+    
+    void SIRE_EXPORT registerBranch(const QString &type_name, const char *root)
+    {
+        QLatin1String r(root);
+        if (not branch_classes.contains(r))
+        {
+            branch_classes.insert(r, QSet<QString>());
+        }
+        
+        branch_classes[r].insert(type_name);
+    }
+    
+    void SIRE_EXPORT registerRootless(const QString &type_name)
+    {
+        rootless_classes.insert(type_name);
+    }
+
+} // end of namespace detail
+} // end of namespace Sire
+
 namespace SireError
 {
 

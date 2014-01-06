@@ -61,7 +61,7 @@ using namespace SireUnits;
 // Implementation of FlexibilityTemplate
 //
 
-static RegisterMetaType<FlexibilityTemplate> r_flextemplate;
+static RegisterMetaType<FlexibilityTemplate> r_flextemplate(NO_ROOT);
 
 QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds,
                                       const FlexibilityTemplate &flextemplate)

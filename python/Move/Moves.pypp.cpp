@@ -44,6 +44,8 @@ namespace bp = boost::python;
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_Moves_class(){
 
     { //::SireMove::Moves
@@ -414,6 +416,7 @@ void register_Moves_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         Moves_exposer.def( "__str__", &__str__< ::SireMove::Moves > );
         Moves_exposer.def( "__repr__", &__str__< ::SireMove::Moves > );
+        Moves_exposer.def( "__len__", &__len_size< ::SireMove::Moves > );
     }
 
 }

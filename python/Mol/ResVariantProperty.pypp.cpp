@@ -19,6 +19,8 @@ SireMol::ResProperty<QVariant> __copy__(const SireMol::ResProperty<QVariant> &ot
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_ResVariantProperty_class(){
 
     { //::SireMol::ResProperty< QVariant >
@@ -255,6 +257,7 @@ void register_ResVariantProperty_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         ResVariantProperty_exposer.def( "__str__", &__str__< ::SireMol::ResProperty<QVariant> > );
         ResVariantProperty_exposer.def( "__repr__", &__str__< ::SireMol::ResProperty<QVariant> > );
+        ResVariantProperty_exposer.def( "__len__", &__len_size< ::SireMol::ResProperty<QVariant> > );
     }
 
 }

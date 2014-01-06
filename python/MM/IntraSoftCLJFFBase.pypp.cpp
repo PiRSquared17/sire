@@ -22,6 +22,8 @@ SireFF::Intra2BFF<SireMM::SoftCLJPotentialInterface<SireMM::IntraSoftCLJPotentia
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_IntraSoftCLJFFBase_class(){
 
     { //::SireFF::Intra2BFF< SireMM::SoftCLJPotentialInterface< SireMM::IntraSoftCLJPotential > >
@@ -149,6 +151,7 @@ void register_IntraSoftCLJFFBase_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         IntraSoftCLJFFBase_exposer.def( "__str__", &__str__< ::SireFF::Intra2BFF<SireMM::SoftCLJPotentialInterface<SireMM::IntraSoftCLJPotential> > > );
         IntraSoftCLJFFBase_exposer.def( "__repr__", &__str__< ::SireFF::Intra2BFF<SireMM::SoftCLJPotentialInterface<SireMM::IntraSoftCLJPotential> > > );
+        IntraSoftCLJFFBase_exposer.def( "__len__", &__len_count< ::SireFF::Intra2BFF<SireMM::SoftCLJPotentialInterface<SireMM::IntraSoftCLJPotential> > > );
     }
 
 }

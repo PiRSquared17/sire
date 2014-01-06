@@ -101,7 +101,7 @@ namespace SireFF
 ///////////// Implementation of SoftCLJPotential
 /////////////
 
-static const RegisterMetaType<SoftCLJPotential> r_cljpot( MAGIC_ONLY,
+static const RegisterMetaType<SoftCLJPotential> r_cljpot( MAGIC_ONLY, NO_ROOT,
                                                           "SireMM::SoftCLJPotential" );
 
 /** Serialise to a binary datastream */
@@ -582,7 +582,7 @@ int SoftCLJPotential::ljPower() const
 ///////////// Implementation of InterSoftCLJPotential
 /////////////
 
-static const RegisterMetaType<InterSoftCLJPotential> r_interclj( MAGIC_ONLY,
+static const RegisterMetaType<InterSoftCLJPotential> r_interclj( MAGIC_ONLY, NO_ROOT,
                                                    InterSoftCLJPotential::typeName() );
 
 /** Serialise to a binary datastream */
@@ -2927,7 +2927,7 @@ void InterSoftCLJPotential::_pvt_calculateLJPotential(const InterSoftCLJPotentia
 ////////////// Implementation of IntraSoftCLJPotential
 /////////////
 
-static const RegisterMetaType<IntraSoftCLJPotential> r_intraclj( MAGIC_ONLY,
+static const RegisterMetaType<IntraSoftCLJPotential> r_intraclj( MAGIC_ONLY, NO_ROOT,
                                                    IntraSoftCLJPotential::typeName() );
 
 /** Serialise to a binary datastream */

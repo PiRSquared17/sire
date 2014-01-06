@@ -33,7 +33,7 @@
 using namespace SireStream;
 using namespace SireMaths;
 
-static const RegisterMetaType<Sphere> r_sphere;
+static const RegisterMetaType<Sphere> r_sphere(NO_ROOT);
 
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Sphere &sphere)

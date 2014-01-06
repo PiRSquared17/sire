@@ -29,6 +29,8 @@ SireAnalysis::FEP __copy__(const SireAnalysis::FEP &other){ return SireAnalysis:
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_FEP_class(){
 
     { //::SireAnalysis::FEP
@@ -336,6 +338,7 @@ void register_FEP_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         FEP_exposer.def( "__str__", &__str__< ::SireAnalysis::FEP > );
         FEP_exposer.def( "__repr__", &__str__< ::SireAnalysis::FEP > );
+        FEP_exposer.def( "__len__", &__len_size< ::SireAnalysis::FEP > );
     }
 
 }

@@ -95,6 +95,8 @@ public:
 
     double operator[](unsigned int i) const;
 
+    double getitem(int i) const{ return this->operator[](i); }
+
     unsigned int count() const;
     double at(unsigned int i) const;
 

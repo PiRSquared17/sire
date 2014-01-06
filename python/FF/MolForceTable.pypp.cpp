@@ -33,6 +33,8 @@ SireFF::MolForceTable __copy__(const SireFF::MolForceTable &other){ return SireF
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_MolForceTable_class(){
 
     { //::SireFF::MolForceTable
@@ -329,6 +331,7 @@ void register_MolForceTable_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         MolForceTable_exposer.def( "__str__", &__str__< ::SireFF::MolForceTable > );
         MolForceTable_exposer.def( "__repr__", &__str__< ::SireFF::MolForceTable > );
+        MolForceTable_exposer.def( "__len__", &__len_size< ::SireFF::MolForceTable > );
     }
 
 }

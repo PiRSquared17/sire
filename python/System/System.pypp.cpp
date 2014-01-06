@@ -68,6 +68,8 @@ SireSystem::System __copy__(const SireSystem::System &other){ return SireSystem:
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_System_class(){
 
     { //::SireSystem::System
@@ -1335,7 +1337,7 @@ void register_System_class(){
         }
         { //::SireSystem::System::remove
         
-            typedef void ( ::SireSystem::System::*remove_function_type )( ::SireMol::MGID const & ) ;
+            typedef bool ( ::SireSystem::System::*remove_function_type )( ::SireMol::MGID const & ) ;
             remove_function_type remove_function_value( &::SireSystem::System::remove );
             
             System_exposer.def( 
@@ -1919,6 +1921,7 @@ void register_System_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         System_exposer.def( "__str__", &__str__< ::SireSystem::System > );
         System_exposer.def( "__repr__", &__str__< ::SireSystem::System > );
+        System_exposer.def( "__len__", &__len_count< ::SireSystem::System > );
     }
 
 }

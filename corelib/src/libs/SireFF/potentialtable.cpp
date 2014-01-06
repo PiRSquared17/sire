@@ -53,7 +53,7 @@ using namespace SireStream;
 ///////// Implementation of MolPotentialTable
 /////////
 
-static const RegisterMetaType<MolPotentialTable> r_moltable;
+static const RegisterMetaType<MolPotentialTable> r_moltable(NO_ROOT);
 
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, 
                                       const MolPotentialTable &moltable)
@@ -881,7 +881,7 @@ void MolPotentialTable::subtract(const MolPotentialTable &other)
 ///////// Implementation of GridPotentialTable
 /////////
 
-static const RegisterMetaType<GridPotentialTable> r_gridtable;
+static const RegisterMetaType<GridPotentialTable> r_gridtable(NO_ROOT);
 
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const GridPotentialTable &gridtable)
 {
@@ -1312,7 +1312,7 @@ GridPotentialTable::const_iterator GridPotentialTable::constEnd() const
 ///////// Implementation of PotentialTable
 /////////
 
-static const RegisterMetaType<PotentialTable> r_potentialtable;
+static const RegisterMetaType<PotentialTable> r_potentialtable(NO_ROOT);
 
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const PotentialTable &potentialtable)
 {

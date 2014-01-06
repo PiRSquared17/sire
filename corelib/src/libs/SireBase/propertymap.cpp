@@ -40,7 +40,7 @@ using namespace SireStream;
 //////////// Implementation of PropertyName
 ////////////
 
-static const RegisterMetaType<PropertyName> r_propname;
+static const RegisterMetaType<PropertyName> r_propname(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, 
@@ -209,7 +209,7 @@ QString PropertyName::toString() const
 //////////// Implementation of PropertyMap
 ////////////
 
-static const RegisterMetaType<PropertyMap> r_propmap;
+static const RegisterMetaType<PropertyMap> r_propmap(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, 

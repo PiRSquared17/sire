@@ -37,7 +37,7 @@ using namespace SireMM;
 using namespace SireMaths;
 using namespace SireStream;
 
-static const RegisterMetaType<LJPair> r_ljpair;
+static const RegisterMetaType<LJPair> r_ljpair(NO_ROOT);
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const LJPair &ljpair)

@@ -19,6 +19,8 @@ SireMol::ChainProperty<double> __copy__(const SireMol::ChainProperty<double> &ot
 
 #include "Helpers/str.hpp"
 
+#include "Helpers/len.hpp"
+
 void register_ChainFloatProperty_class(){
 
     { //::SireMol::ChainProperty< double >
@@ -255,6 +257,7 @@ void register_ChainFloatProperty_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         ChainFloatProperty_exposer.def( "__str__", &__str__< ::SireMol::ChainProperty<double> > );
         ChainFloatProperty_exposer.def( "__repr__", &__str__< ::SireMol::ChainProperty<double> > );
+        ChainFloatProperty_exposer.def( "__len__", &__len_size< ::SireMol::ChainProperty<double> > );
     }
 
 }

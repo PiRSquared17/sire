@@ -43,7 +43,7 @@
 using namespace SireSystem;
 using namespace SireStream;
 
-static const RegisterMetaType<SystemMonitors> r_sysmons;
+static const RegisterMetaType<SystemMonitors> r_sysmons(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const SystemMonitors &sysmons)

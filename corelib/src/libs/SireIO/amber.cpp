@@ -1069,7 +1069,7 @@ static void calcNumberMolecules(int &totalMolecules,
 /////////// Implementation of Amber
 ///////////
 
-static const RegisterMetaType<Amber> r_amber;
+static const RegisterMetaType<Amber> r_amber(NO_ROOT);
 
 /** Serialise to a binary datastream */
 QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds, const Amber &amber)

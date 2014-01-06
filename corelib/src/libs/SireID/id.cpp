@@ -30,6 +30,8 @@
 #include "name.h"
 #include "number.h"
 
+#include <QDebug>
+
 using namespace SireID;
 
 ///////////

@@ -248,7 +248,7 @@ static PackedArray2D<LJParamID> getLJParamIDs(const PartialMolecule &molecule,
 ///////////// Implementation of LJPotential
 /////////////
 
-static const RegisterMetaType<LJPotential> r_ljpot( MAGIC_ONLY,
+static const RegisterMetaType<LJPotential> r_ljpot( MAGIC_ONLY, NO_ROOT,
                                                     "SireMM::LJPotential" );
 
 /** Serialise to a binary datastream */
@@ -470,7 +470,7 @@ const QString& LJPotential::combiningRules() const
 ///////////// Implementation of InterLJPotential
 /////////////
 
-static const RegisterMetaType<InterLJPotential> r_interlj( MAGIC_ONLY,
+static const RegisterMetaType<InterLJPotential> r_interlj( MAGIC_ONLY, NO_ROOT,
                                             InterLJPotential::typeName() );
 
 /** Serialise to a binary datastream */
@@ -1702,7 +1702,7 @@ void InterLJPotential::_pvt_calculateLJField(
 ///////////// Implementation of IntraLJPotential
 /////////////
 
-static const RegisterMetaType<IntraLJPotential> r_intralj( MAGIC_ONLY,
+static const RegisterMetaType<IntraLJPotential> r_intralj( MAGIC_ONLY, NO_ROOT,
                                             IntraLJPotential::typeName() );
 
 /** Serialise to a binary datastream */
