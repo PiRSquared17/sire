@@ -290,9 +290,9 @@ bool AABox::withinDistance(double dist, const AABox &box) const
     double dy = std::abs(cent.y() - box.cent.y()) - halfextents.y() - box.halfextents.y();
     double dz = std::abs(cent.z() - box.cent.z()) - halfextents.z() - box.halfextents.z();
 
-    dx = SIRE_MIN(dx,0.0);
-    dy = SIRE_MIN(dy,0.0);
-    dz = SIRE_MIN(dz,0.0);
+    dx = SIRE_MAX(dx,0.0);
+    dy = SIRE_MAX(dy,0.0);
+    dz = SIRE_MAX(dz,0.0);
 
     return dx*dx + dy*dy + dz*dz <= dist*dist;
 }
@@ -319,11 +319,22 @@ bool AABox::contains(const AABox &other) const
     else
     {
         const Vector maxdelta = this->maxCoords() - other.maxCoords();
-        
-        if (maxdelta.x() < 0 or maxdelta.y() < 0 or maxdelta.z() < 0)
-            return false;
-        else
-            return true;
+        return (maxdelta.x() > 0 and maxdelta.y() > 0 and maxdelta.z() > 0);
+    }
+}
+
+/** Return whether or not this box contains the point 'point' */
+bool AABox::contains(const Vector &point) const
+{
+    const Vector mindelta = this->minCoords() - point;
+    
+    if (mindelta.x() > 0 or mindelta.y() > 0 or mindelta.z() > 0)
+        return false;
+    
+    else
+    {
+        const Vector maxdelta = this->maxCoords() - point;
+        return (maxdelta.x() > 0 and maxdelta.y() > 0 and maxdelta.z() > 0);
     }
 }
 
@@ -458,8 +469,8 @@ AABox AABox::from(const Vector &mincoords, const Vector &maxcoords)
     Vector max = maxcoords;
     max.setMax(mincoords);
     
-    Vector cent = 0.5 * (maxcoords + mincoords);
-    Vector halfextents = maxcoords - cent;
+    Vector halfextents = 0.5 * (max - min);
+    Vector cent = min + halfextents;
     
     return AABox(cent, halfextents);
 }

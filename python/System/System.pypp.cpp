@@ -89,6 +89,16 @@ void register_System_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireSystem::System::accept
+        
+            typedef void ( ::SireSystem::System::*accept_function_type )(  ) ;
+            accept_function_type accept_function_value( &::SireSystem::System::accept );
+            
+            System_exposer.def( 
+                "accept"
+                , accept_function_value );
+        
+        }
         { //::SireSystem::System::add
         
             typedef void ( ::SireSystem::System::*add_function_type )( ::QString const &,::SireSystem::SystemMonitor const &,int ) ;
@@ -1109,6 +1119,16 @@ void register_System_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        { //::SireSystem::System::needsAccepting
+        
+            typedef bool ( ::SireSystem::System::*needsAccepting_function_type )(  ) const;
+            needsAccepting_function_type needsAccepting_function_value( &::SireSystem::System::needsAccepting );
+            
+            System_exposer.def( 
+                "needsAccepting"
+                , needsAccepting_function_value );
+        
+        }
         { //::SireSystem::System::null
         
             typedef ::SireSystem::System const & ( *null_function_type )(  );
@@ -1846,35 +1866,35 @@ void register_System_class(){
         }
         { //::SireSystem::System::update
         
-            typedef void ( ::SireSystem::System::*update_function_type )( ::SireMol::MoleculeData const & ) ;
+            typedef void ( ::SireSystem::System::*update_function_type )( ::SireMol::MoleculeData const &,bool ) ;
             update_function_type update_function_value( &::SireSystem::System::update );
             
             System_exposer.def( 
                 "update"
                 , update_function_value
-                , ( bp::arg("moldata") ) );
+                , ( bp::arg("moldata"), bp::arg("auto_commit")=(bool)(true) ) );
         
         }
         { //::SireSystem::System::update
         
-            typedef void ( ::SireSystem::System::*update_function_type )( ::SireMol::Molecules const & ) ;
+            typedef void ( ::SireSystem::System::*update_function_type )( ::SireMol::Molecules const &,bool ) ;
             update_function_type update_function_value( &::SireSystem::System::update );
             
             System_exposer.def( 
                 "update"
                 , update_function_value
-                , ( bp::arg("molecules") ) );
+                , ( bp::arg("molecules"), bp::arg("auto_commit")=(bool)(true) ) );
         
         }
         { //::SireSystem::System::update
         
-            typedef void ( ::SireSystem::System::*update_function_type )( ::SireMol::MoleculeGroup const & ) ;
+            typedef void ( ::SireSystem::System::*update_function_type )( ::SireMol::MoleculeGroup const &,bool ) ;
             update_function_type update_function_value( &::SireSystem::System::update );
             
             System_exposer.def( 
                 "update"
                 , update_function_value
-                , ( bp::arg("molgroup") ) );
+                , ( bp::arg("molgroup"), bp::arg("auto_commit")=(bool)(true) ) );
         
         }
         { //::SireSystem::System::userProperties

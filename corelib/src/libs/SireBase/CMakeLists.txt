@@ -21,6 +21,7 @@ set ( SIREBASE_HEADERS
       array2d.hpp
       array2d.h
       arrayproperty.hpp
+      booleanproperty.h
       chunkedhash.hpp
       chunkedvector.hpp
       combineproperties.h
@@ -33,6 +34,7 @@ set ( SIREBASE_HEADERS
       increment.h
       incremint.h
       linktoproperty.h
+      lengthproperty.h
       majorminorversion.h
       meminfo.h
       numberproperty.h
@@ -67,6 +69,7 @@ set ( SIREBASE_SOURCES
 
       array2d.cpp
       arrayproperty.cpp
+      booleanproperty.cpp
       chunkedhash.cpp
       chunkedvector.cpp
       combineproperties.cpp
@@ -76,6 +79,7 @@ set ( SIREBASE_SOURCES
       findexe.cpp
       getinstalldir.cpp
       globalsharedpointer.cpp
+      lengthproperty.cpp
       linktoproperty.cpp
       majorminorversion.cpp
       meminfo.cpp
@@ -105,6 +109,7 @@ set_target_properties (SireBase PROPERTIES
 
 # Link to other Sire libraries
 target_link_libraries (SireBase
+                       SireUnits
                        SireID
                        SireStream
                        )

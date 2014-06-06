@@ -16,11 +16,19 @@ set ( SIREMM_HEADERS
       atomfunctions.h
       atomljs.h
       atompairs.hpp
+      cljatoms.h
+      cljboxes.h
+      cljcalculator.h
       cljcomponent.h
+      cljdelta.h
+      cljfunction.h
+      cljgrid.h
       cljparam.h
       cljpotential.h
       cljprobe.h
       cljnbpairs.h
+      cljshiftfunction.h
+      cljworkspace.h
       coulombpotential.h
       dihedralrestraint.h
       distancerestraint.h
@@ -30,6 +38,7 @@ set ( SIREMM_HEADERS
       gridff2.h
       intercljff.h
       intercoulombff.h
+      interff.h
       interljff.h
       internalcomponent.h
       internalff.h
@@ -52,6 +61,7 @@ set ( SIREMM_HEADERS
       softcljcomponent.h
       softcljpotential.h
       switchingfunction.h
+      testff.h
       threeatomfunctions.h
       twoatomfunctions.h
     )
@@ -68,11 +78,19 @@ set ( SIREMM_SOURCES
       anglerestraint.cpp
       atomfunctions.cpp
       atomljs.cpp
+      cljatoms.cpp
+      cljboxes.cpp
+      cljcalculator.cpp
       cljcomponent.cpp
+      cljdelta.cpp
+      cljfunction.cpp
+      cljgrid.cpp
       cljparam.cpp
       cljpotential.cpp
       cljprobe.cpp
       cljnbpairs.cpp
+      cljshiftfunction.cpp
+      cljworkspace.cpp
       coulombpotential.cpp
       dihedralrestraint.cpp
       distancerestraint.cpp
@@ -82,6 +100,7 @@ set ( SIREMM_SOURCES
       gridff2.cpp
       intercljff.cpp
       intercoulombff.cpp
+      interff.cpp
       interljff.cpp
       internalcomponent.cpp
       internalff.cpp
@@ -103,6 +122,7 @@ set ( SIREMM_SOURCES
       softcljcomponent.cpp
       softcljpotential.cpp
       switchingfunction.cpp
+      testff.cpp
       threeatomfunctions.cpp
       twoatomfunctions.cpp    
 

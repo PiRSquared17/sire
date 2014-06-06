@@ -122,8 +122,8 @@ protected:
 
     void _pvt_removed(quint32 groupid, const PartialMolecule &mol);
 
-    void _pvt_changed(quint32 groupid, const SireMol::Molecule &molecule);
-    void _pvt_changed(quint32 groupid, const QList<SireMol::Molecule> &molecules);
+    void _pvt_changed(quint32 groupid, const SireMol::Molecule &molecule, bool auto_commit);
+    void _pvt_changed(quint32 groupid, const QList<SireMol::Molecule> &molecules, bool auto_commit);
     
     void _pvt_removedAll(quint32 groupid);
         
@@ -451,7 +451,8 @@ void Inter2B2GFF<Potential>::_pvt_removed(quint32 groupid,
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
 void Inter2B2GFF<Potential>::_pvt_changed(quint32 groupid,
-                                          const SireMol::Molecule &molecule)
+                                          const SireMol::Molecule &molecule,
+                                          bool auto_commit)
 {
     if (this->recordingChanges())
     {
@@ -474,7 +475,8 @@ void Inter2B2GFF<Potential>::_pvt_changed(quint32 groupid,
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
 void Inter2B2GFF<Potential>::_pvt_changed(quint32 groupid,
-                                          const QList<SireMol::Molecule> &molecules)
+                                          const QList<SireMol::Molecule> &molecules,
+                                          bool auto_commit)
 {
     Molecules old_mols = mols[groupid];
     QHash<MolNum,ChangedMolecule> old_changed_mols = changed_mols[groupid];

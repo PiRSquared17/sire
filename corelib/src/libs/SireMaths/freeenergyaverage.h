@@ -68,12 +68,16 @@ friend QDataStream& ::operator>>(QDataStream&, FreeEnergyAverage&);
 
 public:
     FreeEnergyAverage();
-    FreeEnergyAverage(const SireUnits::Dimension::Temperature &temperature);
+    FreeEnergyAverage(bool forwards_free_energy);
+    FreeEnergyAverage(const SireUnits::Dimension::Temperature &temperature,
+                      bool forwards_free_energy=true);
     
-    FreeEnergyAverage(const SireUnits::Dimension::MolarEnergy &binwidth);
+    FreeEnergyAverage(const SireUnits::Dimension::MolarEnergy &binwidth,
+                      bool forwards_free_energy=true);
     
     FreeEnergyAverage(const SireUnits::Dimension::Temperature &temperature,
-                      const SireUnits::Dimension::MolarEnergy &binwidth);
+                      const SireUnits::Dimension::MolarEnergy &binwidth,
+                      bool forwards_free_energy=true);
     
     FreeEnergyAverage(const FreeEnergyAverage &other);
     
@@ -96,10 +100,19 @@ public:
 
     const Histogram& histogram() const;
 
+    bool isForwardsFreeEnergy() const;
+    bool isBackwardsFreeEnergy() const;
+
     void clear();
     
     void accumulate(double value);
 
+    double average() const;
+    double average2() const;
+
+    operator double() const;
+
+    double fepFreeEnergy() const;
     double taylorExpansion() const;
 
 private:
@@ -107,6 +120,11 @@ private:
         average to be monitored and the error, and corrected values to be 
         calculated */
     Histogram hist;
+    
+    /** Whether or not this is a forwards free energy (from a low lambda to high lambda
+        value) or a backwards free energy (from a high lambda to low lambda). Note that
+        the negative of the free energy is returned if this is a backwards free energy */
+    bool is_forwards_free_energy;
 };
 
 /** This class is used to accumulate the free energy average, using
@@ -134,13 +152,26 @@ friend QDataStream& ::operator>>(QDataStream&, BennettsFreeEnergyAverage&);
 
 public:
     BennettsFreeEnergyAverage();
+    BennettsFreeEnergyAverage(bool forwards_free_energy);
 
-    BennettsFreeEnergyAverage(const SireUnits::Dimension::Temperature &temperature);
+    BennettsFreeEnergyAverage(const SireUnits::Dimension::Temperature &temperature,
+                              bool forwards_free_energy=true);
+
+    BennettsFreeEnergyAverage(const SireUnits::Dimension::MolarEnergy &constant,
+                              const SireUnits::Dimension::Temperature &temperature,
+                              bool forwards_free_energy=true);
     
-    BennettsFreeEnergyAverage(const SireUnits::Dimension::MolarEnergy &binwidth);
+    BennettsFreeEnergyAverage(const SireUnits::Dimension::MolarEnergy &constant,
+                              bool forwards_free_energy=true);
     
     BennettsFreeEnergyAverage(const SireUnits::Dimension::Temperature &temperature,
-                             const SireUnits::Dimension::MolarEnergy &binwidth);
+                              const SireUnits::Dimension::MolarEnergy &binwidth,
+                              bool forwards_free_energy=true);
+    
+    BennettsFreeEnergyAverage(const SireUnits::Dimension::MolarEnergy &constant,
+                              const SireUnits::Dimension::Temperature &temperature,
+                              const SireUnits::Dimension::MolarEnergy &binwidth,
+                              bool forwards_free_energy=true);
     
     BennettsFreeEnergyAverage(const BennettsFreeEnergyAverage &other);
     
@@ -163,24 +194,23 @@ public:
     
     void accumulate(double value);
 
-    double forwardsRatio() const;
-    double forwardsStandardError(double level) const;
-    
-    double backwardsRatio() const;
-    double backwardsStandardError(double level) const;
+    double bennettsRatio() const;
+    double bennettsStandardError(double level) const;
+
+    bool isForwardsRatio() const;
+    bool isBackwardsRatio() const;
+
+    SireUnits::Dimension::MolarEnergy constant() const;
 
 private:
-    /** The average forwards ratio */
-    double fwds_avg;
+    /** The average bennetts ratio */
+    double bennetts_avg;
     
-    /** The average backwards ratio */
-    double bwds_avg;
+    /** The average of the squared bennetts ratio */
+    double bennetts_avg2;
     
-    /** The average of the squared forwards ratio */
-    double fwds_avg2;
-    
-    /** The average of the squared backwards ratio */
-    double bwds_avg2;
+    /** The energy offset for each ratio */
+    SireUnits::Dimension::MolarEnergy const_offset;
 };
 
 }

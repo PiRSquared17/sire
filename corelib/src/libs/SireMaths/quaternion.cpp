@@ -34,6 +34,8 @@
 #include <QRegExp>
 #include <cmath>
 
+#include <QDebug>
+
 #include "SireStream/datastream.h"
 
 using namespace SireMaths;
@@ -175,12 +177,25 @@ const Quaternion SIREMATHS_EXPORT SireMaths::operator*(const Vector &p, const Qu
 /** Convert into a matrix */
 Matrix Quaternion::toMatrix() const
 {
+    /* Thanks to http://www.flipcode.com/documents/matrfaq.html#Q54
+    
+        |       2     2                                |
+        | 1 - 2Y  - 2Z    2XY - 2ZW      2XZ + 2YW     |
+        |                                              |
+        |                       2     2                |
+    M = | 2XY + 2ZW       1 - 2X  - 2Z   2YZ - 2XW     |
+        |                                              |
+        |                                      2     2 |
+        | 2XZ - 2YW       2YZ + 2XW      1 - 2X  - 2Y  |
+        |                                              |
+    */
+
     return 
-     Matrix( 1.0-(2.0*sc[1]*sc[1])-(2.0*sc[2]*sc[2]), (2.0*sc[0]*sc[1])+(2.0*sc[3]*sc[2]),
-             (2.0*sc[0]*sc[2])-(2.0*sc[3]*sc[1]),
-             (2.0*sc[0]*sc[1])-(2.0*sc[3]*sc[2]), 1.0-(2.0*sc[0]*sc[0])-(2.0*sc[2]*sc[2]),
-             (2.0*sc[1]*sc[2])+(2.0*sc[3]*sc[0]),
-             (2.0*sc[0]*sc[2])+(2.0*sc[1]*sc[3]), (2.0*sc[1]*sc[2])-(2.0*sc[0]*sc[3]),
+     Matrix( 1.0-(2.0*sc[1]*sc[1])-(2.0*sc[2]*sc[2]), (2.0*sc[0]*sc[1])-(2.0*sc[3]*sc[2]),
+             (2.0*sc[0]*sc[2])+(2.0*sc[1]*sc[3]),
+             (2.0*sc[0]*sc[1])+(2.0*sc[3]*sc[2]), 1.0-(2.0*sc[0]*sc[0])-(2.0*sc[2]*sc[2]),
+             (2.0*sc[1]*sc[2])-(2.0*sc[3]*sc[0]),
+             (2.0*sc[0]*sc[2])-(2.0*sc[1]*sc[3]), (2.0*sc[1]*sc[2])+(2.0*sc[0]*sc[3]),
              1.0-(2.0*sc[0]*sc[0])-(2.0*sc[1]*sc[1]) );
 }
 
@@ -212,6 +227,46 @@ Vector Quaternion::rotate(const Vector &p) const
                        + ( 0.5 - sx2 - sy2 )*p.z()) );
 }
 
+/** Use the quaternion to rotate all of the points in 'p' */
+QVector<Vector> Quaternion::rotate(const QVector<Vector> &points) const
+{
+    if (this->isIdentity())
+        return points;
+
+    const double sx2 = sc[0]*sc[0];
+    const double sy2 = sc[1]*sc[1];
+    const double sz2 = sc[2]*sc[2];
+
+    const double sxy = sc[0]*sc[1];
+    const double sxz = sc[0]*sc[2];
+    const double syz = sc[1]*sc[2];
+
+    const double swx = sc[0]*sc[3];
+    const double swy = sc[1]*sc[3];
+    const double swz = sc[2]*sc[3];
+
+    QVector<Vector> ret(points);
+    
+    for (int i=0; i<ret.count(); ++i)
+    {
+        Vector &p = ret[i];
+        
+        p = Vector( 2.0*( ( 0.5 - sy2 - sz2 ) *p.x()
+                         + ( sxy - swz )      *p.y()
+                         + ( sxz + swy )      *p.z()),
+
+                    2.0*( ( sxy + swz )       *p.x()
+                        + ( 0.5 - sx2 - sz2 ) *p.y()
+                        + ( syz - swx )       *p.z()),
+
+                    2.0*( ( sxz - swy )       *p.x()
+                        + ( syz + swx )       *p.y()
+                        + ( 0.5 - sx2 - sy2 ) *p.z()) );
+    }
+
+    return ret;
+}
+
 /** Return a quaternion that represents the identity matrix */
 Quaternion Quaternion::identity()
 {
@@ -221,50 +276,113 @@ Quaternion Quaternion::identity()
 /** Get from a matrix */
 void Quaternion::fromMatrix(const Matrix &m)
 {
-    double trace = m.xx()+m.yy()+m.zz();
+    if (not SireMaths::areEqual(m.determinant(), 1.0))
+        throw SireMaths::domain_error( QObject::tr(
+                "You can only convert a rotation matrix to a quaternion. Rotation matrices "
+                "have a determinant of 1.0, while the matrix you passed has a determinant of "
+                "%1\n%2").arg(m.determinant()).arg(m.toString()), CODELOC );
 
-    if (trace >= 0.000001)
+  /* Thanks to http://www.flipcode.com/documents/matrfaq.html#Q54
+  
+  A rotation may be converted back to a quaternion through the use of
+  the following algorithm:
+
+  The process is performed in the following stages, which are as follows:
+
+    Calculate the trace of the matrix T from the equation:
+
+      T = mat[0] + mat[5] + mat[10] + 1
+
+   */
+    const double trace = m.xx() + m.yy() + m.zz() + 1;
+
+    /*
+    If the trace of the matrix is greater than zero, then
+    perform an "instant" calculation.
+
+      S = 0.5 / sqrt(T)
+
+      W = 0.25 / S                           Mapping from Sire to mat[X]
+                                             xx xy xz   0 1 2
+      X = ( mat[9] - mat[6] ) * S            yx yy yz   4 5 6
+                                             zx zy zz   8 9 10
+      Y = ( mat[2] - mat[8] ) * S
+
+      Z = ( mat[4] - mat[1] ) * S
+    */
+    if (trace > 0.00001)  // use 0.00001 to avoid numerical instability near 0
     {
-        double s = sqrt(trace+1.0);
-        sc[3] = 0.5*s;
-        s = 0.5 / s;
+        double s = 0.5 / sqrt(trace);
+        sc[3] = 0.25 / s;
 
-        sc[0] = (m.yz()-m.zy())*s;
-        sc[1] = (m.zx()-m.xz())*s;
-        sc[2] = (m.xy()-m.yx())*s;
+        sc[0] = (m.zy()-m.yz())*s;
+        sc[1] = (m.xz()-m.zx())*s;
+        sc[2] = (m.yx()-m.xy())*s;
     }
     else
     {
-        if ( (m.zz() > m.yy()) && (m.zz() > m.yy()) )
-        {
-            double s = sqrt( m.zz() - m.xx() - m.yy() + 1 );
-            sc[2] = 0.5*s;
-            s = 0.5 / s;
+        /*
+        If the trace of the matrix is less than or equal to zero
+        then identify which major diagonal element has the greatest
+        value. */
 
-            sc[0] = (m.xz()+m.zx())*s;
-            sc[1] = (m.zy()+m.yz())*s;
-            sc[3] = (m.xy()-m.yx())*s;
+        if ( (m.zz() >= m.yy()) and (m.zz() >= m.xx()) )
+        {
+            /* Column 2:
+            S  = sqrt( 1.0 + mr[10] - mr[0] - mr[5] ) * 2;
+
+            Qx = (mr[2] + mr[8] ) / S;
+            Qy = (mr[6] + mr[9] ) / S;
+            Qz = 0.5 / S;
+            Qw = (mr[1] + mr[4] ) / S; */
+
+            double s = sqrt( 1 + m.zz() - m.xx() - m.yy() ) * 2;
+
+            sc[0] = (m.xz() + m.zx()) / s;
+            sc[1] = (m.zy() + m.yz()) / s;
+            sc[2] = 0.5 / s;
+            sc[3] = (m.yx() + m.xy()) / s;
         }
-        else if (m.yy() > m.xx())
+        else if (m.yy() >= m.xx())
         {
-            double s = sqrt( m.yy() - m.zz() - m.xx() + 1 );
-            sc[1] = 0.5*s;
-            s = 0.5 / s;
+           /* Column 1:
+            S  = sqrt( 1.0 + mr[5] - mr[0] - mr[10] ) * 2;
 
-            sc[2] = (m.zy() + m.yz()) * s;
-            sc[0] = (m.yx() + m.xy()) * s;
-            sc[3] = (m.zx() - m.xz()) * s;
+            Qx = (mr[1] + mr[4] ) / S;
+            Qy = 0.5 / S;
+            Qz = (mr[6] + mr[9] ) / S;
+            Qw = (mr[2] + mr[8] ) / S; */
+
+            double s = sqrt( 1.0 + m.yy() - m.zz() - m.xx() ) * 2;
+
+            sc[0] = (m.yx() + m.xy()) / s;
+            sc[1] = 0.5 / s;
+            sc[2] = (m.zy() + m.yz()) / s;
+            sc[3] = (m.xz() + m.zx()) / s;
         }
         else
         {
-            double s = sqrt( m.xx() - m.yy() - m.zz() + 1 );
-            sc[0] = 0.5*s;
-            s = 0.5 / s;
-            sc[1] = (m.yx() + m.xy()) * s;
-            sc[2] = (m.xz() + m.zx()) * s;
-            sc[3] = (m.yx() - m.zy()) * s;
+            /* Column 0:
+            S  = sqrt( 1.0 + mr[0] - mr[5] - mr[10] ) * 2;
+
+            Qx = 0.5 / S;
+            Qy = (mr[1] + mr[4] ) / S;
+            Qz = (mr[2] + mr[8] ) / S;
+            Qw = (mr[6] + mr[9] ) / S; */
+
+            double s = sqrt( 1.0 + m.xx() - m.yy() - m.zz() ) * 2;
+            sc[0] = 0.5 / s;
+            sc[1] = (m.yx() + m.xy()) / s;
+            sc[2] = (m.xz() + m.zx()) / s;
+            sc[3] = (m.zy() + m.yz()) / s;
         }
     }
+
+    /*
+     The quaternion is then defined as:
+
+       Q = | Qx Qy Qz Qw |
+    */
 
     renormalise();
 }

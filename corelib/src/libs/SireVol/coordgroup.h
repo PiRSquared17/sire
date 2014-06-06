@@ -62,6 +62,7 @@ class AxisSet;
 class Matrix;
 class Vector;
 class Quaternion;
+class Transform;
 }
 
 namespace SireVol
@@ -206,6 +207,7 @@ using SireMaths::Vector;
 using SireMaths::Quaternion;
 using SireMaths::Matrix;
 using SireMaths::AxisSet;
+using SireMaths::Transform;
 
 /** This is the base class of all CoordGroup-like classes
     (e.g. CoordGroup and CoordGroupEditor). CoordGroup classes
@@ -399,6 +401,9 @@ public:
     CoordGroupEditor& rotate(quint32 i, const Quaternion &quat, const Vector &point);
     CoordGroupEditor& rotate(quint32 i, const Matrix &rotmat, const Vector &point);
 
+    CoordGroupEditor& transform(const Transform &t);
+    CoordGroupEditor& transform(quint32 i, const Transform &t);
+
     CoordGroupEditor& setCoordinates(const QVector<Vector> &newcoords);
     CoordGroupEditor& setCoordinates(const CoordGroupBase &newcoords);
 
@@ -528,6 +533,9 @@ public:
     void rotate(quint32 i, const Quaternion &quat, const Vector &point);
     void rotate(quint32 i, const Matrix &rotmat, const Vector &point);
     
+    void transform(const Transform &t);
+    void transform(quint32 i, const Transform &t);
+    
     void mapInto(const AxisSet &axes);
     void mapInto(quint32 i, const AxisSet &axes);
     
@@ -637,6 +645,10 @@ public:
                 const Quaternion &quat, const Vector &point);
     void rotate(quint32 i, quint32 j,
                 const Matrix &rotmat, const Vector &point);
+    
+    void transform(const Transform &t);
+    void transform(quint32 i, const Transform &t);
+    void transform(quint32 i, quint32 j, const Transform &t);
     
     void mapInto(const AxisSet &axes);
     void mapInto(quint32 i, const AxisSet &axes);

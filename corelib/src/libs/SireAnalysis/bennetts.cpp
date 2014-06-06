@@ -34,6 +34,9 @@
 
 #include "SireError/errors.h"
 
+#include "SireUnits/units.h"
+#include "SireUnits/temperature.h"
+
 #include "SireStream/shareddatastream.h"
 #include "SireStream/registeralternativename.h"
 
@@ -43,6 +46,7 @@ using namespace SireAnalysis;
 using namespace SireMaths;
 using namespace SireBase;
 using namespace SireID;
+using namespace SireUnits;
 using namespace SireUnits::Dimension;
 using namespace SireStream;
 
@@ -407,10 +411,11 @@ const DataPoint& getPoint(const QVector<DataPoint> &points, double lam, bool *fo
     return empty;
 }
 
-/** Return the values between windows. This returns the average of the 
-    forwards and backwards values */
+/** Return the values between windows. This returns the value of lambda of the from
+    window, and the difference in free energy between this and the next window */
 QVector<DataPoint> BennettsRatios::values() const
 {
+    QVector<DataPoint> consts = constants();
     QVector<DataPoint> nums = numerators();
     QVector<DataPoint> denoms = denominators();
 
@@ -420,23 +425,59 @@ QVector<DataPoint> BennettsRatios::values() const
     {
         double lamval = lamvals.at(i);
         
+        bool found_const;
         bool found_num;
         bool found_denom;
         
+        const DataPoint &c = getPoint(consts, lamval, &found_const);
         const DataPoint &num = getPoint(nums, lamval, &found_num);
         const DataPoint &denom = getPoint(denoms, lamval, &found_denom);
         
-        if (found_num and found_denom)
+        if (found_const and found_num and found_denom)
         {
             //we have found a matched pair - calculate the ratio, and minimum
             //and maximum values
             double val = num.y() / denom.y();
-            double minerr = std::abs( (num.y()+num.yMinError())/(denom.y()-denom.yMinError())
-                                                - val );
-            double maxerr = std::abs( (num.y()+num.yMaxError())/(denom.y()-denom.yMaxError())
-                                                - val );
+            double minerr = (num.y()+num.yMinError())/(denom.y()-denom.yMinError());
+            double maxerr = (num.y()+num.yMaxError())/(denom.y()-denom.yMaxError());
             
-            vals.append( DataPoint(num.x(),val, 0,minerr, 0,maxerr) );
+            // ratio = e^(-beta (dG - C)) so dG = -(1/beta) ln(ratio) + C
+            
+            val = -(k_boltz * temperature().to(kelvin) * std::log(val)) + c.y();
+            minerr = -(k_boltz * temperature().to(kelvin) * std::log(minerr)) + c.y();
+            maxerr = -(k_boltz * temperature().to(kelvin) * std::log(maxerr)) + c.y();
+            
+            vals.append( DataPoint(num.x(),val, 0, std::abs(val-minerr),
+                                                0, std::abs(val-maxerr)) );
+        }
+        else if (found_num and found_denom)
+        {
+            //there are forwards and backwards FEP values that we can use to get dG
+            //for this window
+            if (not fwds_ratios.contains(lamval))
+                throw SireError::program_bug( QObject::tr(
+                        "No forwards value for lambda %1? %2")
+                            .arg(lamval).arg(Sire::toString(fwds_ratios.keys())),
+                                CODELOC );
+
+            if (not bwds_ratios.contains( lamvals.at(i+1) ))
+                throw SireError::program_bug( QObject::tr(
+                        "No backwards value for lambda %1? %2")
+                            .arg(lamvals.at(i+1)).arg(Sire::toString(bwds_ratios.keys())),
+                                CODELOC );
+
+            const BennettsFreeEnergyAverage &fwds = *(fwds_ratios.constFind(lamval));
+            const BennettsFreeEnergyAverage &bwds = *(bwds_ratios.constFind(lamvals.at(i+1)));
+
+            double fwdsval = fwds.fepFreeEnergy();
+            double bwdsval = bwds.fepFreeEnergy();
+            double val = 0.5 * (fwdsval + bwdsval);
+
+            double minerr = 0.5 * std::abs(fwdsval - bwdsval);
+            double maxerr = minerr + fwds.histogram().standardError(90) +
+                                     bwds.histogram().standardError(90);
+            
+            vals.append( DataPoint(lamval,val, 0,minerr, 0,maxerr) );
         }
         else if (found_num)
         {
@@ -449,22 +490,11 @@ QVector<DataPoint> BennettsRatios::values() const
 
             const BennettsFreeEnergyAverage &fwds = *(fwds_ratios.constFind(lamval));
         
-            double fwdsval = fwds.average();
-            double fwdstay = fwds.taylorExpansion();
+            double val = fwds.average();
             
-            double maxerr = fwds.histogram().standardError(90);
+            double err = fwds.histogram().standardError(90);
             
-            double val = 0.5 * (fwdsval + fwdstay);
-            
-            //get the biggest difference between the four estimates of
-            //the free energy
-            double minerr = 0.5 * ( qMax(fwdsval,fwdstay) -
-                                    qMin(fwdsval,fwdstay) );
-            
-            if (maxerr < minerr)
-                qSwap(maxerr, minerr);
-            
-            vals.append( DataPoint(lamval, val, 0, minerr, 0, maxerr) );
+            vals.append( DataPoint(lamval, val, 0, err) );
         }
         else if (found_denom)
         {
@@ -478,22 +508,10 @@ QVector<DataPoint> BennettsRatios::values() const
             
             const FreeEnergyAverage &bwds = *(bwds_ratios.constFind(lamvals.at(i+1)));
         
-            double bwdsval = bwds.average();
-            double bwdstay = bwds.taylorExpansion();
+            double val = bwds.average();
+            double err = bwds.histogram().standardError(90);
             
-            double maxerr = bwds.histogram().standardError(90);
-            
-            double val = 0.5 * (bwdsval + bwdstay);
-            
-            //get the biggest difference between the four estimates of
-            //the free energy
-            double minerr = 0.5 * ( qMax(bwdsval,bwdstay) -
-                                    qMin(bwdsval,bwdstay) );
-            
-            if (maxerr < minerr)
-                qSwap(maxerr, minerr);
-            
-            vals.append( DataPoint(lamval, val, 0, minerr, 0, maxerr) );
+            vals.append( DataPoint(lamval, val, 0, err) );
         }
         else
         {
@@ -505,8 +523,36 @@ QVector<DataPoint> BennettsRatios::values() const
     return vals;
 }
 
+/** Return the constants for each set of Bennetts acceptance ratios. This
+    returns the lambda value of the from window, together with the constant
+    used for the numerator from this window to the next window (which must
+    be the same as the constant used for the denominator for the next window
+    back to this window) */
+QVector<DataPoint> BennettsRatios::constants() const
+{
+    QVector<DataPoint> points;
+    
+    for (int i=1; i<lamvals.count(); ++i)
+    {
+        if (fwds_ratios.contains(lamvals[i-1]) and bwds_ratios.contains(lamvals[i]))
+        {
+            const BennettsFreeEnergyAverage &fwds = *(fwds_ratios.constFind(lamvals[i-1]));
+            const BennettsFreeEnergyAverage &bwds = *(bwds_ratios.constFind(lamvals[i]));
+            
+            if (fwds.constant() == bwds.constant())
+                points.append( DataPoint(lamvals[i-1],fwds.constant().value()) );
+            else
+                qDebug() << "WARNING: Bennetts constants for numerator and denominator "
+                         << "don't match!" << fwds.toString() << "vs." << bwds.toString();
+            
+        }
+    }
+    
+    return points;
+}
+
 /** Return the numerators for the Bennetts acceptance ratio. This returns the 
-    lambda value of the from window, together with the Bennetts average for the 
+    lambda value of the from window, together with the Bennetts ratio for the
     energy difference from this window to the next window */
 QVector<DataPoint> BennettsRatios::numerators() const
 {
@@ -518,9 +564,9 @@ QVector<DataPoint> BennettsRatios::numerators() const
         {
             const BennettsFreeEnergyAverage &fwds = *(fwds_ratios.constFind(lamval));
         
-            double val = fwds.forwardsRatio();
-            double minerr = fwds.forwardsStandardError(50);
-            double maxerr = fwds.forwardsStandardError(95);
+            double val = fwds.bennettsRatio();
+            double minerr = fwds.bennettsStandardError(50);
+            double maxerr = fwds.bennettsStandardError(95);
             
             if (maxerr < minerr)
                 qSwap(maxerr, minerr);
@@ -533,7 +579,7 @@ QVector<DataPoint> BennettsRatios::numerators() const
 }
 
 /** Return the denominators for the Bennetts acceptance ratio. This returns the 
-    lambda value of the previous window, together with the Bennetts average for the
+    lambda value of the previous window, together with the Bennetts ratio for the
     energy difference from this window to the previous window */
 QVector<DataPoint> BennettsRatios::denominators() const
 {
@@ -545,9 +591,9 @@ QVector<DataPoint> BennettsRatios::denominators() const
         {
             const BennettsFreeEnergyAverage &bwds = *(bwds_ratios.constFind(lamvals[i]));
         
-            double val = bwds.backwardsRatio();
-            double minerr = bwds.backwardsStandardError(50);
-            double maxerr = bwds.backwardsStandardError(95);
+            double val = bwds.bennettsRatio();
+            double minerr = bwds.bennettsStandardError(50);
+            double maxerr = bwds.bennettsStandardError(95);
             
             if (maxerr < minerr)
                 qSwap(maxerr, minerr);

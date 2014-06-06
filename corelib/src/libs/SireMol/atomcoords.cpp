@@ -28,6 +28,8 @@
 
 #include "atomcoords.h"
 
+#include "SireMaths/align.h"
+
 #include "SireVol/space.h"
 
 #include "SireBase/quickcopy.hpp"
@@ -491,6 +493,12 @@ void AtomProperty<Vector>::rotate(const Quaternion &quat, const Vector &point)
     coords.rotate(quat, point);
 }
 
+/** Transform all of the atoms in this container using the transformation 't' */
+void AtomProperty<Vector>::transform(const Transform &t)
+{
+    coords.transform(t);
+}
+
 /** Rotate all of the atoms in this container using the matrix 'rotmat'
     about the point 'point' */
 void AtomProperty<Vector>::rotate(const Matrix &rotmat, const Vector &point)
@@ -507,6 +515,16 @@ void AtomProperty<Vector>::rotate(CGIdx cgidx, const Quaternion &quat,
                                   const Vector &point)
 {
     coords.rotate( cgidx.map(coords.count()), quat, point );
+}
+
+/** Transform all of the atoms in the CutGroup at index 'cgidx' using
+    the transformation 't'
+    
+    \throw SireError::invalid_index
+*/
+void AtomProperty<Vector>::transform(CGIdx cgidx, const Transform &t)
+{
+    coords.transform( cgidx.map(coords.count()), t );
 }
 
 /** Rotate all of the atoms in the CutGroup at index 'cgidx' using

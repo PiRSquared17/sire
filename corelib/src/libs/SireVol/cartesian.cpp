@@ -961,6 +961,33 @@ double Cartesian::minimumDistance(const CoordGroup &group0,
     return sqrt(mindist2);
 }
 
+/** Return the minimum distance between the two passed boxes */
+double Cartesian::minimumDistance(const AABox &box0, const AABox &box1) const
+{
+    Vector delta = (box0.center() - box1.center());
+    delta = Vector( std::abs(delta.x()), std::abs(delta.y()), std::abs(delta.z()) );
+    
+    delta -= box0.halfExtents();
+    delta -= box1.halfExtents();
+    
+    delta = delta.max( Vector(0) );
+    
+    return delta.length();
+}
+
+/** Return the minimum distance between a point and a box */
+double Cartesian::minimumDistance(const Vector &point, const AABox &box) const
+{
+    Vector delta = point - box.center();
+    delta = Vector( std::abs(delta.x()), std::abs(delta.y()), std::abs(delta.z()) );
+    
+    delta -= box.halfExtents();
+    
+    delta = delta.max( Vector(0) );
+    
+    return delta.length();
+}
+
 /** Return the minimum distance between points within the group 'group'. */
 double Cartesian::minimumDistance(const CoordGroup &group) const
 {
@@ -1013,6 +1040,21 @@ AABox Cartesian::getMinimumImage(const AABox &aabox, const Vector&) const
 Vector Cartesian::getMinimumImage(const Vector &point, const Vector&) const
 {
     return point;
+}
+
+/** Return all periodic images of 'point' with respect to 'center' within
+    'dist' distance of 'center' */
+QVector<Vector> Cartesian::getImagesWithin(const Vector &point, const Vector &center,
+                                           double dist) const
+{
+    QVector<Vector> points;
+
+    if ( Vector::distance(point,center) < dist )
+    {
+        points.append(point);
+    }
+    
+    return points;
 }
 
 /** Return a list of copies of CoordGroup 'group' that are within

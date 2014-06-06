@@ -2,6 +2,8 @@
 # Specify the lambda values to use
 lambda values = [ 0.001, 0.999 ]
 
+fixed points = True
+
 # Specify the number of RETI iterations
 nmoves = 10
 

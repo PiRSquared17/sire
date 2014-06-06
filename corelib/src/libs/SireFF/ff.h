@@ -242,11 +242,11 @@ public:
     bool remove(MolNum molnum, const MGID &mgid);
     bool remove(const QSet<MolNum> &molnums, const MGID &mgid);
 
-    void update(const MoleculeData &moldata);
-    void update(const MoleculeView &molview);
+    void update(const MoleculeData &moldata, bool auto_commit=true);
+    void update(const MoleculeView &molview, bool auto_commit=true);
     
-    void update(const Molecules &molecules);
-    void update(const MoleculeGroup &molgroup);
+    void update(const Molecules &molecules, bool auto_commit=true);
+    void update(const MoleculeGroup &molgroup, bool auto_commit=true);
 
     void setContents(const MGID &mgid, const MoleculeView &molview);
     void setContents(const MGID &mgid, const ViewsOfMol &molview);
@@ -326,10 +326,12 @@ protected:
 
     virtual void group_removeAll(quint32 i)=0;
 
-    virtual bool group_update(quint32 i, const MoleculeData &moldata)=0;
+    virtual bool group_update(quint32 i, const MoleculeData &moldata, bool auto_commit)=0;
 
-    virtual QList<Molecule> group_update(quint32 i, const Molecules &molecules)=0;
-    virtual QList<Molecule> group_update(quint32 i, const MoleculeGroup &molgroup)=0;
+    virtual QList<Molecule> group_update(quint32 i, const Molecules &molecules,
+                                         bool auto_commit)=0;
+    virtual QList<Molecule> group_update(quint32 i, const MoleculeGroup &molgroup,
+                                         bool auto_commit)=0;
     
     virtual bool group_setContents(quint32 i, const MoleculeView &molview, 
                                    const PropertyMap &map)=0;

@@ -222,7 +222,7 @@ CombinedSpace::const_iterator CombinedSpace::end() const
 
 void CombinedSpace::assertSingleSpace(const QString &text, const QString &codeloc) const
 {
-    if (not spces.count() == 1)
+    if (spces.count() != 1)
         throw SireVol::incompatible_space( QObject::tr(
                 "%1 as there is not just a single space. The number of spaces "
                 "is equal to %2.").arg(text), codeloc );
@@ -537,6 +537,13 @@ double CombinedSpace::minimumDistance(const CoordGroup &group0,
     return spces.at(0).read().minimumDistance(group0, group1);
 }
 
+/** Return the minimum distance between the boxes 'box0' and 'box1'. */
+double CombinedSpace::minimumDistance(const AABox &box0, const AABox &box1) const
+{
+    this->assertSameSpace("Cannot calculate minimum distances", CODELOC);
+    return spces.at(0).read().minimumDistance(box0, box1);
+}
+
 /** Return the minimum distance between points within the group 'group'. */
 double CombinedSpace::minimumDistance(const CoordGroup &group) const
 {
@@ -576,6 +583,13 @@ Vector CombinedSpace::getMinimumImage(const Vector &point, const Vector &center)
 {
     this->assertSameSpace("Cannot get minimum images", CODELOC);
     return spces.at(0).read().getMinimumImage(point, center);
+}
+
+QVector<Vector> CombinedSpace::getImagesWithin(const Vector &point, const Vector &center,
+                                               double dist) const
+{
+    this->assertSameSpace("Cannot get minimum images", CODELOC);
+    return spces.at(0).read().getImagesWithin(point, center, dist);
 }
 
 /** Return a random point within the spaces used in this combined space */

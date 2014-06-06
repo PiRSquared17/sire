@@ -30,7 +30,9 @@
 #define SIREMM_GRIDFF2_H
 
 #include "intercljff.h"
+
 #include "SireMaths/histogram.h"
+#include "SireMaths/multifloat.h"
 
 SIRE_BEGIN_HEADER
 
@@ -115,8 +117,8 @@ protected:
 
     void _pvt_removed(quint32 groupid, const PartialMolecule &mol);
 
-    void _pvt_changed(quint32 groupid, const SireMol::Molecule &molecule);
-    void _pvt_changed(quint32 groupid, const QList<SireMol::Molecule> &molecules);
+    void _pvt_changed(quint32 groupid, const SireMol::Molecule &molecule, bool auto_commit);
+    void _pvt_changed(quint32 groupid, const QList<SireMol::Molecule> &molecules, bool auto_commit);
     
     void _pvt_removedAll(quint32 groupid);
 
@@ -127,9 +129,35 @@ private:
     typedef InterGroupCLJFF::Molecule CLJMolecule;
     typedef InterGroupCLJFF::Molecules CLJMolecules;
 
-    void calculateEnergy(const SireVol::CoordGroup &coords,
-                         const CLJParameters::Array &params,
-                         double &cnrg, double &ljnrg);
+    /** This class holds a set of coordinates, partial charges and Lennard Jones
+        parameters of a set of atoms. This is held in an optimised format to speed
+        up non-bonded calculations */
+    class CLJAtoms
+    {
+    public:
+        CLJAtoms();
+        CLJAtoms(const CoordGroup &coords, const CLJParameters::Array &params0);
+        CLJAtoms(const CLJAtoms &other);
+        ~CLJAtoms();
+        
+        CLJAtoms& operator=(const CLJAtoms &other);
+        
+        int count() const;
+        
+        /** x coordinates */
+        QVector<SireMaths::MultiFloat> x;
+        /** y coordinates */
+        QVector<SireMaths::MultiFloat> y;
+        /** z coordinates */
+        QVector<SireMaths::MultiFloat> z;
+        /** reduced partial charge (square root of charge divided by 4 pi eps 0) */
+        QVector<SireMaths::MultiFloat> q;
+        /** square root of sigma */
+        QVector<SireMaths::MultiFloat> sig;
+        /** square root of epsilon */
+        QVector<SireMaths::MultiFloat> eps;
+        
+    };
 
     class Vector4
     {
@@ -169,6 +197,13 @@ private:
     void addToGrid(const QVector<float> &vx, const QVector<float> &vy,
                    const QVector<float> &vz, const QVector<float> &vq);
 
+    void calculateEnergy(const SireVol::CoordGroup &coords,
+                         const CLJParameters::Array &params,
+                         double &cnrg, double &ljnrg);
+
+    void calculateEnergy(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                         double &cnrg, double &ljnrg);
+
     /** The AABox that describes the grid */
     SireVol::AABox gridbox;
 
@@ -205,6 +240,16 @@ private:
         molecules that are within the LJ cutoff of the center of the grid */
     QVector<SireMaths::Vector> closemols_coords;
     QVector<detail::CLJParameter> closemols_params;
+    
+    /** The set of coordinates and parameters (charge, LJ sig and eps)
+        of atoms of group 2 and
+        fixed atoms that are within the LJ cutoff of the edge of the grid */
+    QVector<SireMaths::MultiFloat> close_mols_x;
+    QVector<SireMaths::MultiFloat> close_mols_y;
+    QVector<SireMaths::MultiFloat> close_mols_z;
+    QVector<SireMaths::MultiFloat> close_mols_q;
+    QVector<SireMaths::MultiFloat> close_mols_sig;
+    QVector<SireMaths::MultiFloat> close_mols_eps;
     
     /** The old energy of each molecule */
     QHash<SireMol::MolNum,CLJEnergy> oldnrgs;

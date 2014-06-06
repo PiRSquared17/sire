@@ -28,6 +28,8 @@
 
 #include "multifloat.h"
 #include "multidouble.h"
+#include "multiuint.h"
+#include "multiint.h"
 
 #include <QStringList>
 
@@ -88,6 +90,19 @@ void MultiFloat::assertAligned(const void *ptr, size_t size)
                     .arg((quintptr)ptr)
                     .arg((quintptr)ptr % size)
                     .arg(size), CODELOC );
+}
+
+/** Construct from the passed array, taking the values of each element
+    of the vector from the index in the associated MultiInt, e.g.
+    
+    MultiFloat[i] = array[ MultiInt[i] ]
+*/
+MultiFloat::MultiFloat(const float *array, const MultiInt &idxs)
+{
+    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+    {
+        v.a[i] = array[ idxs.v.a[i] ];
+    }
 }
 
 /** Construct from the passed array. If size is greater than MultiFloat::size()
@@ -186,6 +201,26 @@ MultiFloat::MultiFloat(const QVector<double> &array)
     }
 
     this->operator=( MultiFloat(farray) );
+}
+
+/** Construct from a MultiInt */
+MultiFloat::MultiFloat(const MultiInt &other)
+{
+    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+    {
+        v.a[i] = other.v.a[i];
+    }
+}
+
+/** Copy assignment from a MultiInt */
+MultiFloat& MultiFloat::operator=(const MultiInt &other)
+{
+    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+    {
+        v.a[i] = other.v.a[i];
+    }
+    
+    return *this;
 }
 
 /** Return whether or not this MultiFloat is correctly aligned. If it is not,
@@ -447,6 +482,80 @@ bool MultiFloat::operator!=(const MultiFloat &other) const
     return true;
 }
 
+/** Return whether all of the elements of this MultiFloat are 
+    equal to 0x00000000 (e.g. every bit in the entire vector is 0) */
+bool MultiFloat::isBinaryZero() const
+{
+    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+    {
+        static const quint32 bin_zero = 0x00000000;
+    
+        if (*(reinterpret_cast<const quint32*>(&(v.a[i]))) != bin_zero)
+            return false;
+    }
+    
+    return true;
+}
+
+/** Return whether all of the elements of this MultiFloat are
+    not equal to 0x00000000 (e.g. at least one bit in the entire vector is 1) */
+bool MultiFloat::isNotBinaryZero() const
+{
+    return not isBinaryZero();
+}
+
+/** Return whether or not at least one of the elements of this vector
+    is binary zero (the float is equal to 0x00000000) */
+bool MultiFloat::hasBinaryZero() const
+{
+    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+    {
+        static const quint32 bin_zero = 0x00000000;
+    
+        if (*(reinterpret_cast<const quint32*>(&(v.a[i]))) == bin_zero)
+            return true;
+    }
+    
+    return false;
+}
+
+/** Return whether all of the elements of this MultiFloat are 
+    equal to 0xFFFFFFFF (e.g. every bit in the entire vector is 1) */
+bool MultiFloat::isBinaryOne() const
+{
+    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+    {
+        static const quint32 bin_one = 0xFFFFFFFF;
+    
+        if (*(reinterpret_cast<const quint32*>(&(v.a[i]))) != bin_one)
+            return false;
+    }
+    
+    return true;
+}
+
+/** Return whether all of the elements of this MultiFloat are
+    not equal to 0xFFFFFFFF (e.g. at least one bit in the entire vector is 0) */
+bool MultiFloat::isNotBinaryOne() const
+{
+    return not isBinaryOne();
+}
+
+/** Return whether or not at least one of the elements of this vector
+    is binary one (the float is equal to 0xFFFFFFFF) */
+bool MultiFloat::hasBinaryOne() const
+{
+    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+    {
+        static const quint32 bin_one = 0xFFFFFFFF;
+    
+        if (*(reinterpret_cast<const quint32*>(&(v.a[i]))) == bin_one)
+            return true;
+    }
+    
+    return false;
+}
+
 /** Comparison operator - only returns true if all elements are less */
 bool MultiFloat::operator<(const MultiFloat &other) const
 {
@@ -495,35 +604,6 @@ bool MultiFloat::operator>=(const MultiFloat &other) const
     return true;
 }
 
-/** Return the ith value in the multifloat */
-float MultiFloat::operator[](int i) const
-{
-    if (i < 0)
-        i = MULTIFLOAT_SIZE + i;
-    
-    if (i < 0 or i >= MULTIFLOAT_SIZE)
-    {
-        throw SireError::invalid_index( QObject::tr(
-                "Cannot access element %1 of MultiFloat (holds only %2 values)")
-                    .arg(i).arg(MULTIFLOAT_SIZE), CODELOC );
-    }
-    
-    return v.a[i];
-}
-
-/** Negative operator */
-MultiFloat MultiFloat::operator-() const
-{
-    MultiFloat ret;
-    
-    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-    {
-        ret.v.a[i] = -v.a[i];
-    }
-    
-    return ret;
-}
-
 /** Set the ith value of the multifloat to 'value' */
 void MultiFloat::set(int i, float value)
 {
@@ -543,7 +623,27 @@ void MultiFloat::set(int i, float value)
 /** Return the ith value in the multifloat */
 float MultiFloat::get(int i) const
 {
-    return this->operator[](i);
+    if (i < 0)
+        i = MULTIFLOAT_SIZE + i;
+    
+    if (i < 0 or i >= MULTIFLOAT_SIZE)
+    {
+        throw SireError::invalid_index( QObject::tr(
+                "Cannot access element %1 of MultiFloat (holds only %2 values)")
+                    .arg(i).arg(MULTIFLOAT_SIZE), CODELOC );
+    }
+    
+    return v.a[i];
+}
+
+float MultiFloat::at(int i) const
+{
+    return this->get(i);
+}
+
+float MultiFloat::getitem(int i) const
+{
+    return this->get(i);
 }
 
 const char* MultiFloat::what() const
@@ -554,6 +654,32 @@ const char* MultiFloat::what() const
 const char* MultiFloat::typeName()
 {
     return "SireMaths::MultiFloat";
+}
+
+/** Return the maximum value in the vector */
+float MultiFloat::max() const
+{
+    float m = v.a[0];
+    
+    for (int i=1; i<MultiFloat::count(); ++i)
+    {
+        m = qMax(m, v.a[i]);
+    }
+    
+    return m;
+}
+
+/** Return the minimum value in the vector */
+float MultiFloat::min() const
+{
+    float m = v.a[0];
+    
+    for (int i=1; i<MultiFloat::count(); ++i)
+    {
+        m = qMin(m, v.a[i]);
+    }
+    
+    return m;
 }
 
 QString MultiFloat::toString() const

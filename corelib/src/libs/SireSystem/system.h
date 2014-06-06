@@ -309,6 +309,9 @@ public:
     
     void mustNowRecalculateFromScratch();
     
+    void accept();
+    bool needsAccepting() const;
+    
     bool isDirty() const;
     bool isClean() const;
     
@@ -400,9 +403,9 @@ public:
     bool remove(MolNum molnum, const MGID &mgid);
     bool remove(const QSet<MolNum> &molnums, const MGID &mgid);
 
-    void update(const MoleculeData &moldata);
-    void update(const Molecules &molecules);
-    void update(const MoleculeGroup &molgroup);
+    void update(const MoleculeData &moldata, bool auto_commit=true);
+    void update(const Molecules &molecules, bool auto_commit=true);
+    void update(const MoleculeGroup &molgroup, bool auto_commit=true);
     
     void setContents(const MGID &mgid, const MoleculeView &molview,
                      const PropertyMap &map);
@@ -431,8 +434,8 @@ protected:
     void reindex();
 
     friend class Delta; // so can call below functions
-    bool deltaUpdate(const MoleculeData &moldata);
-    QList<MolNum> deltaUpdate(const Molecules &molecules);
+    bool deltaUpdate(const MoleculeData &moldata, bool auto_commit);
+    QList<MolNum> deltaUpdate(const Molecules &molecules, bool auto_commit);
 
     void applyAllConstraints();
 

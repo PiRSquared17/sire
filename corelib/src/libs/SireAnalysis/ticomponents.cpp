@@ -150,7 +150,7 @@ ComponentGradients::ComponentGradients(const QMap<double,FreeEnergyMonitor> &gra
          it != gradients.constEnd();
          ++it)
     {
-        if (it.value().isEmpty())
+        if (it.value().isEmpty() or it.value().nSamples() == 0)
         {
             any_empty = true;
             break;
@@ -163,7 +163,7 @@ ComponentGradients::ComponentGradients(const QMap<double,FreeEnergyMonitor> &gra
              it != gradients.constEnd();
              ++it)
         {
-            if (not it.value().isEmpty())
+            if (not (it.value().isEmpty() or it.value().nSamples() == 0))
                 grads.insert(it.key(), it.value());
         }
     }
@@ -185,7 +185,7 @@ ComponentGradients::ComponentGradients(const QList<FreeEnergyMonitor> &gradients
 {
     foreach (const FreeEnergyMonitor &gradient, gradients)
     {
-        if (not gradient.isEmpty())
+        if (not (gradient.isEmpty() or gradient.nSamples() == 0))
             grads.insert(gradient.lambdaValue(), gradient);
     }
     

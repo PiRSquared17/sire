@@ -167,6 +167,7 @@ endif()
 # Define the headers in SireMaths
 set ( SIREMATHS_HEADERS
       accumulator.h
+      align.h
       axisset.h
       boys.h
       complex.h
@@ -183,6 +184,8 @@ set ( SIREMATHS_HEADERS
       multidouble.h
       multifixed.h
       multifloat.h
+      multiint.h
+      multiuint.h
       nmatrix.h
       nvector.h
       n4matrix.h
@@ -212,6 +215,7 @@ set ( SIREMATHS_SOURCES
       register_siremaths.cpp
 
       accumulator.cpp
+      align.cpp
       axisset.cpp
       boys.cpp
       complex.cpp
@@ -226,6 +230,8 @@ set ( SIREMATHS_SOURCES
       multidouble.cpp
       multifixed.cpp
       multifloat.cpp
+      multiint.cpp
+      multiuint.cpp
       nmatrix.cpp
       nvector.cpp
       n4matrix.cpp

@@ -43,14 +43,14 @@ using namespace SireStream;
 
 /** Null constructor */
 Delta::Delta() : last_change(0), last_mol_change(0),
-                 last_comp_change(0), last_prop_change(0)
+                 last_comp_change(0), last_prop_change(0), auto_commit(true)
 {}
 
 /** Construct to begin applying to the passed system */
-Delta::Delta(const System &system)
+Delta::Delta(const System &system, bool autoc)
       : delta_system(system), last_change(0),
         last_mol_change(0), last_comp_change(0),
-        last_prop_change(0)
+        last_prop_change(0), auto_commit(autoc)
 {
     if (system.subVersion() != 0)
         throw SireError::program_bug( QObject::tr(
@@ -65,7 +65,8 @@ Delta::Delta(const Delta &other)
         changed_comps(other.changed_comps), changed_props(other.changed_props),
         last_change(other.last_change), last_mol_change(other.last_mol_change),
         last_comp_change(other.last_comp_change), 
-        last_prop_change(other.last_prop_change)
+        last_prop_change(other.last_prop_change),
+        auto_commit(other.auto_commit)
 {}
 
 /** Destructor */
@@ -85,6 +86,7 @@ Delta& Delta::operator=(const Delta &other)
         last_mol_change = other.last_mol_change;
         last_comp_change = other.last_comp_change;
         last_prop_change = other.last_prop_change;
+        auto_commit = other.auto_commit;
     }
     
     return *this;
@@ -101,7 +103,8 @@ bool Delta::operator==(const Delta &other) const
             last_change == other.last_change and
             last_mol_change == other.last_mol_change and
             last_comp_change == other.last_comp_change and
-            last_prop_change == other.last_prop_change);
+            last_prop_change == other.last_prop_change and
+            auto_commit == other.auto_commit);
 }
 
 /** Comparison operator */
@@ -119,6 +122,12 @@ QString Delta::toString() const
                 .arg(last_mol_change)
                 .arg(last_comp_change)
                 .arg(last_prop_change);
+}
+
+/** Return whether or not this delta will auto-commit each update */
+bool Delta::willAutoCommit() const
+{
+    return auto_commit;
 }
 
 /** Return whether or not this is an empty delta */
@@ -908,7 +917,7 @@ QList<QString> Delta::changedPropertiesSince(quint32 subversion) const
     in 'moldata' */
 bool Delta::update(const MoleculeData &moldata)
 {
-    if (delta_system.deltaUpdate(moldata))
+    if (delta_system.deltaUpdate(moldata,auto_commit))
     {
         last_change = delta_system.subVersion();
         last_mol_change = last_change;
@@ -924,7 +933,7 @@ bool Delta::update(const MoleculeData &moldata)
     contained in 'molview' */
 bool Delta::update(const MoleculeView &molview)
 {
-    if (delta_system.deltaUpdate(molview.data()))
+    if (delta_system.deltaUpdate(molview.data(),auto_commit))
     {
         last_change = delta_system.subVersion();
         last_mol_change = last_change;
@@ -940,7 +949,7 @@ bool Delta::update(const MoleculeView &molview)
     contained in 'molecules' */
 bool Delta::update(const Molecules &molecules)
 {
-    QList<MolNum> molnums = delta_system.deltaUpdate(molecules);
+    QList<MolNum> molnums = delta_system.deltaUpdate(molecules,auto_commit);
     
     if (not molnums.isEmpty())
     {
@@ -965,17 +974,20 @@ bool Delta::update(const Molecules &molecules)
     'component' to the value 'value' */
 bool Delta::update(const Symbol &component, double value)
 {
-    if (delta_system.deltaUpdate(component, value))
+    if (delta_system.constant(component) != value)
     {
-        last_change = delta_system.subVersion();
-        last_comp_change = last_change;
-        
-        changed_comps.insert(component, last_comp_change);
-        
-        return true;
+        if (delta_system.deltaUpdate(component, value))
+        {
+            last_change = delta_system.subVersion();
+            last_comp_change = last_change;
+            
+            changed_comps.insert(component, last_comp_change);
+            
+            return true;
+        }
     }
-    else
-        return false;
+    
+    return false;
 }
 
 /** Update the contained system to set the value of the property

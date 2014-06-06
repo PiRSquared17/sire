@@ -5,6 +5,7 @@ set ( PYPP_SOURCES
        QDateTime.pypp.cpp
        QDir.pypp.cpp
        QFileInfo.pypp.cpp
+       QElapsedTimer.pypp.cpp
        QTime.pypp.cpp
        QUuid.pypp.cpp
        autoconvert_QChar.cpp

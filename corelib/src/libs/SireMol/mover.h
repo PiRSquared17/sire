@@ -39,6 +39,7 @@ SIRE_BEGIN_HEADER
 namespace SireMaths
 {
 class AxisSet;
+class Transform;
 }
 
 namespace SireVol
@@ -63,10 +64,25 @@ using SireMaths::Vector;
 using SireMaths::Quaternion;
 using SireMaths::Matrix;
 using SireMaths::AxisSet;
+using SireMaths::Transform;
 
 using SireBase::PropertyMap;
 
 using SireVol::Space;
+
+Transform getAlignment(const MoleculeView &view0, const MoleculeView &view1, bool fit=true);
+Transform getAlignment(const MoleculeView &view0, const MoleculeView &view1,
+                       const PropertyMap &map, bool fit=true);
+Transform getAlignment(const MoleculeView &view0, const PropertyMap &map0,
+                       const MoleculeView &view1, const PropertyMap &map1,
+                       bool fit=true);
+Transform getAlignment(const MoleculeView &view0, const MoleculeView &view1,
+                       const AtomMatcher &matcher, bool fit=true);
+Transform getAlignment(const MoleculeView &view0, const MoleculeView &view1,
+                       const AtomMatcher &matcher, const PropertyMap &map, bool fit=true);
+Transform getAlignment(const MoleculeView &view0, const PropertyMap &map0,
+                       const MoleculeView &view1, const PropertyMap &map1,
+                       const AtomMatcher &matcher, bool fit=true);
 
 /** This class provides the template-independent part
     of Mover<T>. This class is not designed to be used
@@ -103,6 +119,10 @@ protected:
                 const Matrix &rotmat,
                 const Vector &point,
                 const PropertyMap &map) const;
+
+    void transform(MoleculeData &data,
+                   const Transform &transform,
+                   const PropertyMap &map) const;
 
     void mapInto(MoleculeData &data,
                  const AxisSet &axes,
@@ -171,6 +191,11 @@ protected:
                        const Vector &point,
                        const PropertyMap &map);
 
+    static void transform(MoleculeData &view,
+                          const AtomSelection &selected_atoms,
+                          const Transform &t,
+                          const PropertyMap &map);
+
     static void mapInto(AtomCoords &coords,
                         const AtomSelection &selected_atoms,
                         const AxisSet &axes);
@@ -194,13 +219,18 @@ protected:
                        const Quaternion &quat,
                        const Vector &point);
 
+    static void transform(AtomCoords &coords,
+                          const AtomSelection &selected_atoms,
+                          const Transform &t);
+
     /** The only atoms that can be moved by this Mover */
     AtomSelection movable_atoms;
 };
 
-SIRE_EXPOSE_CLASS( SireMol::MoverBase )
-
 }
+
+SIRE_EXPOSE_CLASS( SireMol::MoverBase )
+SIRE_EXPOSE_FUNCTION( SireMol::getAlignment )
 
 SIRE_END_HEADER
 

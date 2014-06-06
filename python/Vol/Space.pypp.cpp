@@ -297,6 +297,17 @@ void register_Space_class(){
                 , ( bp::arg("group"), bp::arg("center"), bp::arg("dist") ) );
         
         }
+        { //::SireVol::Space::getImagesWithin
+        
+            typedef ::QVector< SireMaths::Vector > ( ::SireVol::Space::*getImagesWithin_function_type )( ::SireMaths::Vector const &,::SireMaths::Vector const &,double ) const;
+            getImagesWithin_function_type getImagesWithin_function_value( &::SireVol::Space::getImagesWithin );
+            
+            Space_exposer.def( 
+                "getImagesWithin"
+                , getImagesWithin_function_value
+                , ( bp::arg("point"), bp::arg("center"), bp::arg("dist") ) );
+        
+        }
         { //::SireVol::Space::getMinimumImage
         
             typedef ::SireVol::CoordGroup ( ::SireVol::Space::*getMinimumImage_function_type )( ::SireVol::CoordGroup const &,::SireMaths::Vector const & ) const;
@@ -424,6 +435,17 @@ void register_Space_class(){
                 "minimumDistance"
                 , minimumDistance_function_value
                 , ( bp::arg("group") ) );
+        
+        }
+        { //::SireVol::Space::minimumDistance
+        
+            typedef double ( ::SireVol::Space::*minimumDistance_function_type )( ::SireVol::AABox const &,::SireVol::AABox const & ) const;
+            minimumDistance_function_type minimumDistance_function_value( &::SireVol::Space::minimumDistance );
+            
+            Space_exposer.def( 
+                "minimumDistance"
+                , minimumDistance_function_value
+                , ( bp::arg("box0"), bp::arg("box1") ) );
         
         }
         { //::SireVol::Space::null

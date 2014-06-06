@@ -32,9 +32,14 @@
 #include "atomcharges.h"
 #include "atomelements.h"
 #include "atommatcher.h"
+#include "atommatchers.h"
 #include "bondid.h"
 #include "angleid.h"
 #include "dihedralid.h"
+#include "connectivity.h"
+#include "molecule.h"
+#include "mover.hpp"
+#include "editor.hpp"
 
 #include "SireVol/coordgroup.h"
 
@@ -43,19 +48,23 @@
 #include "SireMaths/line.h"
 #include "SireMaths/triangle.h"
 #include "SireMaths/torsion.h"
+#include "SireMaths/accumulator.h"
 
 #include "SireBase/errors.h"
 #include "SireMol/errors.h"
 
 #include "SireUnits/dimensions.h"
+#include "SireUnits/units.h"
 
 #include "SireStream/datastream.h"
 
 #include <QDebug>
+#include <QElapsedTimer>
 
 using namespace SireMol;
 using namespace SireMaths;
 using namespace SireVol;
+using namespace SireUnits;
 using namespace SireUnits::Dimension;
 using namespace SireStream;
 
@@ -427,10 +436,10 @@ static void getPrincipalAxes(Matrix &inertia, Vector principal_moments)
     inertia_array[6] = inertia_array[2];
     inertia_array[7] = inertia_array[5];
 
-    std::pair<Vector,Matrix> eigs = inertia.diagonalise();
+    boost::tuple<Vector,Matrix> eigs = inertia.diagonalise();
 
-    principal_moments = eigs.first;
-    inertia = eigs.second;
+    principal_moments = eigs.get<0>();
+    inertia = eigs.get<1>();
     
     //if one or more of the eigenvalues is zero then we may have a problem
     //because the wrong eigenvector direction may be chosen - in this case,
@@ -499,7 +508,7 @@ static AxisSet getPrincipalAxes(const AtomCoords &coords,
         
     Vector com = ::getCOM(coords, masses, selected_atoms);
 
-    Matrix inertia(0);
+    Matrix inertia( double(0) );
     
     if (selected_atoms.selectedAll())
     {
@@ -1121,6 +1130,301 @@ Angle Evaluator::measure(const DihedralID &dihedral, const PropertyMap &map) con
 {
     return measure(dihedral.atom0(), dihedral.atom1(), 
                    dihedral.atom2(), dihedral.atom3(), map);
+}
+
+/** Find the maximum common substructure of this molecule view with 'other'. This
+    returns the mapping from this structure to 'other' for the matching parts,
+    using the optionally supplied propertymap to find the elements, masses,
+    connectivity and coordinates of the two molecules, with the passed 'atommatcher'
+    used to pre-match atoms before the common substructure search (useful to speed
+    up the search and to enforce matching sub-parts) */
+QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
+                                          const AtomMatcher &matcher,
+                                          const PropertyMap &map0,
+                                          const PropertyMap &map1) const
+{
+    return this->findMCS(other, matcher, 5*second, map0, map1);
+}
+
+/** Find the maximum common substructure of this molecule view with 'other'. This
+    returns the mapping from this structure to 'other' for the matching parts,
+    using the optionally supplied propertymap to find the elements, masses,
+    connectivity and coordinates of the two molecules */
+QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
+                                          const PropertyMap &map) const
+{
+    return this->findMCS(other, AtomMultiMatcher(), map, map);
+}
+
+/** Find the maximum common substructure of this molecule view with 'other'. This
+    returns the mapping from this structure to 'other' for the matching parts,
+    using map0 and map1 to find the elements, masses,
+    connectivity and coordinates of the two molecules respectively */
+QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
+                                          const PropertyMap &map0,
+                                          const PropertyMap &map1) const
+{
+    return this->findMCS(other, AtomMultiMatcher(), map0, map1);
+}
+
+/** Find the maximum common substructure of this molecule view with 'other'. This
+    returns the mapping from this structure to 'other' for the matching parts,
+    using the optionally supplied propertymap to find the elements, masses,
+    connectivity and coordinates of the two molecules, with the passed 'atommatcher'
+    used to pre-match atoms before the common substructure search (useful to speed
+    up the search and to enforce matching sub-parts) */
+QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
+                                          const AtomMatcher &atommatcher,
+                                          const PropertyMap &map) const
+{
+    return this->findMCS(other, atommatcher, map, map);
+}
+
+/** Find the maximum common substructure of this molecule view with 'other'. This
+    returns the mapping from this structure to 'other' for the matching parts,
+    using the optionally supplied propertymap to find the elements, masses,
+    connectivity and coordinates of the two molecules. Terminate the calculation
+    returning the best match found within 'timeout'. */
+QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
+                                          const Time &timeout,
+                                          const PropertyMap &map) const
+{
+    return this->findMCS(other, AtomMultiMatcher(), timeout, map, map);
+}
+
+/** Find the maximum common substructure of this molecule view with 'other'. This
+    returns the mapping from this structure to 'other' for the matching parts,
+    using map0 and map1 to find the elements, masses,
+    connectivity and coordinates of the two molecules respectively. Terminate the calculation
+    returning the best match found within 'timeout'. */
+QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
+                                          const Time &timeout,
+                                          const PropertyMap &map0,
+                                          const PropertyMap &map1) const
+{
+    return this->findMCS(other, AtomMultiMatcher(), timeout, map0, map1);
+}
+
+/** Find the maximum common substructure of this molecule view with 'other'. This
+    returns the mapping from this structure to 'other' for the matching parts,
+    using the optionally supplied propertymap to find the elements, masses,
+    connectivity and coordinates of the two molecules, with the passed 'atommatcher'
+    used to pre-match atoms before the common substructure search (useful to speed
+    up the search and to enforce matching sub-parts). Terminate the calculation
+    returning the best match found within 'timeout'. */
+QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
+                                          const AtomMatcher &atommatcher,
+                                          const Time &timeout,
+                                          const PropertyMap &map) const
+{
+    return this->findMCS(other, atommatcher, timeout, map, map);
+}
+
+/** Find the maximum common substructure of this molecule view with 'other'. This
+    returns the mapping from this structure to 'other' for the matching parts,
+    using the optionally supplied propertymap to find the elements, masses,
+    connectivity and coordinates of the two molecules, with the passed 'atommatcher'
+    used to pre-match atoms before the common substructure search (useful to speed
+    up the search and to enforce matching sub-parts).
+    
+    If 'match_light_atoms' is true, then include light atoms (e.g. hydrogen)
+    in the match. This may make things slower...
+*/
+QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
+                                          const AtomMatcher &matcher,
+                                          bool match_light_atoms,
+                                          const PropertyMap &map0,
+                                          const PropertyMap &map1) const
+{
+    return this->findMCS(other, matcher, 5*second, match_light_atoms, map0, map1);
+}
+
+/** Find the maximum common substructure of this molecule view with 'other'. This
+    returns the mapping from this structure to 'other' for the matching parts,
+    using the optionally supplied propertymap to find the elements, masses,
+    connectivity and coordinates of the two molecules 
+ 
+    If 'match_light_atoms' is true, then include light atoms (e.g. hydrogen)
+    in the match. This may make things slower...
+*/
+QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
+                                          bool match_light_atoms,
+                                          const PropertyMap &map) const
+{
+    return this->findMCS(other, AtomMultiMatcher(), match_light_atoms, map, map);
+}
+
+/** Find the maximum common substructure of this molecule view with 'other'. This
+    returns the mapping from this structure to 'other' for the matching parts,
+    using map0 and map1 to find the elements, masses,
+    connectivity and coordinates of the two molecules respectively
+    
+    If 'match_light_atoms' is true, then include light atoms (e.g. hydrogen)
+    in the match. This may make things slower...
+
+*/
+QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
+                                          bool match_light_atoms,
+                                          const PropertyMap &map0,
+                                          const PropertyMap &map1) const
+{
+    return this->findMCS(other, AtomMultiMatcher(), match_light_atoms, map0, map1);
+}
+
+/** Find the maximum common substructure of this molecule view with 'other'. This
+    returns the mapping from this structure to 'other' for the matching parts,
+    using the optionally supplied propertymap to find the elements, masses,
+    connectivity and coordinates of the two molecules, with the passed 'atommatcher'
+    used to pre-match atoms before the common substructure search (useful to speed
+    up the search and to enforce matching sub-parts) 
+    
+    If 'match_light_atoms' is true, then include light atoms (e.g. hydrogen)
+    in the match. This may make things slower...
+*/
+QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
+                                          const AtomMatcher &atommatcher,
+                                          bool match_light_atoms,
+                                          const PropertyMap &map) const
+{
+    return this->findMCS(other, atommatcher, match_light_atoms, map, map);
+}
+
+/** Find the maximum common substructure of this molecule view with 'other'. This
+    returns the mapping from this structure to 'other' for the matching parts,
+    using the optionally supplied propertymap to find the elements, masses,
+    connectivity and coordinates of the two molecules. Terminate the calculation
+    returning the best match found within 'timeout'. 
+    
+    If 'match_light_atoms' is true, then include light atoms (e.g. hydrogen)
+    in the match. This may make things slower...
+*/
+QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
+                                          const Time &timeout,
+                                          bool match_light_atoms,
+                                          const PropertyMap &map) const
+{
+    return this->findMCS(other, AtomMultiMatcher(), timeout, match_light_atoms, map, map);
+}
+
+/** Find the maximum common substructure of this molecule view with 'other'. This
+    returns the mapping from this structure to 'other' for the matching parts,
+    using map0 and map1 to find the elements, masses,
+    connectivity and coordinates of the two molecules respectively. Terminate the calculation
+    returning the best match found within 'timeout'.
+    
+    If 'match_light_atoms' is true, then include light atoms (e.g. hydrogen)
+    in the match. This may make things slower...
+*/
+QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
+                                          const Time &timeout,
+                                          bool match_light_atoms,
+                                          const PropertyMap &map0,
+                                          const PropertyMap &map1) const
+{
+    return this->findMCS(other, AtomMultiMatcher(), timeout, match_light_atoms, map0, map1);
+}
+
+/** Find the maximum common substructure of this molecule view with 'other'. This
+    returns the mapping from this structure to 'other' for the matching parts,
+    using the optionally supplied propertymap to find the elements, masses,
+    connectivity and coordinates of the two molecules, with the passed 'atommatcher'
+    used to pre-match atoms before the common substructure search (useful to speed
+    up the search and to enforce matching sub-parts). Terminate the calculation
+    returning the best match found within 'timeout'.
+    
+    If 'match_light_atoms' is true, then include light atoms (e.g. hydrogen)
+    in the match. This may make things slower...
+*/
+QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
+                                          const AtomMatcher &atommatcher,
+                                          const Time &timeout,
+                                          bool match_light_atoms,
+                                          const PropertyMap &map) const
+{
+    return this->findMCS(other, atommatcher, timeout, match_light_atoms, map, map);
+}
+
+/** Find the maximum common substructure of this molecule view with 'other'. This
+    returns the mapping from this structure to 'other' for the matching parts,
+    using the optionally supplied propertymap to find the elements, masses,
+    connectivity and coordinates of the two molecules, with the passed 'atommatcher'
+    used to pre-match atoms before the common substructure search (useful to speed
+    up the search and to enforce matching sub-parts) */
+QHash<AtomIdx,AtomIdx> Evaluator::findMCS(const MoleculeView &other,
+                                          const AtomMatcher &matcher,
+                                          const Time &timeout,
+                                          const PropertyMap &map0,
+                                          const PropertyMap &map1) const
+{
+    return this->findMCS(other, matcher, timeout, false, map0, map1);
+}
+
+/** Return the root mean square deviation (RMSD) of the atoms in this view against
+    the atoms in 'other', using the passed AtomMatcher to match atoms in this
+    view against 'other', and using the passed property maps to find the required
+    properties */
+SireUnits::Dimension::Length Evaluator::rmsd(const MoleculeView &other,
+                                             const AtomMatcher &atommatcher,
+                                             const PropertyMap &map0,
+                                             const PropertyMap &map1) const
+{
+    const AtomCoords &c0 = this->data().property( map0["coordinates"] ).asA<AtomCoords>();
+    const AtomCoords &c1 = other.data().property( map1["coordinates"] ).asA<AtomCoords>();
+
+    QHash<AtomIdx,AtomIdx> match = atommatcher.match(*this, map0, other, map1);
+
+    const AtomSelection &sel0 = this->selection();
+    const AtomSelection &sel1 = other.selection();
+    
+    Average msd;
+
+    for (QHash<AtomIdx,AtomIdx>::const_iterator it = match.constBegin();
+         it != match.constEnd();
+         ++it)
+    {
+        const AtomIdx atm0 = it.key();
+        const AtomIdx atm1 = it.value();
+    
+        if (sel0.selected(atm0) and sel1.selected(atm1))
+        {
+            Vector v0 = c0.get( this->data().info().cgAtomIdx(atm0) );
+            Vector v1 = c1.get( this->data().info().cgAtomIdx(atm1) );
+            
+            msd.accumulate( Vector::distance2(v0,v1) );
+        }
+    }
+    
+    return Length( std::sqrt( msd.average() ) );
+}
+
+/** Return the root mean square deviation (RMSD) of the atoms in this view against
+    the atoms in 'other', using the passed property map to find the required
+    properties */
+SireUnits::Dimension::Length Evaluator::rmsd(const MoleculeView &other,
+                                             const PropertyMap &map) const
+{
+    return this->rmsd(other, AtomIdxMatcher(), map, map);
+}
+
+/** Return the root mean square deviation (RMSD) of the atoms in this view against
+    the atoms in 'other', using the passed property maps to find the required
+    properties */
+SireUnits::Dimension::Length Evaluator::rmsd(const MoleculeView &other,
+                                             const PropertyMap &map0,
+                                             const PropertyMap &map1) const
+{
+    return this->rmsd(other, AtomIdxMatcher(), map0, map1);
+}
+
+/** Return the root mean square deviation (RMSD) of the atoms in this view against
+    the atoms in 'other', using the passed AtomMatcher to match atoms in this
+    view against 'other', and using the passed property map to find the required
+    properties */
+SireUnits::Dimension::Length Evaluator::rmsd(const MoleculeView &other,
+                                             const AtomMatcher &atommatcher,
+                                             const PropertyMap &map) const
+{
+    return this->rmsd(other, atommatcher, map, map);
 }
 
 const char* Evaluator::typeName()

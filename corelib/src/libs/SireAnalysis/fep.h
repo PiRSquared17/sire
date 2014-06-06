@@ -234,6 +234,12 @@ public:
     PMF sum() const;
     PMF integrate() const;
 
+    PMF sumForwards() const;
+    PMF sumBackwards() const;
+    
+    PMF sumForwardsTaylor() const;
+    PMF sumBackwardsTaylor() const;
+
 private:
     void checkSane() const;
 

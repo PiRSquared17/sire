@@ -44,6 +44,8 @@
 #include <gsl/gsl_eigen.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
+#include <gsl/gsl_linalg.h>
+#include <gsl/gsl_blas.h>
 
 #include <QDebug>
 
@@ -155,6 +157,27 @@ Matrix::Matrix(const NMatrix &m)
     }
 }
 
+/** Construct from a GSL matrix. This must obviously be a 3x3 matrix! */
+Matrix::Matrix(const gsl_matrix *m)
+{
+    if (m->size1 > 3 or m->size2 > 3)
+        throw SireError::incompatible_error( QObject::tr(
+                    "SireMaths::Matrix is a 3x3 matrix class and cannot be initialised "
+                    "from a gsl_matrix of size %1x%2.")
+                        .arg(m->size1).arg(m->size2), CODELOC );
+
+    for (int i=0; i<9; ++i)
+        array[i] = 0;
+    
+    for (int i=0; i<m->size1; ++i)
+    {
+        for (int j=0; j<m->size2; ++j)
+        {
+            this->operator()(i,j) = gsl_matrix_get(m,i,j);
+        }
+    }
+}
+
 /** Copy constructor */
 Matrix::Matrix(const Matrix &m)
 {
@@ -236,13 +259,34 @@ const double* Matrix::constData() const
     return array;
 }
 
+/** Return the element at index i,j */
+double Matrix::at(int i, int j) const
+{
+    return this->operator()(i,j);
+}
+
 /** Return the determinant of the matrix */
 double Matrix::determinant() const
 {
-    double d = xx()*(yy()*zz()-zy()*yz()) +
-               yx()*(zy()*xz()-xy()*zz()) +
-               zx()*(xy()*yz()-yy()*xz());
-    return d;
+    //  | a b c |
+    //  | d e f |
+    //  | g h i |
+
+    // det = (aei+bfg+cdh)-(ceg+bdi+afh)
+
+    const double a = array[offset(0,0)];
+    const double b = array[offset(0,1)];
+    const double c = array[offset(0,2)];
+
+    const double d = array[offset(1,0)];
+    const double e = array[offset(1,1)];
+    const double f = array[offset(1,2)];
+
+    const double g = array[offset(2,0)];
+    const double h = array[offset(2,1)];
+    const double i = array[offset(2,2)];
+
+    return (a*e*i + b*f*g + c*d*h) - (c*e*g + b*d*i + a*f*h);
 }
 
 /** Return a QString representation of the matrix */
@@ -534,10 +578,7 @@ void Matrix::enforceSymmetric()
 
 Matrix convertGSLMatrix(gsl_matrix *mat)
 {
-    return 
-      Matrix( gsl_matrix_get(mat,0,0), gsl_matrix_get(mat,1,0), gsl_matrix_get(mat,2,0),
-              gsl_matrix_get(mat,0,1), gsl_matrix_get(mat,1,1), gsl_matrix_get(mat,2,1),
-              gsl_matrix_get(mat,0,2), gsl_matrix_get(mat,1,2), gsl_matrix_get(mat,2,2) );
+    return Matrix(mat);
 }
 
 /** Obtain the principal axes of this matrix. This can only be performed if this
@@ -586,8 +627,79 @@ Matrix Matrix::getPrincipalAxes() const
     return ret;
 }
 
+/** Return the single value decomposition of this matrix.
+
+    This calculates the decomposition of this matrix
+    into U S V^T, returning U, S and V in the tuple
+*/
+boost::tuple<Matrix,Matrix,Matrix> Matrix::singleValueDecomposition() const
+{
+    //use GSL
+    gsl_matrix *A = 0;
+    gsl_matrix *W = 0;
+    gsl_vector *S = 0;
+    
+    try
+    {
+        //copy this matrix into A
+        A = gsl_matrix_alloc(3, 3);
+        
+        for (int i=0; i<3; ++i)
+        {
+            for (int j=0; j<3; ++j)
+            {
+                gsl_matrix_set( A, i, j, array[offset(i,j)] );
+            }
+        }
+        
+        //create space to hold the matrices for single value decomposition
+        S = gsl_vector_alloc(3);
+        W = gsl_matrix_alloc(3, 3);
+            
+        // calculate single value decomposition of A into V S W^T
+        int ok = gsl_linalg_SV_decomp_jacobi(A, W, S);
+
+        if (ok != 0)
+            throw SireMaths::domain_error( QObject::tr(
+                    "Could not calculate the single value decomposition of %1.")
+                        .arg(this->toString()), CODELOC );
+        
+        //copy out the results...
+        Matrix a(A);
+        Matrix w = Matrix(W).transpose();
+        Matrix s( gsl_vector_get(S,0), 0, 0,
+                  0, gsl_vector_get(S,1), 0,
+                  0, 0, gsl_vector_get(S,2) );
+        
+        gsl_matrix_free(A);
+        gsl_vector_free(S);
+        gsl_matrix_free(W);
+        
+        return boost::tuple<Matrix,Matrix,Matrix>(a,s,w);
+    }
+    catch(...)
+    {
+        gsl_matrix_free(A);
+        gsl_vector_free(S);
+        gsl_matrix_free(W);
+        throw;
+
+        return boost::tuple<Matrix,Matrix,Matrix>();
+    }
+}
+
+/** Return the single value decomposition of this matrix.
+
+    This calculates the decomposition of this matrix
+    into U S V^T, returning U, S and V in the tuple
+*/
+boost::tuple<Matrix,Matrix,Matrix> Matrix::svd() const
+{
+    return this->singleValueDecomposition();
+}
+
 /** Return the eigenvectors and eigenvalues of this matrix */
-std::pair<Vector,Matrix> Matrix::diagonalise() const
+boost::tuple<Vector,Matrix> Matrix::diagonalise() const
 {
     if (this->isSymmetric())
     {
@@ -606,7 +718,7 @@ std::pair<Vector,Matrix> Matrix::diagonalise() const
         
         eigen_decomposition(A, V, d);
         
-        return std::pair<Vector,Matrix>(
+        return boost::tuple<Vector,Matrix>(
                     Vector(d[0], d[1], d[2]),
                     Matrix(V[0][0], V[1][0], V[2][0],
                            V[0][1], V[1][1], V[2][1],
@@ -617,7 +729,74 @@ std::pair<Vector,Matrix> Matrix::diagonalise() const
         //we need to use BLAS - via NMatrix
         std::pair<NVector,NMatrix> eigs = NMatrix(*this).diagonalise();
         
-        return std::pair<Vector,Matrix>( Vector(eigs.first), Matrix(eigs.second) );
+        return boost::tuple<Vector,Matrix>( Vector(eigs.first), Matrix(eigs.second) );
+    }
+}
+
+/** Return the covariance matrix of the passed arrays of points. This
+    matches point p[i] against point q[i], and only calculates up to either
+    the specified number of points, if n > 0, or to min(len(p),len(q)) */
+Matrix Matrix::covariance(const QVector<Vector> &p, const QVector<Vector> &q, int n)
+{
+    if (n < 0 or n > qMin(p.count(), q.count()))
+    {
+        n = qMin(p.count(), q.count());
+    }
+
+    gsl_matrix *P = 0;
+    gsl_matrix *Q = 0;
+    gsl_matrix *C = 0;
+
+    try
+    {
+        //convert the two vectors of points into GSL matrices
+        P = gsl_matrix_alloc(n, 3);
+        Q = gsl_matrix_alloc(n, 3);
+        
+        for (int i=0; i<n; ++i)
+        {
+            gsl_matrix_set(P, i, 0, p[i].x());
+            gsl_matrix_set(P, i, 1, p[i].y());
+            gsl_matrix_set(P, i, 2, p[i].z());
+            
+            gsl_matrix_set(Q, i, 0, q[i].x());
+            gsl_matrix_set(Q, i, 1, q[i].y());
+            gsl_matrix_set(Q, i, 2, q[i].z());
+        }
+        
+        //create space to hold the covariance matrix
+        C = gsl_matrix_alloc(3, 3);
+        
+        for (int i=0; i<3; ++i)
+        {
+            for (int j=0; j<3; ++j)
+            {
+                gsl_matrix_set(C, i, j, 0);
+            }
+        }
+        
+        //compute the covariance matrix P^T Q
+        int ok = gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, P, Q, 0.0, C);
+
+        if (ok != 0)
+            throw SireMaths::domain_error( QObject::tr(
+                    "Something went wrong with the dgemm in covariance!"), CODELOC );
+
+        Matrix c(C);
+        
+        gsl_matrix_free(P);
+        gsl_matrix_free(Q);
+        gsl_matrix_free(C);
+        
+        return c;
+    }
+    catch(...)
+    {
+        gsl_matrix_free(P);
+        gsl_matrix_free(Q);
+        gsl_matrix_free(C);
+        throw;
+        return Matrix();
     }
 }
 

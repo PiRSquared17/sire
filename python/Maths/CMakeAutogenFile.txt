@@ -5,6 +5,7 @@ set ( PYPP_SOURCES
        TrigArray2D_Matrix_.pypp.cpp
        _Maths_free_functions.pypp.cpp
        TrigArray2D_Vector_.pypp.cpp
+       MultiInt.pypp.cpp
        Torsion.pypp.cpp
        Matrix.pypp.cpp
        Array2D_Vector_.pypp.cpp
@@ -34,9 +35,11 @@ set ( PYPP_SOURCES
        VectorArrayProperty.pypp.cpp
        Complex.pypp.cpp
        DistVector.pypp.cpp
+       Transform.pypp.cpp
        BennettsFreeEnergyAverage.pypp.cpp
        Line.pypp.cpp
        Triangle.pypp.cpp
+       MultiUInt.pypp.cpp
        Vector.pypp.cpp
        Average.pypp.cpp
        NMatrix.pypp.cpp

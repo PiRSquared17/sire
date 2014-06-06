@@ -13,6 +13,8 @@
 
 #include "Array2D_double_.pypp.hpp"
 
+#include "BooleanProperty.pypp.hpp"
+
 #include "CPUID.pypp.hpp"
 
 #include "ChunkedVector_double_.pypp.hpp"
@@ -26,6 +28,8 @@
 #include "Incremint.pypp.hpp"
 
 #include "IntegerArrayProperty.pypp.hpp"
+
+#include "LengthProperty.pypp.hpp"
 
 #include "LinkToProperty.pypp.hpp"
 
@@ -107,6 +111,8 @@ namespace bp = boost::python;
 
 #include "SireBase/numberproperty.h"
 
+#include "SireBase/lengthproperty.h"
+
 #include <QString>
 
 BOOST_PYTHON_MODULE(_Base){
@@ -122,6 +128,8 @@ BOOST_PYTHON_MODULE(_Base){
 
     register_Property_class();
 
+    register_BooleanProperty_class();
+
     register_CPUID_class();
 
     register_ChunkedVector_double__class();
@@ -135,6 +143,8 @@ BOOST_PYTHON_MODULE(_Base){
     register_Incremint_class();
 
     register_IntegerArrayProperty_class();
+
+    register_LengthProperty_class();
 
     register_LinkToProperty_class();
 
@@ -215,6 +225,8 @@ BOOST_PYTHON_MODULE(_Base){
     bp::implicitly_convertible< double, SireBase::NumberProperty >();
 
     bp::implicitly_convertible< int, SireBase::NumberProperty >();
+
+    bp::implicitly_convertible< SireBase::LengthProperty, SireUnits::Dimension::Length >();
 
     bp::implicitly_convertible< QHash<QString,SireBase::PropertyName>, SireBase::PropertyMap >();
 

@@ -48,6 +48,16 @@ void register_G1FF_class(){
         typedef bp::class_< SireFF::G1FF, bp::bases< SireFF::FF, SireMol::MolGroupsBase, SireBase::Property >, boost::noncopyable > G1FF_exposer_t;
         G1FF_exposer_t G1FF_exposer = G1FF_exposer_t( "G1FF", bp::no_init );
         bp::scope G1FF_scope( G1FF_exposer );
+        { //::SireFF::G1FF::accept
+        
+            typedef void ( ::SireFF::G1FF::*accept_function_type )(  ) ;
+            accept_function_type accept_function_value( &::SireFF::G1FF::accept );
+            
+            G1FF_exposer.def( 
+                "accept"
+                , accept_function_value );
+        
+        }
         { //::SireFF::G1FF::add
         
             typedef void ( ::SireFF::G1FF::*add_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) ;
@@ -245,6 +255,16 @@ void register_G1FF_class(){
                 , at_function_value
                 , ( bp::arg("mgnum") )
                 , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
+        { //::SireFF::G1FF::needsAccepting
+        
+            typedef bool ( ::SireFF::G1FF::*needsAccepting_function_type )(  ) const;
+            needsAccepting_function_type needsAccepting_function_value( &::SireFF::G1FF::needsAccepting );
+            
+            G1FF_exposer.def( 
+                "needsAccepting"
+                , needsAccepting_function_value );
         
         }
         { //::SireFF::G1FF::remove

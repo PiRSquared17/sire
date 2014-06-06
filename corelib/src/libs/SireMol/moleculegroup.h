@@ -37,6 +37,7 @@
 #include "SireBase/property.h"
 
 #include "molecules.h"
+#include "molgroupworkspace.h"
 
 SIRE_BEGIN_HEADER
 
@@ -285,16 +286,19 @@ public:
 
     virtual void removeAll();
 
-    virtual bool update(const MoleculeData &moldata);
-    bool update(const MoleculeView &molview);
+    virtual bool update(const MoleculeData &moldata, bool auto_commit=true);
+    bool update(const MoleculeView &molview, bool auto_commit=true);
     
-    virtual QList<Molecule> update(const Molecules &molecules);
-    virtual QList<Molecule> update(const MoleculeGroup &MoleculeGroup);
+    virtual QList<Molecule> update(const Molecules &molecules, bool auto_commit=true);
+    virtual QList<Molecule> update(const MoleculeGroup &MoleculeGroup, bool auto_commit=true);
     
     virtual bool setContents(const MoleculeView &molview);
     virtual bool setContents(const ViewsOfMol &molviews);
     virtual bool setContents(const Molecules &molecules);
     virtual bool setContents(const MoleculeGroup &MoleculeGroup);
+
+    virtual void accept();
+    virtual bool needsAccepting() const;
 
     static const MoleculeGroup& null();
 
@@ -312,6 +316,10 @@ private:
     /** Implicitly shared pointer to the contents and index
         of this group */
     QSharedDataPointer<detail::MolGroupPvt> d;
+    
+    /** The workspace used to cache updates, thus preventing
+        excessive re-allocation of memory during, e.g. MC moves */
+    MolGroupWorkspace workspace;
 };
 
 typedef SireBase::PropPtr<MoleculeGroup> MolGroupPtr;

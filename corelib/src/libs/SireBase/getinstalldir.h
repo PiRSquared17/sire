@@ -47,6 +47,8 @@ namespace SireBase
     
     QString getRepositoryURL();
     QString getRepositoryVersion();
+    
+    QString getReleaseVersion();
 }
 
 SIRE_EXPOSE_FUNCTION(SireBase::getInstallDir)
@@ -58,6 +60,7 @@ SIRE_EXPOSE_FUNCTION(SireBase::getShareDir)
 SIRE_EXPOSE_FUNCTION(SireBase::getSireDir)
 SIRE_EXPOSE_FUNCTION(SireBase::getRepositoryURL)
 SIRE_EXPOSE_FUNCTION(SireBase::getRepositoryVersion)
+SIRE_EXPOSE_FUNCTION(SireBase::getReleaseVersion)
 
 SIRE_END_HEADER
 

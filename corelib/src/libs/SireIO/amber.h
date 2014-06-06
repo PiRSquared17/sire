@@ -52,6 +52,7 @@ QDataStream& operator>>(QDataStream&, SireIO::Amber&);
 namespace SireMol
 {
 class Molecules;
+class MoleculeGroup;
 }
 
 namespace SireMM
@@ -86,15 +87,30 @@ friend QDataStream& ::operator>>(QDataStream&, SireIO::Amber&);
   
 public:
     Amber();
+    Amber(const Amber &other);
     ~Amber();
+  
+    Amber& operator=(const Amber &other);
+    
+    bool operator==(const Amber &other) const;
+    bool operator!=(const Amber &other) const;
   
     static const char* typeName();
   
     const char* what() const;
   
-    tuple<Molecules,SpacePtr> readCrdTop(const QString &crdfile, 
-                                         const QString &topfile,
-                                         QString flag_cutting="perresidue") const;
+    void set14Factors(double coul_14, double lj_14);
+    
+    double coulomb14Factor() const;
+    double lj14Factor() const;
+  
+    tuple<MoleculeGroup,SpacePtr> readCrdTop(const QString &crdfile,
+                                             const QString &topfile,
+                                             QString flag_cutting="perresidue") const;
+
+private:
+    double coul_14scl;
+    double lj_14scl;
 };
 
 }

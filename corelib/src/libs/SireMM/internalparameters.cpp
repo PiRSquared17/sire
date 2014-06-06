@@ -2961,9 +2961,7 @@ void InternalParameters::updateState()
     state = EMPTY;
     
     if (group_params.isEmpty())
-        throw SireFF::missing_function( QObject::tr(
-            "There are no internal functions for the molecule! The "
-            "molecule will have an internal energy of zero!"), CODELOC );
+        return;
         
     int ngroups = group_params.count();
     const GroupInternalParameters *groups_array = group_params.constData();
@@ -3008,11 +3006,6 @@ void InternalParameters::updateState()
                 state |= HAS_SBT;
         }
     }
-    
-    if (state == EMPTY)
-        throw SireFF::missing_function( QObject::tr(
-            "There are no internal functions for the molecule! The "
-            "molecule will have an internal energy of zero!"), CODELOC );
 }
 
 /** Reindex the parameters */

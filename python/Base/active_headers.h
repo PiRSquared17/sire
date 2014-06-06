@@ -5,6 +5,7 @@
 
 #include "array2d.h"
 #include "array2d.hpp"
+#include "booleanproperty.h"
 #include "chunkedvector.hpp"
 #include "combineproperties.h"
 #include "countflops.h"
@@ -13,6 +14,7 @@
 #include "getinstalldir.h"
 #include "increment.h"
 #include "incremint.h"
+#include "lengthproperty.h"
 #include "linktoproperty.h"
 #include "majorminorversion.h"
 #include "meminfo.h"

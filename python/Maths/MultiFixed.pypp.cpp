@@ -17,6 +17,10 @@ namespace bp = boost::python;
 
 #include "multifixed.h"
 
+#include "multifloat.h"
+
+#include "multiint.h"
+
 SireMaths::MultiFixed __copy__(const SireMaths::MultiFixed &other){ return SireMaths::MultiFixed(other); }
 
 #include "Helpers/str.hpp"

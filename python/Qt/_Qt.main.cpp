@@ -27,6 +27,8 @@
 
 #include "QTime.pypp.hpp"
 
+#include "QElapsedTimer.pypp.hpp"
+
 #include "QUuid.pypp.hpp"
 
 namespace bp = boost::python;
@@ -52,6 +54,8 @@ BOOST_PYTHON_MODULE(_Qt){
     register_QFileInfo_class();
 
     register_QTime_class();
+
+    register_QElapsedTimer_class();
 
     autoconvert_QChar();
     

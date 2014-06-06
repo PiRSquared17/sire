@@ -41,7 +41,33 @@
 
 #include "CHARMMSwitchingFunction.pypp.hpp"
 
+#include "CLJAtom.pypp.hpp"
+
+#include "CLJAtoms.pypp.hpp"
+
+#include "CLJBox.pypp.hpp"
+
+#include "CLJBoxDistance.pypp.hpp"
+
+#include "CLJBoxIndex.pypp.hpp"
+
+#include "CLJBoxes.pypp.hpp"
+
+#include "CLJCalculator.pypp.hpp"
+
 #include "CLJComponent.pypp.hpp"
+
+#include "CLJCutoffFunction.pypp.hpp"
+
+#include "CLJDelta.pypp.hpp"
+
+#include "CLJFunction.pypp.hpp"
+
+#include "CLJGrid.pypp.hpp"
+
+#include "CLJIntraFunction.pypp.hpp"
+
+#include "CLJIntraShiftFunction.pypp.hpp"
 
 #include "CLJNBPairs.pypp.hpp"
 
@@ -60,6 +86,12 @@
 #include "CLJProbe.pypp.hpp"
 
 #include "CLJScaleFactor.pypp.hpp"
+
+#include "CLJShiftFunction.pypp.hpp"
+
+#include "CLJSoftFunction.pypp.hpp"
+
+#include "CLJWorkspace.pypp.hpp"
 
 #include "ChargeParameterName.pypp.hpp"
 
@@ -116,6 +148,8 @@
 #include "InterCoulombFF.pypp.hpp"
 
 #include "InterCoulombFFBase.pypp.hpp"
+
+#include "InterFF.pypp.hpp"
 
 #include "InterGroupCLJFF.pypp.hpp"
 
@@ -213,6 +247,8 @@
 
 #include "NoCutoff.pypp.hpp"
 
+#include "NullCLJFunction.pypp.hpp"
+
 #include "NullRestraint.pypp.hpp"
 
 #include "Restraint.pypp.hpp"
@@ -254,6 +290,8 @@
 #include "StretchStretchSymbols.pypp.hpp"
 
 #include "SwitchingFunction.pypp.hpp"
+
+#include "TestFF.pypp.hpp"
 
 #include "ThreeAtomFunction.pypp.hpp"
 
@@ -416,7 +454,33 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_CHARMMSwitchingFunction_class();
 
+    register_CLJAtom_class();
+
+    register_CLJAtoms_class();
+
+    register_CLJBox_class();
+
+    register_CLJBoxDistance_class();
+
+    register_CLJBoxIndex_class();
+
+    register_CLJBoxes_class();
+
+    register_CLJCalculator_class();
+
     register_CLJComponent_class();
+
+    register_CLJFunction_class();
+
+    register_CLJCutoffFunction_class();
+
+    register_CLJDelta_class();
+
+    register_CLJGrid_class();
+
+    register_CLJIntraFunction_class();
+
+    register_CLJIntraShiftFunction_class();
 
     register_CLJNBPairs_class();
 
@@ -429,6 +493,12 @@ BOOST_PYTHON_MODULE(_MM){
     register_CLJParameterNames3D_class();
 
     register_CLJProbe_class();
+
+    register_CLJShiftFunction_class();
+
+    register_CLJSoftFunction_class();
+
+    register_CLJWorkspace_class();
 
     register_ChargeParameterName3D_class();
 
@@ -472,6 +542,8 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_ImproperSymbols_class();
 
+    register_InterFF_class();
+
     register_InternalComponent_class();
 
     register_InternalFF_class();
@@ -508,6 +580,8 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_NoCutoff_class();
 
+    register_NullCLJFunction_class();
+
     register_NullRestraint_class();
 
     register_RestraintComponent_class();
@@ -533,6 +607,8 @@ BOOST_PYTHON_MODULE(_MM){
     register_StretchStretchComponent_class();
 
     register_StretchStretchSymbols_class();
+
+    register_TestFF_class();
 
     register_ThreeAtomFunction_class();
 

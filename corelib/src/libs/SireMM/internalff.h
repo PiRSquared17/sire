@@ -509,8 +509,8 @@ protected:
 
     void _pvt_removed(const PartialMolecule &mol);
 
-    void _pvt_changed(const SireMol::Molecule &molecule);
-    void _pvt_changed(const QList<SireMol::Molecule> &molecules);
+    void _pvt_changed(const SireMol::Molecule &molecule, bool auto_update);
+    void _pvt_changed(const QList<SireMol::Molecule> &molecules, bool auto_update);
     
     void _pvt_removedAll();
         

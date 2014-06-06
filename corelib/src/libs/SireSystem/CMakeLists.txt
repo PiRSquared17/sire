@@ -45,6 +45,7 @@ set ( SIRESYSTEM_HEADERS
       system.h
       systemmonitor.h
       systemmonitors.h
+      volmapmonitor.h
     )
 
 # Define the sources in SireSystem
@@ -82,6 +83,7 @@ set ( SIRESYSTEM_SOURCES
       system.cpp
       systemmonitor.cpp
       systemmonitors.cpp
+      volmapmonitor.cpp
     
       ${SIRESYSTEM_HEADERS}
     )

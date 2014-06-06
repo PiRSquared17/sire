@@ -4858,14 +4858,31 @@ public:
         return mapping != other.mapping;
     }
     
-    bool unchangedAtomOrder(const MoleculeInfoData &molinfo0,
-                            const MoleculeInfoData &molinfo1) const
+protected:
+    bool pvt_changesAtomOrder(const MoleculeInfoData &molinfo0,
+                              const MoleculeInfoData &molinfo1) const
     {
-        return false;
+        return true;
     }
     
-    QHash<AtomIdx,AtomIdx> match(const MoleculeInfoData &molinfo0,
-                                 const MoleculeInfoData &molinfo1) const
+    bool pvt_changesAtomOrder(const MoleculeView &mol0,
+                              const PropertyMap &map0,
+                              const MoleculeView &mol1,
+                              const PropertyMap &map1) const
+    {
+        return true;
+    }
+    
+    QHash<AtomIdx,AtomIdx> pvt_match(const MoleculeInfoData &molinfo0,
+                                     const MoleculeInfoData &molinfo1) const
+    {
+        return mapping;
+    }
+
+    QHash<AtomIdx,AtomIdx> pvt_match(const MoleculeView &mol0,
+                                     const PropertyMap &map0,
+                                     const MoleculeView &mol1,
+                                     const PropertyMap &map1) const
     {
         return mapping;
     }

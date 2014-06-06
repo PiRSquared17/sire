@@ -13,7 +13,16 @@ share_directory = Sire.Base.getShareDir()
 parameter_directory = "%s/parameters" % share_directory
 test_directory = "%s/test" % Sire.Base.getInstallDir()
 
+sire_release_version = Sire.Base.getReleaseVersion()
 sire_repository_url = Sire.Base.getRepositoryURL()
 sire_repository_version = Sire.Base.getRepositoryVersion()
 sire_python_repository_url = "@SVN_REPOSITORY_URL@"
 sire_python_repository_version = "@SVN_VERSION_NUMBER@"
+
+def versionString():
+    s = "Sire Release %s\n(Version %s from repository %s,\nPython wrappers %s from %s)" \
+             % (sire_release_version, sire_repository_version, \
+                sire_repository_url, sire_python_repository_version, \
+                sire_python_repository_url)
+
+    return s

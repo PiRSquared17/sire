@@ -980,6 +980,38 @@ bool PeriodicBox::beyond(double dist, const CoordGroup &group0,
     return PeriodicBox::beyond(dist, group0.aaBox(), group1.aaBox());
 }
 
+/** Return the minimum distance between the two boxes */
+double PeriodicBox::minimumDistance(const AABox &box0, const AABox &box1) const
+{
+    //get the distance between the minimum image of the box centers
+    Vector delta = box0.center() - box1.center();
+    delta = Vector( std::abs(delta.x()), std::abs(delta.y()), std::abs(delta.z()) );
+
+    while (delta.x() > halflength.x())
+    {
+        delta.setX( delta.x() - boxlength.x() );
+    }
+
+    while (delta.y() > halflength.y())
+    {
+        delta.setY( delta.y() - boxlength.z() );
+    }
+
+    while (delta.z() > halflength.z())
+    {
+        delta.setZ( delta.z() - boxlength.z() );
+    }
+
+    delta = Vector( std::abs(delta.x()), std::abs(delta.y()), std::abs(delta.z()) );
+    
+    delta -= box0.halfExtents();
+    delta -= box1.halfExtents();
+    
+    delta = delta.max( Vector(0) );
+    
+    return delta.length();
+}
+
 /** Return the minimum distance between the points in 'group0' and 'group1'.
     If this is a periodic space then this uses the minimum image convention
     (i.e. the minimum distance between the closest periodic replicas are
@@ -1141,6 +1173,57 @@ AABox PeriodicBox::getMinimumImage(const AABox &aabox, const Vector &center) con
 Vector PeriodicBox::getMinimumImage(const Vector &point, const Vector &center) const
 {
     return point + wrapDelta(point, center);
+}
+
+/** Return all periodic images of 'point' with respect to 'center' within
+    'dist' distance of 'center' */
+QVector<Vector> PeriodicBox::getImagesWithin(const Vector &point, const Vector &center,
+                                             double dist) const
+{
+    QVector<Vector> points;
+
+    //first, get the minimum image...
+    Vector p = getMinimumImage(point, center);
+
+    if ( Vector::distance(p,center) < dist )
+    {
+        //the minimum image is within the distance, so lets now look at all periodic replicas...
+
+        //We only need to look at periodic boxes that are within 'dist'...
+        // This rounds to the nearest number of box lengths, e.g.
+        // if dist is >= halflength.x() and < 1.5 length.x()
+        // then there is only the need to go out to the first layer in the
+        // x-dimension.
+        int nlayers_x = int( (dist*invlength.x()) + 0.5 );
+        int nlayers_y = int( (dist*invlength.y()) + 0.5 );
+        int nlayers_z = int( (dist*invlength.z()) + 0.5 );
+
+        //loop over all peridic boxes in range
+        for (int i = -nlayers_x; i <= nlayers_x; ++i)
+        {
+            for (int j = -nlayers_y; j <= nlayers_y; ++j)
+            {
+                for (int k = -nlayers_z; k <= nlayers_z; ++k)
+                {
+                    //get the delta value needed to translate the minimum
+                    //image into the i,j,k box
+                    Vector delta( i * boxlength.x(),
+                                  j * boxlength.y(),
+                                  k * boxlength.z() );
+
+                    //translate just the center of the minimum image...
+                    Vector p_image = p + delta;
+
+                    if ( Vector::distance(center, p_image) < dist )
+                    {
+                        points.append(p_image);
+                    }
+                }
+            }
+        }
+    }
+    
+    return points;
 }
 
 /** Return a list of copies of CoordGroup 'group' that are within

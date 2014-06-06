@@ -110,6 +110,14 @@ public:
     bool areConnected(ResIdx res0, ResIdx res1) const;
     bool areConnected(const ResID &res0, const ResID &res1) const;
 
+    bool areBonded(AtomIdx atom0, AtomIdx atom1) const;
+    bool areAngled(AtomIdx atom0, AtomIdx atom2) const;
+    bool areDihedraled(AtomIdx atom0, AtomIdx atom3) const;
+
+    bool areBonded(const AtomID &atom0, const AtomID &atom1) const;
+    bool areAngled(const AtomID &atom0, const AtomID &atom2) const;
+    bool areDihedraled(const AtomID &atom0, const AtomID &atom3) const;
+
     QList<AtomIdx> findPath(AtomIdx atom0, AtomIdx atom1) const;
     QList< QList<AtomIdx> > findPaths(AtomIdx atom0, AtomIdx atom1) const;
     
@@ -219,6 +227,9 @@ public:
     QList<DihedralID> getDihedrals(const AtomID &atom0) const;
     QList<DihedralID> getDihedrals(const AtomID &atom0, const AtomID &atom1) const;
     QList<DihedralID> getDihedrals(const AtomID &atom0, const AtomID &atom1, const AtomID &atom2) const;
+
+    QVector< QVector<bool> > getBondMatrix(int order) const;
+    QVector< QVector<bool> > getBondMatrix(int start, int end) const;
 
 protected:
     ConnectivityBase();

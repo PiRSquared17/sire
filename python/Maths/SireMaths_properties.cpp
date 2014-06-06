@@ -9,6 +9,7 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 #include "accumulator.h"
+#include "histogram.h"
 #include <QDebug>
 #include <QMutex>
 #include <cmath>

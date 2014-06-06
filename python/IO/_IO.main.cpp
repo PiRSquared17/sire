@@ -9,6 +9,8 @@
 
 #include "Cube.pypp.hpp"
 
+#include "DX.pypp.hpp"
+
 #include "FlexibilityLibrary.pypp.hpp"
 
 #include "FlexibilityTemplate.pypp.hpp"
@@ -51,6 +53,8 @@ BOOST_PYTHON_MODULE(_IO){
     register_Amber_class();
 
     register_Cube_class();
+
+    register_DX_class();
 
     register_FlexibilityLibrary_class();
 

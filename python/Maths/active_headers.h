@@ -4,6 +4,7 @@
 #ifdef GCCXML_PARSE
 
 #include "accumulator.h"
+#include "align.h"
 #include "axisset.h"
 #include "boys.h"
 #include "complex.h"
@@ -17,6 +18,8 @@
 #include "multidouble.h"
 #include "multifixed.h"
 #include "multifloat.h"
+#include "multiint.h"
+#include "multiuint.h"
 #include "n4matrix.h"
 #include "nmatrix.h"
 #include "nvector.h"

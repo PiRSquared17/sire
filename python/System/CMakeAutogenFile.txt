@@ -37,6 +37,7 @@ set ( PYPP_SOURCES
        MonitorName.pypp.cpp
        System.pypp.cpp
        MoleculeConstraint.pypp.cpp
+       VolMapMonitor.pypp.cpp
        PerturbationConstraint.pypp.cpp
        MonitorProperty.pypp.cpp
        CheckPoint.pypp.cpp

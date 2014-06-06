@@ -704,7 +704,7 @@ PropertyPtr
 ThreeAtomFunctions::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
                                             const AtomMatcher &atommatcher) const
 {
-    if (atommatcher.unchangedAtomOrder(this->info(), molinfo))
+    if (not atommatcher.changesOrder(this->info(), molinfo))
     {
         //the order of the atoms remains the same - this means that the 
         //AtomIdx indicies are still valid

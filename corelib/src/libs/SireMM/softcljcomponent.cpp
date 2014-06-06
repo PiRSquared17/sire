@@ -154,7 +154,7 @@ void SoftCLJEnergy::setEnergy(int i, double cnrg, double ljnrg)
     #else
     nrgs[i][0] = cnrg;
     nrgs[i][1] = ljnrg;
-    #endif;
+    #endif
 }
 
 /** Return the sum of all of the coulomb components */

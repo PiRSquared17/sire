@@ -203,9 +203,9 @@ protected:
     void _pvt_removed(quint32 group_id, 
                       const SireMol::PartialMolecule &mol);
                       
-    void _pvt_changed(quint32 group_id, const SireMol::Molecule &mol);
+    void _pvt_changed(quint32 group_id, const SireMol::Molecule &mol, bool auto_update);
     
-    void _pvt_changed(quint32 group_id, const QList<SireMol::Molecule> &mols);
+    void _pvt_changed(quint32 group_id, const QList<SireMol::Molecule> &mols, bool auto_update);
     
     void _pvt_removedAll(quint32 group_id);
     

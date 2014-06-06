@@ -29,6 +29,7 @@
 #include "molviewproperty.h"
 #include "moleculeinfodata.h"
 #include "atommatcher.h"
+#include "atommatchers.h"
 
 #include "mover.hpp"
 

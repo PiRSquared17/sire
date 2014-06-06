@@ -89,6 +89,16 @@ void register_MoleculeGroups_class(){
         MoleculeGroups_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("molgroup") )) );
         MoleculeGroups_exposer.def( bp::init< QList< SireBase::PropPtr< SireMol::MoleculeGroup > > const & >(( bp::arg("molgroups") )) );
         MoleculeGroups_exposer.def( bp::init< SireMol::MoleculeGroups const & >(( bp::arg("other") )) );
+        { //::SireMol::MoleculeGroups::accept
+        
+            typedef void ( ::SireMol::MoleculeGroups::*accept_function_type )(  ) ;
+            accept_function_type accept_function_value( &::SireMol::MoleculeGroups::accept );
+            
+            MoleculeGroups_exposer.def( 
+                "accept"
+                , accept_function_value );
+        
+        }
         { //::SireMol::MoleculeGroups::add
         
             typedef void ( ::SireMol::MoleculeGroups::*add_function_type )( ::SireMol::MoleculeGroup const & ) ;
@@ -198,6 +208,16 @@ void register_MoleculeGroups_class(){
                 , at_function_value
                 , ( bp::arg("mgnum") )
                 , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
+        { //::SireMol::MoleculeGroups::needsAccepting
+        
+            typedef bool ( ::SireMol::MoleculeGroups::*needsAccepting_function_type )(  ) const;
+            needsAccepting_function_type needsAccepting_function_value( &::SireMol::MoleculeGroups::needsAccepting );
+            
+            MoleculeGroups_exposer.def( 
+                "needsAccepting"
+                , needsAccepting_function_value );
         
         }
         MoleculeGroups_exposer.def( bp::self != bp::self );
@@ -424,35 +444,35 @@ void register_MoleculeGroups_class(){
         }
         { //::SireMol::MoleculeGroups::update
         
-            typedef void ( ::SireMol::MoleculeGroups::*update_function_type )( ::SireMol::MoleculeData const & ) ;
+            typedef void ( ::SireMol::MoleculeGroups::*update_function_type )( ::SireMol::MoleculeData const &,bool ) ;
             update_function_type update_function_value( &::SireMol::MoleculeGroups::update );
             
             MoleculeGroups_exposer.def( 
                 "update"
                 , update_function_value
-                , ( bp::arg("moldata") ) );
+                , ( bp::arg("moldata"), bp::arg("auto_commit")=(bool)(true) ) );
         
         }
         { //::SireMol::MoleculeGroups::update
         
-            typedef void ( ::SireMol::MoleculeGroups::*update_function_type )( ::SireMol::Molecules const & ) ;
+            typedef void ( ::SireMol::MoleculeGroups::*update_function_type )( ::SireMol::Molecules const &,bool ) ;
             update_function_type update_function_value( &::SireMol::MoleculeGroups::update );
             
             MoleculeGroups_exposer.def( 
                 "update"
                 , update_function_value
-                , ( bp::arg("molecules") ) );
+                , ( bp::arg("molecules"), bp::arg("auto_commit")=(bool)(true) ) );
         
         }
         { //::SireMol::MoleculeGroups::update
         
-            typedef void ( ::SireMol::MoleculeGroups::*update_function_type )( ::SireMol::MoleculeGroup const & ) ;
+            typedef void ( ::SireMol::MoleculeGroups::*update_function_type )( ::SireMol::MoleculeGroup const &,bool ) ;
             update_function_type update_function_value( &::SireMol::MoleculeGroups::update );
             
             MoleculeGroups_exposer.def( 
                 "update"
                 , update_function_value
-                , ( bp::arg("molgroup") ) );
+                , ( bp::arg("molgroup"), bp::arg("auto_commit")=(bool)(true) ) );
         
         }
         MoleculeGroups_exposer.staticmethod( "typeName" );

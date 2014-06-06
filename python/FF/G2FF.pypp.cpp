@@ -48,6 +48,16 @@ void register_G2FF_class(){
         typedef bp::class_< SireFF::G2FF, bp::bases< SireFF::FF, SireMol::MolGroupsBase, SireBase::Property >, boost::noncopyable > G2FF_exposer_t;
         G2FF_exposer_t G2FF_exposer = G2FF_exposer_t( "G2FF", bp::no_init );
         bp::scope G2FF_scope( G2FF_exposer );
+        { //::SireFF::G2FF::accept
+        
+            typedef void ( ::SireFF::G2FF::*accept_function_type )(  ) ;
+            accept_function_type accept_function_value( &::SireFF::G2FF::accept );
+            
+            G2FF_exposer.def( 
+                "accept"
+                , accept_function_value );
+        
+        }
         { //::SireFF::G2FF::assertContains
         
             typedef void ( ::SireFF::G2FF::*assertContains_function_type )( ::SireMol::MGNum ) const;
@@ -69,6 +79,16 @@ void register_G2FF_class(){
                 , at_function_value
                 , ( bp::arg("mgnum") )
                 , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
+        { //::SireFF::G2FF::needsAccepting
+        
+            typedef bool ( ::SireFF::G2FF::*needsAccepting_function_type )(  ) const;
+            needsAccepting_function_type needsAccepting_function_value( &::SireFF::G2FF::needsAccepting );
+            
+            G2FF_exposer.def( 
+                "needsAccepting"
+                , needsAccepting_function_value );
         
         }
         G2FF_exposer.def( "__rlshift__", &__rlshift__QDataStream< ::SireFF::G2FF >,

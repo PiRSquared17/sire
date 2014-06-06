@@ -75,7 +75,7 @@ class SIRESYSTEM_EXPORT Delta
 {
 public:
     Delta();
-    Delta(const System &system);
+    Delta(const System &system, bool auto_commit=true);
           
     Delta(const Delta &other);
     
@@ -173,6 +173,8 @@ public:
     bool update(const PropertyName &property, const QList<FFIdx> &ffidxs,
                 const Property &value);
     
+    bool willAutoCommit() const;
+    
     System apply();
     
 private:
@@ -202,6 +204,9 @@ private:
     
     /** The subversion of the last property change (0 for no change) */
     quint32 last_prop_change;
+    
+    /** Whether or not to auto-commit after each update */
+    bool auto_commit;
 };
 
 }

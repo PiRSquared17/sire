@@ -52,6 +52,7 @@ QDataStream& operator>>(QDataStream&, SireAnalysis::TIPMF&);
 namespace SireAnalysis
 {
 
+using SireMaths::AverageAndStddev;
 using SireMaths::FreeEnergyAverage;
 using SireUnits::Dimension::MolarEnergy;
 
@@ -140,6 +141,7 @@ friend QDataStream& ::operator>>(QDataStream&, Gradients&);
 
 public:
     Gradients();
+    Gradients(const QMap<double,AverageAndStddev> &gradients);
     Gradients(const QMap<double,FreeEnergyAverage> &gradients);
     Gradients(const QMap<double,FreeEnergyAverage> &gradients,
               double delta_lambda);
@@ -186,6 +188,8 @@ public:
     QVector<DataPoint> forwardsValues() const;
     QVector<DataPoint> backwardsValues() const;
 
+    QMap<double,AverageAndStddev> analyticData() const;
+
     QMap<double,FreeEnergyAverage> forwardsData() const;
     QMap<double,FreeEnergyAverage> backwardsData() const;
 
@@ -202,7 +206,10 @@ public:
 private:
     void checkSane() const;
 
-    /** The forwards values */
+    /** The analytic gradient data (from analytic TI) */
+    QMap<double,AverageAndStddev> analytic;
+
+    /** The forwards values (from finite difference TI) */
     QMap<double,FreeEnergyAverage> fwds;
 
     /** The backwards values */
@@ -242,6 +249,7 @@ public:
     
     QString toString() const;
     
+    void add(const QMap<double,AverageAndStddev> &gradients);
     void add(const QMap<double,FreeEnergyAverage> &gradients);
     void add(const QMap<double,FreeEnergyAverage> &gradients,
              double delta_lambda);
@@ -266,6 +274,7 @@ public:
     
     QList<Gradients> gradients() const;
     
+    void set(int i, const QMap<double,AverageAndStddev> &gradients);
     void set(int i, const QMap<double,FreeEnergyAverage> &gradients);
     void set(int i, const QMap<double,FreeEnergyAverage> &gradients,
              double delta_lambda);

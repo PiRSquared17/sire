@@ -198,8 +198,11 @@ Ensemble Moves::ensemble() const
 {
     QList<MovePtr> mvs = this->moves();
     
-    Ensemble merged = mvs.takeFirst()->ensemble();
+    if (mvs.isEmpty())
+        return Ensemble();
     
+    Ensemble merged = mvs.takeFirst()->ensemble();
+
     for (QList<MovePtr>::const_iterator it = mvs.constBegin();
          it != mvs.constEnd();
          ++it)

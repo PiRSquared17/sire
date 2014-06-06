@@ -36,17 +36,12 @@ def _pvt_loadLibrary(lib):
 
     if lib in _pvt_modules:
         __import__( _pvt_modules[lib] ) 
-        sys.stdout.write(".")
 
 def load(data):
     header = getDataHeader(data)
 
-    sys.stdout.write("Loading required Sire Python modules.")
-
     for lib in header.requiredLibraries():
         _pvt_loadLibrary(lib)
-
-    sys.stdout.write("Done!")
 
     return _pvt_load(data)
 

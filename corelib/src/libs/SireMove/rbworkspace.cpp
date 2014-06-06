@@ -113,10 +113,10 @@ static Vector getPrincipalAxes(Matrix &inertia)
     inertia_array[inertia.offset(2,0)] = inertia_array[inertia.offset(0,2)];
     inertia_array[inertia.offset(2,1)] = inertia_array[inertia.offset(1,2)];
 
-    std::pair<Vector,Matrix> eigs = inertia.diagonalise();
+    boost::tuple<Vector,Matrix> eigs = inertia.diagonalise();
 
-    Vector &principle_inertia = eigs.first;
-    Matrix &orientation = eigs.second;
+    Vector &principle_inertia = eigs.get<0>();
+    Matrix &orientation = eigs.get<1>();
     
     //if one or more of the eigenvalues is zero then we may have a problem
     //because the wrong eigenvector direction may be chosen - in this case,
@@ -217,7 +217,7 @@ static QVector<Vector> buildBead(const ViewsOfMol &mol,
             bead_com /= bead_mass;
             bead_orients[0] = Quaternion();
             
-            bead_to_world = Matrix(0);
+            bead_to_world = Matrix( double(0) );
             
             //now calculate moments of inertia
             for (int i=0; i<nats; ++i)
@@ -460,7 +460,7 @@ void RBWorkspace::rebuildFromScratch()
     //now build all of the beads
     bead_coordinates = QVector<Vector>(nbeads, Vector(0));
     bead_orientations = QVector<Quaternion>(nbeads);
-    bead_to_world = QVector<Matrix>(nbeads, Matrix(0));
+    bead_to_world = QVector<Matrix>(nbeads, Matrix(double(0)));
     bead_masses = QVector<double>(nbeads, 0.0);
     bead_inertia = QVector<Vector>(nbeads, Vector(0));
     

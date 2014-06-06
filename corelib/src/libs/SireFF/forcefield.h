@@ -83,6 +83,9 @@ public:
     const Properties& properties() const;
     void mustNowRecalculateFromScratch();
 
+    bool needsAccepting() const;
+    void accept();
+
 protected:
     void recalculateEnergy();
     void group_add(quint32 i, const MoleculeView &molview,
@@ -117,10 +120,10 @@ protected:
 
     void group_removeAll(quint32 i);
 
-    bool group_update(quint32 i, const MoleculeData &moldata);
+    bool group_update(quint32 i, const MoleculeData &moldata, bool auto_commit);
 
-    QList<Molecule> group_update(quint32 i, const Molecules &molecules);
-    QList<Molecule> group_update(quint32 i, const MoleculeGroup &molgroup);
+    QList<Molecule> group_update(quint32 i, const Molecules &molecules, bool auto_commit);
+    QList<Molecule> group_update(quint32 i, const MoleculeGroup &molgroup, bool auto_commit);
     
     bool group_setContents(quint32 i, const MoleculeView &molview, 
                            const PropertyMap &map);

@@ -253,6 +253,17 @@ void register_PeriodicBox_class(){
                 , ( bp::arg("group"), bp::arg("center"), bp::arg("dist") ) );
         
         }
+        { //::SireVol::PeriodicBox::getImagesWithin
+        
+            typedef ::QVector< SireMaths::Vector > ( ::SireVol::PeriodicBox::*getImagesWithin_function_type )( ::SireMaths::Vector const &,::SireMaths::Vector const &,double ) const;
+            getImagesWithin_function_type getImagesWithin_function_value( &::SireVol::PeriodicBox::getImagesWithin );
+            
+            PeriodicBox_exposer.def( 
+                "getImagesWithin"
+                , getImagesWithin_function_value
+                , ( bp::arg("point"), bp::arg("center"), bp::arg("dist") ) );
+        
+        }
         { //::SireVol::PeriodicBox::getMinimumImage
         
             typedef ::SireVol::CoordGroup ( ::SireVol::PeriodicBox::*getMinimumImage_function_type )( ::SireVol::CoordGroup const &,::SireMaths::Vector const & ) const;
@@ -359,6 +370,17 @@ void register_PeriodicBox_class(){
                 "minimumDistance"
                 , minimumDistance_function_value
                 , ( bp::arg("group0"), bp::arg("group1") ) );
+        
+        }
+        { //::SireVol::PeriodicBox::minimumDistance
+        
+            typedef double ( ::SireVol::PeriodicBox::*minimumDistance_function_type )( ::SireVol::AABox const &,::SireVol::AABox const & ) const;
+            minimumDistance_function_type minimumDistance_function_value( &::SireVol::PeriodicBox::minimumDistance );
+            
+            PeriodicBox_exposer.def( 
+                "minimumDistance"
+                , minimumDistance_function_value
+                , ( bp::arg("box0"), bp::arg("box1") ) );
         
         }
         PeriodicBox_exposer.def( bp::self != bp::self );

@@ -425,6 +425,17 @@ void register_free_functions(){
     
     }
 
+    { //::SireBase::getReleaseVersion
+
+        typedef ::QString ( *getReleaseVersion_function_type )(  );
+        getReleaseVersion_function_type getReleaseVersion_function_value( &::SireBase::getReleaseVersion );
+
+        bp::def(
+            "getReleaseVersion"
+            , getReleaseVersion_function_value );
+
+    }
+
     { //::SireBase::getRepositoryURL
     
         typedef ::QString ( *getRepositoryURL_function_type )(  );

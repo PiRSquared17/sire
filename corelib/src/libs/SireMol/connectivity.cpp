@@ -27,6 +27,8 @@
 \*********************************************/
 
 #include <QDataStream>
+#include <QElapsedTimer>
+
 #include <boost/assert.hpp>
 
 #include "atomselection.h"
@@ -190,46 +192,46 @@ PropertyPtr ConnectivityBase::_pvt_makeCompatibleWith(const MoleculeInfoData &mo
 {
     try
     {
-    if (atommatcher.unchangedAtomOrder(this->info(), molinfo))
-    {
-        //the order of the atoms remains the same - this means that the 
-        //AtomIdx indicies are still valid
-        Connectivity ret;
-        ret.connected_atoms = connected_atoms;
-        ret.connected_res = connected_res;
-        ret.d = molinfo;
-        return ret;
-    }
-
-    QHash<AtomIdx,AtomIdx> matched_atoms = atommatcher.match(this->info(), molinfo);
-
-    ConnectivityEditor editor;
-    editor.d = molinfo;
-    editor.connected_atoms = QVector< QSet<AtomIdx> >( molinfo.nAtoms() );
-    editor.connected_res = QVector< QSet<ResIdx> >( molinfo.nResidues() );
-
-    for (int i=0; i<connected_atoms.count(); ++i)
-    {
-        AtomIdx old_idx(i);
-        
-        AtomIdx new_idx = matched_atoms.value(old_idx, AtomIdx(-1));
-        
-        if (new_idx != -1)
+        if (not atommatcher.changesOrder(this->info(), molinfo))
         {
-            foreach (AtomIdx old_bond, this->connectionsTo(old_idx))
+            //the order of the atoms remains the same - this means that the 
+            //AtomIdx indicies are still valid
+            Connectivity ret;
+            ret.connected_atoms = connected_atoms;
+            ret.connected_res = connected_res;
+            ret.d = molinfo;
+            return ret;
+        }
+
+        QHash<AtomIdx,AtomIdx> matched_atoms = atommatcher.match(this->info(), molinfo);
+
+        ConnectivityEditor editor;
+        editor.d = molinfo;
+        editor.connected_atoms = QVector< QSet<AtomIdx> >( molinfo.nAtoms() );
+        editor.connected_res = QVector< QSet<ResIdx> >( molinfo.nResidues() );
+
+        for (int i=0; i<connected_atoms.count(); ++i)
+        {
+            AtomIdx old_idx(i);
+            
+            AtomIdx new_idx = matched_atoms.value(old_idx, AtomIdx(-1));
+            
+            if (new_idx != -1)
             {
-                AtomIdx new_bond = matched_atoms.value(old_bond, AtomIdx(-1));
-                
-                if (new_bond != -1)
+                foreach (AtomIdx old_bond, this->connectionsTo(old_idx))
                 {
-                    if (new_bond > new_idx)
-                        editor.connect(new_idx, new_bond);
+                    AtomIdx new_bond = matched_atoms.value(old_bond, AtomIdx(-1));
+                    
+                    if (new_bond != -1)
+                    {
+                        if (new_bond > new_idx)
+                            editor.connect(new_idx, new_bond);
+                    }
                 }
             }
         }
-    }
 
-    return editor.commit();
+        return editor.commit();
     }
     catch(const SireError::exception &e)
     {
@@ -484,7 +486,76 @@ bool ConnectivityBase::areConnected(const AtomID &atom0, const AtomID &atom1) co
 {
     return this->connectionsTo(atom0).contains( info().atomIdx(atom1) );
 }
+
+/** Return whether or not the two atoms are bonded together */
+bool ConnectivityBase::areBonded(AtomIdx atom0, AtomIdx atom1) const
+{
+    return areConnected(atom0, atom1);
+}
+
+/** Return whether or not the two atoms are angled together */
+bool ConnectivityBase::areAngled(AtomIdx atom0, AtomIdx atom2) const
+{
+    atom0 = d.read().atomIdx(atom0);
+    atom2 = d.read().atomIdx(atom2);
+
+    if (atom0 == atom2)
+        return false;
+
+    foreach (const AtomIdx &atom1, connected_atoms[atom0.value()])
+    {
+        if (connected_atoms[atom2.value()].contains(atom1))
+            return true;
+    }
     
+    return false;
+}
+
+/** Return whether or not the two atoms are dihedraled together */
+bool ConnectivityBase::areDihedraled(AtomIdx atom0, AtomIdx atom3) const
+{
+    atom0 = d.read().atomIdx(atom0);
+    atom3 = d.read().atomIdx(atom3);
+    
+    if (atom0 == atom3)
+        return false;
+    
+    foreach (const AtomIdx &atom1, connected_atoms[atom0.value()])
+    {
+        if (atom1.value() != atom3.value())
+        {
+            foreach (const AtomIdx &atom2, connected_atoms[atom3.value()])
+            {
+                if (atom2.value() != atom0.value())
+                {
+                    if (connected_atoms[atom1.value()].contains(atom2))
+                        return true;
+                }
+            }
+        }
+    }
+    
+    return false;
+}
+
+/** Return whether or not the two atoms are bonded together */
+bool ConnectivityBase::areBonded(const AtomID &atom0, const AtomID &atom1) const
+{
+    return areBonded(d.read().atomIdx(atom0), d.read().atomIdx(atom1));
+}
+
+/** Return whether or not the two atoms are angled together */
+bool ConnectivityBase::areAngled(const AtomID &atom0, const AtomID &atom2) const
+{
+    return areAngled(d.read().atomIdx(atom0), d.read().atomIdx(atom2));
+}
+
+/** Return whether or not the two atoms are bonded together */
+bool ConnectivityBase::areDihedraled(const AtomID &atom0, const AtomID &atom3) const
+{
+    return areDihedraled(d.read().atomIdx(atom0), d.read().atomIdx(atom3));
+}
+
 /** Return whether or not the residues at indicies 'res0' and 'res1' 
     are connected
     
@@ -2147,6 +2218,171 @@ QList<DihedralID> ConnectivityBase::getDihedrals(const AtomID &atom0) const
     }
   return dihedrals;
 }
+
+/** Return a matrix (organised by AtomIdx) that says which atoms are bonded between
+    order 'start' and order 'end' (e.g. if order is two, it returns true for each atom pair that
+    are bonded together, if order is three, then true for each atom pair that are
+    bonded or angled together, if order is four, then true for each atom pair
+    that are bonded, angled or dihedraled) */
+QVector< QVector<bool> > ConnectivityBase::getBondMatrix(int start, int end) const
+{
+    QElapsedTimer t;
+    t.start();
+    
+    if (start < 0)
+        start = 0;
+    
+    if (end < 0)
+        end = 0;
+    
+    if (start > end)
+        qSwap(start, end);
+    
+    QVector< QVector<bool> > ret;
+    
+    const int nats = d.read().nAtoms();
+    
+    if (nats == 0)
+        return ret;
+    
+    else
+    {
+        ret = QVector< QVector<bool> >(nats);
+        ret.squeeze();
+     
+        QVector<bool> row;
+        
+        if (start == 0)
+            row = QVector<bool>(nats, true);
+        else
+            row = QVector<bool>(nats, false);
+        
+        row.squeeze();
+        
+        for (int i=0; i<nats; ++i)
+        {
+            ret.data()[i] = row;
+        }
+    }
+    
+    if (start <= 0)
+        return ret;
+    
+    for (int order = start; order <= end; ++order)
+    {
+        if (order == 1)
+        {
+            for (int i=0; i<nats; ++i)
+            {
+                ret[i][i] = true;
+            }
+        }
+    
+        if (order == 2)
+        {
+            for (int i=0; i<nats; ++i)
+            {
+                QVector<bool> &row = ret.data()[i];
+            
+                for (QSet<AtomIdx>::const_iterator it = connected_atoms[i].constBegin();
+                     it != connected_atoms[i].constEnd();
+                     ++it)
+                {
+                    row[it->value()] = true;
+                }
+            }
+        }
+        
+        if (order == 3)
+        {
+            for (int atm0=0; atm0<nats; ++atm0)
+            {
+                QVector<bool> &row = ret.data()[atm0];
+                
+                for (QSet<AtomIdx>::const_iterator it = connected_atoms[atm0].constBegin();
+                     it != connected_atoms[atm0].constEnd();
+                     ++it)
+                {
+                    const int atm1 = it->value();
+                
+                    for (QSet<AtomIdx>::const_iterator it2 = connected_atoms[atm1].constBegin();
+                         it2 != connected_atoms[atm1].constEnd();
+                         ++it2)
+                    {
+                        const int atm2 = it2->value();
+                        
+                        if (atm2 != atm0)
+                            row[atm2] = true;
+                    }
+                }
+            }
+        }
+        
+        if (order == 4)
+        {
+            for (int atm0=0; atm0<nats; ++atm0)
+            {
+                QVector<bool> &row = ret.data()[atm0];
+                
+                for (QSet<AtomIdx>::const_iterator it = connected_atoms[atm0].constBegin();
+                     it != connected_atoms[atm0].constEnd();
+                     ++it)
+                {
+                    const int atm1 = it->value();
+                
+                    for (QSet<AtomIdx>::const_iterator it2 = connected_atoms[atm1].constBegin();
+                         it2 != connected_atoms[atm1].constEnd();
+                         ++it2)
+                    {
+                        const int atm2 = it2->value();
+                        
+                        if (atm2 != atm0)
+                        {
+                            for (QSet<AtomIdx>::const_iterator
+                                                it3 = connected_atoms[atm2].constBegin();
+                                 it3 != connected_atoms[atm2].constEnd();
+                                 ++it3)
+                            {
+                                const int atm3 = it3->value();
+                                
+                                if (atm3 != atm0 and atm3 != atm1 and atm3 != atm2)
+                                {
+                                    row[atm3] = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (order > 4)
+        {
+            qDebug() << "Cannot build a bond matrix for values greater than 4";
+            break;
+        }
+    }
+    
+    quint64 ns = t.nsecsElapsed();
+    
+    qDebug() << "getBondMatrix(" << start << "," << end << ") took" << (0.000001*ns) << "ms";
+    
+    return ret;
+}
+
+/** Return a matrix (organised by AtomIdx) that says which atoms are bonded up to 
+    order 'order' (e.g. if order is two, it returns true for each atom pair that
+    are bonded together, if order is three, then true for each atom pair that are
+    bonded or angled together, if order is four, then true for each atom pair
+    that are bonded, angled or dihedraled) */
+QVector< QVector<bool> > ConnectivityBase::getBondMatrix(int order) const
+{
+    if (order <= 0)
+        return getBondMatrix(0,0);
+    else
+        return getBondMatrix(1,order);
+}
+
 /////////
 ///////// Implementation of Connectivity
 /////////

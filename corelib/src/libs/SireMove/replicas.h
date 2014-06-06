@@ -97,7 +97,11 @@ public:
     
     const QVector<quint32>& replicaIDs() const;
     
+    void collectSupraStats();
+    
     QVector<double> lambdaTrajectory() const;
+    
+    QList< QVector<double> > lambdaTrajectoryHistory() const;
     
     void setReplicas(const Replicas &replicas);
     
@@ -154,6 +158,9 @@ private:
     /** The index of each of the replicas - this allows the 
         replicas to be tracked as they are swapped around */
     QVector<quint32> replica_ids;
+    
+    /** The history of lambda values sampled by each replica */
+    QList< QVector<double> > replica_history;
 };
 
 }

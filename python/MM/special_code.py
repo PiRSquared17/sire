@@ -19,8 +19,11 @@ def fix_AtomLJs(c):
 def fix_AtomFunctions(c):
     c.add_declaration_code("#include \"SireMol/moleculedata.h\"")
 
+def fix_CLJFunction(c):
+    c.add_declaration_code("#include \"SireMM/cljshiftfunction.h\"")
 
 special_code = { "AtomLJs" : fix_AtomLJs,
+                 "SireMM::CLJFunction" : fix_CLJFunction,
                  "SireMM::FourAtomFunctions" : fix_AtomFunctions,
                  "SireMM::ThreeAtomFunctions" : fix_AtomFunctions,
                  "SireMM::TwoAtomFunctions" : fix_AtomFunctions }

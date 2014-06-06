@@ -44,6 +44,17 @@ void register_TI_class(){
         TI_exposer.def( bp::init< SireAnalysis::TI const & >(( bp::arg("other") )) );
         { //::SireAnalysis::TI::add
         
+            typedef void ( ::SireAnalysis::TI::*add_function_type )( ::QMap< double, SireMaths::AverageAndStddev > const & ) ;
+            add_function_type add_function_value( &::SireAnalysis::TI::add );
+            
+            TI_exposer.def( 
+                "add"
+                , add_function_value
+                , ( bp::arg("gradients") ) );
+        
+        }
+        { //::SireAnalysis::TI::add
+        
             typedef void ( ::SireAnalysis::TI::*add_function_type )( ::QMap< double, SireMaths::FreeEnergyAverage > const & ) ;
             add_function_type add_function_value( &::SireAnalysis::TI::add );
             
@@ -245,6 +256,17 @@ void register_TI_class(){
                 "rollingAverage"
                 , rollingAverage_function_value
                 , ( bp::arg("niterations") ) );
+        
+        }
+        { //::SireAnalysis::TI::set
+        
+            typedef void ( ::SireAnalysis::TI::*set_function_type )( int,::QMap< double, SireMaths::AverageAndStddev > const & ) ;
+            set_function_type set_function_value( &::SireAnalysis::TI::set );
+            
+            TI_exposer.def( 
+                "set"
+                , set_function_value
+                , ( bp::arg("i"), bp::arg("gradients") ) );
         
         }
         { //::SireAnalysis::TI::set

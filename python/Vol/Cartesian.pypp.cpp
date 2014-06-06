@@ -295,6 +295,17 @@ void register_Cartesian_class(){
                 , ( bp::arg("group"), bp::arg("center"), bp::arg("dist") ) );
         
         }
+        { //::SireVol::Cartesian::getImagesWithin
+        
+            typedef ::QVector< SireMaths::Vector > ( ::SireVol::Cartesian::*getImagesWithin_function_type )( ::SireMaths::Vector const &,::SireMaths::Vector const &,double ) const;
+            getImagesWithin_function_type getImagesWithin_function_value( &::SireVol::Cartesian::getImagesWithin );
+            
+            Cartesian_exposer.def( 
+                "getImagesWithin"
+                , getImagesWithin_function_value
+                , ( bp::arg("point"), bp::arg("center"), bp::arg("dist") ) );
+        
+        }
         { //::SireVol::Cartesian::getMinimumImage
         
             typedef ::SireVol::CoordGroup ( ::SireVol::Cartesian::*getMinimumImage_function_type )( ::SireVol::CoordGroup const &,::SireMaths::Vector const & ) const;
@@ -390,6 +401,28 @@ void register_Cartesian_class(){
                 "minimumDistance"
                 , minimumDistance_function_value
                 , ( bp::arg("group") ) );
+        
+        }
+        { //::SireVol::Cartesian::minimumDistance
+        
+            typedef double ( ::SireVol::Cartesian::*minimumDistance_function_type )( ::SireVol::AABox const &,::SireVol::AABox const & ) const;
+            minimumDistance_function_type minimumDistance_function_value( &::SireVol::Cartesian::minimumDistance );
+            
+            Cartesian_exposer.def( 
+                "minimumDistance"
+                , minimumDistance_function_value
+                , ( bp::arg("box0"), bp::arg("box1") ) );
+        
+        }
+        { //::SireVol::Cartesian::minimumDistance
+        
+            typedef double ( ::SireVol::Cartesian::*minimumDistance_function_type )( ::SireMaths::Vector const &,::SireVol::AABox const & ) const;
+            minimumDistance_function_type minimumDistance_function_value( &::SireVol::Cartesian::minimumDistance );
+            
+            Cartesian_exposer.def( 
+                "minimumDistance"
+                , minimumDistance_function_value
+                , ( bp::arg("p"), bp::arg("box") ) );
         
         }
         Cartesian_exposer.def( bp::self != bp::self );

@@ -156,6 +156,8 @@ public:
     
     void clearStatistics();
     
+    int nSamples() const;
+    
     void monitor(System &system);
 
     void setLambdaComponent(const SireCAS::Symbol &component);

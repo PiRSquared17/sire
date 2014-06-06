@@ -93,15 +93,61 @@ void register_Amber_class(){
         typedef bp::class_< SireIO::Amber > Amber_exposer_t;
         Amber_exposer_t Amber_exposer = Amber_exposer_t( "Amber", bp::init< >() );
         bp::scope Amber_scope( Amber_exposer );
+        Amber_exposer.def( bp::init< SireIO::Amber const & >(( bp::arg("other") )) );
+        { //::SireIO::Amber::coulomb14Factor
+        
+            typedef double ( ::SireIO::Amber::*coulomb14Factor_function_type )(  ) const;
+            coulomb14Factor_function_type coulomb14Factor_function_value( &::SireIO::Amber::coulomb14Factor );
+            
+            Amber_exposer.def( 
+                "coulomb14Factor"
+                , coulomb14Factor_function_value );
+        
+        }
+        { //::SireIO::Amber::lj14Factor
+        
+            typedef double ( ::SireIO::Amber::*lj14Factor_function_type )(  ) const;
+            lj14Factor_function_type lj14Factor_function_value( &::SireIO::Amber::lj14Factor );
+            
+            Amber_exposer.def( 
+                "lj14Factor"
+                , lj14Factor_function_value );
+        
+        }
+        Amber_exposer.def( bp::self != bp::self );
+        { //::SireIO::Amber::operator=
+        
+            typedef ::SireIO::Amber & ( ::SireIO::Amber::*assign_function_type )( ::SireIO::Amber const & ) ;
+            assign_function_type assign_function_value( &::SireIO::Amber::operator= );
+            
+            Amber_exposer.def( 
+                "assign"
+                , assign_function_value
+                , ( bp::arg("other") )
+                , bp::return_self< >() );
+        
+        }
+        Amber_exposer.def( bp::self == bp::self );
         { //::SireIO::Amber::readCrdTop
         
-            typedef ::boost::tuples::tuple< SireMol::Molecules, SireBase::PropPtr< SireVol::Space >, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireIO::Amber::*readCrdTop_function_type )( ::QString const &,::QString const &,::QString ) const;
+            typedef ::boost::tuples::tuple< SireMol::MoleculeGroup, SireBase::PropPtr< SireVol::Space >, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireIO::Amber::*readCrdTop_function_type )( ::QString const &,::QString const &,::QString ) const;
             readCrdTop_function_type readCrdTop_function_value( &::SireIO::Amber::readCrdTop );
             
             Amber_exposer.def( 
                 "readCrdTop"
                 , readCrdTop_function_value
                 , ( bp::arg("crdfile"), bp::arg("topfile"), bp::arg("flag_cutting")="perresidue" ) );
+        
+        }
+        { //::SireIO::Amber::set14Factors
+        
+            typedef void ( ::SireIO::Amber::*set14Factors_function_type )( double,double ) ;
+            set14Factors_function_type set14Factors_function_value( &::SireIO::Amber::set14Factors );
+            
+            Amber_exposer.def( 
+                "set14Factors"
+                , set14Factors_function_value
+                , ( bp::arg("coul_14"), bp::arg("lj_14") ) );
         
         }
         { //::SireIO::Amber::typeName

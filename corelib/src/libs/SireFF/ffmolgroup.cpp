@@ -628,56 +628,56 @@ void FFMolGroup::removeAll()
     updateGroup();
 }
 
-bool FFMolGroup::update(const MoleculeData &moldata)
+bool FFMolGroup::update(const MoleculeData &moldata, bool auto_commit)
 {
     assertNotNull();
     
     //update in a copy of the group (so get the return value)
     ForceField copy = ffield;
-    bool ret = copy.edit().group_update(mgidx, moldata);
+    bool ret = copy.edit().group_update(mgidx, moldata, auto_commit);
 
     if (ret)
     {
         //we have to do the update for real
-        ffield.edit().update(moldata);
+        ffield.edit().update(moldata, auto_commit);
         updateGroup();
     }
     
     return false;
 }
 
-QList<Molecule> FFMolGroup::update(const Molecules &molecules)
+QList<Molecule> FFMolGroup::update(const Molecules &molecules, bool auto_commit)
 {
     assertNotNull();
 
     //perform the update in a copy so that we can get the return 
     //value
     ForceField copy = ffield;
-    QList<Molecule> ret = copy.edit().group_update(mgidx, molecules);
+    QList<Molecule> ret = copy.edit().group_update(mgidx, molecules, auto_commit);
     
     if (not ret.isEmpty())
     {
         //we have to update the entire forcefield
-        ffield.edit().update(molecules);
+        ffield.edit().update(molecules, auto_commit);
         updateGroup();
     }
     
     return ret;
 }
 
-QList<Molecule> FFMolGroup::update(const MoleculeGroup &molgroup)
+QList<Molecule> FFMolGroup::update(const MoleculeGroup &molgroup, bool auto_commit)
 {
     assertNotNull();
 
     //perform the update in a copy so that we can get the return 
     //value
     ForceField copy = ffield;
-    QList<Molecule> ret = copy.edit().group_update(mgidx, molgroup);
+    QList<Molecule> ret = copy.edit().group_update(mgidx, molgroup, auto_commit);
     
     if (not ret.isEmpty())
     {
         //we have to update the entire forcefield
-        ffield.edit().update(molgroup);
+        ffield.edit().update(molgroup, auto_commit);
         updateGroup();
     }
     
@@ -783,6 +783,19 @@ bool FFMolGroup::setContents(const MoleculeGroup &molgroup)
 const char* FFMolGroup::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<FFMolGroup>() );
+}
+
+bool FFMolGroup::needsAccepting() const
+{
+    return MoleculeGroup::needsAccepting() or ffield.read().needsAccepting();
+}
+
+void FFMolGroup::accept()
+{
+    MoleculeGroup::accept();
+    
+    if (ffield.read().needsAccepting())
+        ffield.edit().accept();
 }
 
 FFMolGroup* FFMolGroup::clone() const

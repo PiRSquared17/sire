@@ -13,6 +13,7 @@
 #include "constraints.h"
 #include "anglecomponent.h"
 #include "freeenergymonitor.h"
+#include "volmapmonitor.h"
 #include "monitorproperty.h"
 #include "monitorname.h"
 #include "sysidx.h"
@@ -49,6 +50,7 @@ void register_SireSystem_objects()
     ObjectRegistry::registerConverterFor< SireSystem::AngleComponent >();
     ObjectRegistry::registerConverterFor< SireSystem::FreeEnergyMonitor >();
     ObjectRegistry::registerConverterFor< SireSystem::AssignerGroup >();
+    ObjectRegistry::registerConverterFor< SireSystem::VolMapMonitor >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorProperty >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorName >();
     ObjectRegistry::registerConverterFor< SireSystem::SysIdx >();

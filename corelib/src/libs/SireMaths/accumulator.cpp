@@ -31,6 +31,8 @@
 #include <cmath>
 
 #include "accumulator.h"
+#include "histogram.h"
+
 #include "SireMaths/maths.h"
 
 #include "SireError/errors.h"
@@ -516,6 +518,22 @@ double AverageAndStddev::stddev() const
 double AverageAndStddev::standardDeviation() const
 {
     return this->stddev();
+}
+
+/** Return the standard error on the average */
+double AverageAndStddev::standardError() const
+{
+    if (nSamples() == 0)
+        return 0;
+    else
+        return standardDeviation() / sqrt(nSamples());
+}
+
+/** Return the standard error calculated to the passed level 
+    (66, 90, 95 or 99%) */
+double AverageAndStddev::standardError(int level) const
+{
+    return Histogram::tValue(nSamples(), level) * standardError();
 }
 
 /** Return the mean average of the squares */

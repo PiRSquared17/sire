@@ -108,6 +108,9 @@ public:
     void set(int i, double value);
     double get(int i) const;
     
+    double at(int i) const;
+    double getitem(int i) const;
+    
     MultiDouble operator-() const;
     
     MultiDouble operator+(const MultiDouble &other) const;
@@ -160,25 +163,23 @@ private:
     static void assertAligned(const void *ptr, size_t alignment);
 
     #ifndef SIRE_SKIP_INLINE_FUNCTIONS
+        #ifndef MULTIFLOAT_CHECK_ALIGNMENT
+            void assertAligned(){}
+        #endif
 
-    #ifndef MULTIFLOAT_CHECK_ALIGNMENT
-        void assertAligned(){}
-    #endif
-
-    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        union
-        {
-            __m256d x[2];
-            double a[8];
-        } v;
-    
-        #ifndef SIRE_SKIP_INLINE_FUNCTIONS
-        MultiDouble(__m256d avx_val0, __m256d avx_val1)
-        {
-            v.x[0] = avx_val0;
-            v.x[1] = avx_val1;
-        }
-    
+        #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+            _ALIGNED(32) union
+            {
+                __m256d x[2];
+                double a[8];
+            } v;
+        
+            MultiDouble(__m256d avx_val0, __m256d avx_val1)
+            {
+                v.x[0] = avx_val0;
+                v.x[1] = avx_val1;
+            }
+        
             #ifdef MULTIFLOAT_CHECK_ALIGNMENT
                 void assertAligned()
                 {
@@ -186,21 +187,19 @@ private:
                         assertAligned(this, 32);
                 }
             #endif
-        #endif
-    #else
-    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        union
-        {
-            __m128d x[2];
-            double a[4];
-        } v;
+        #else
+        #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+            _ALIGNED(16) union
+            {
+                __m128d x[2];
+                double a[4];
+            } v;
 
-        #ifndef SIRE_SKIP_INLINE_FUNCTIONS
-        MultiDouble(__m128d sse_val0, __m128d sse_val1)
-        {
-            v.x[0] = sse_val0;
-            v.x[1] = sse_val1;
-        }
+            MultiDouble(__m128d sse_val0, __m128d sse_val1)
+            {
+                v.x[0] = sse_val0;
+                v.x[1] = sse_val1;
+            }
 
             #ifdef MULTIFLOAT_CHECK_ALIGNMENT
                 void assertAligned()
@@ -209,21 +208,19 @@ private:
                         assertAligned(this, 16);
                 }
             #endif
-        #endif
-    #else
-        union
-        {
-            double a[MULTIFLOAT_SIZE];
-        } _ALIGNED(32) v;
-        #define MULTIDOUBLE_BINONE getBinaryOne()
+        #else
+            _ALIGNED(32) union
+            {
+                double a[MULTIFLOAT_SIZE];
+            } v;
+            #define MULTIDOUBLE_BINONE getBinaryOne()
 
-        #ifndef SIRE_SKIP_INLINE_FUNCTIONS
-        static double getBinaryOne()
-        {
-            const quint64 x = 0xFFFFFFFFFFFFFFFFULL;
-            return *(reinterpret_cast<const double*>(&x));
-        }
-    
+            static double getBinaryOne()
+            {
+                const quint64 x = 0xFFFFFFFFFFFFFFFFULL;
+                return *(reinterpret_cast<const double*>(&x));
+            }
+        
             #ifdef MULTIFLOAT_CHECK_ALIGNMENT
                 void assertAligned()
                 {
@@ -232,9 +229,7 @@ private:
                 }
             #endif
         #endif
-    #endif
-    #endif
-    
+        #endif
     #endif // #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 };
 
@@ -345,6 +340,13 @@ MultiDouble::MultiDouble(const MultiDouble &other)
 inline
 MultiDouble::~MultiDouble()
 {}
+
+/** Return the ith value in the MultiDouble - note that
+    this is a fast function that does no bounds checking */
+inline double MultiDouble::operator[](int i) const
+{
+    return v.a[i];
+}
 
 /** Assignment operator */
 inline

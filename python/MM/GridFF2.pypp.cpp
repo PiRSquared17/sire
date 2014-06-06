@@ -31,6 +31,8 @@ namespace bp = boost::python;
 
 #include <QDebug>
 
+#include <QElapsedTimer>
+
 #include <QTime>
 
 #include "gridff2.h"

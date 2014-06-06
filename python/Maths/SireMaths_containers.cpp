@@ -41,14 +41,17 @@
 #include "Helpers/pair.hpp"
 
 #include "SireMaths/vector.h"
+#include "SireMaths/matrix.h"
 #include "SireMaths/nmatrix.h"
 #include "SireMaths/nvector.h"
 #include "SireMaths/accumulator.h"
 #include "SireMaths/multifloat.h"
 #include "SireMaths/multifixed.h"
 #include "SireMaths/multidouble.h"
+#include "SireMaths/multiuint.h"
 #include "SireMaths/histogram.h"
 #include "SireMaths/freeenergyaverage.h"
+#include "SireMaths/sphere.h"
 
 using namespace SireMaths;
 
@@ -62,13 +65,20 @@ void register_SireMaths_containers()
     register_list< QVector<MultiFloat> >();
     register_list< QVector<MultiFixed> >();
     register_list< QVector<MultiDouble> >();
+    register_list< QVector<MultiUInt> >();
 
+    register_list< QVector<AverageAndStddev> >();
     register_list< QVector<FreeEnergyAverage> >();
 
     register_list< QVector<HistogramValue> >();
 
+    register_list< QVector<Sphere> >();
+
     register_pair< NVector,NMatrix >();
 
     register_tuple< boost::tuple<Vector,Vector,Vector> >();
+
+    register_tuple< boost::tuple<Matrix,Vector> >();
+    register_tuple< boost::tuple<Matrix,Matrix,Matrix> >();
 }
 

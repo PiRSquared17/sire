@@ -35,6 +35,8 @@ class QString;
 
 #include "SireUnits/dimensions.h"
 
+#include <QVector>
+
 SIRE_BEGIN_HEADER
 
 namespace SireMaths
@@ -103,7 +105,9 @@ public:
 
     Matrix toMatrix() const;
     void fromMatrix(const Matrix &m);
+
     Vector rotate(const Vector &p) const;
+    QVector<Vector> rotate(const QVector<Vector> &points) const;
 
     Quaternion slerp(const Quaternion &q, double lambda) const;
 

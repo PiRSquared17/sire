@@ -81,9 +81,40 @@ AxisSet::~AxisSet()
 /** Convert a vector from the cartesian frame to this coordinate frame */
 Vector AxisSet::fromIdentity(const Vector &vec) const
 {
-    #warning Is this right? What about origins?
-
     return (mat * vec) + orgn;
+}
+
+/** Convert a vector from the cartesian frame with origin 'delta' to this coordinate frame */
+Vector AxisSet::fromIdentity(const Vector &vec, const Vector &delta) const
+{
+    return delta + this->fromIdentity(vec-delta);
+}
+
+/** Convert the array of vectors from the cartesian frame to this coordinate frame */
+QVector<Vector> AxisSet::fromIdentity(const QVector<Vector> &vecs) const
+{
+    QVector<Vector> newvecs(vecs);
+    
+    for (int i=0; i<vecs.count(); ++i)
+    {
+        newvecs[i] = this->fromIdentity(vecs[i]);
+    }
+    
+    return newvecs;
+}
+
+/** Convert the array of vectors from the cartesian frame offset by delta
+    to this coordinate frame */
+QVector<Vector> AxisSet::fromIdentity(const QVector<Vector> &vecs, const Vector &delta) const
+{
+    QVector<Vector> newvecs(vecs);
+    
+    for (int i=0; i<vecs.count(); ++i)
+    {
+        newvecs[i] = this->fromIdentity(vecs[i],delta);
+    }
+    
+    return newvecs;
 }
 
 /** Convert a vector to the cartesian frame from this coordinate frame */
@@ -107,7 +138,7 @@ Vector AxisSet::toFrame(const AxisSet &frame, const Vector &vec) const
 /** Return a string representation of the AxisSet */
 QString AxisSet::toString() const
 {
-    return QObject::tr("AxisSet, %1, %2").arg(orgn.toString(),mat.toString());
+    return QObject::tr("AxisSet{ origin() = %1,matrix=\n%2 }").arg(orgn.toString(),mat.toString());
 }
 
 const char* AxisSet::typeName()

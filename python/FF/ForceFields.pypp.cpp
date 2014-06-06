@@ -88,6 +88,16 @@ void register_ForceFields_class(){
         ForceFields_exposer.def( bp::init< QList< SireBase::PropPtr< SireFF::FF > > const & >(( bp::arg("forcefields") )) );
         ForceFields_exposer.def( bp::init< QVector< SireBase::PropPtr< SireFF::FF > > const & >(( bp::arg("forcefields") )) );
         ForceFields_exposer.def( bp::init< SireFF::ForceFields const & >(( bp::arg("other") )) );
+        { //::SireFF::ForceFields::accept
+        
+            typedef void ( ::SireFF::ForceFields::*accept_function_type )(  ) ;
+            accept_function_type accept_function_value( &::SireFF::ForceFields::accept );
+            
+            ForceFields_exposer.def( 
+                "accept"
+                , accept_function_value );
+        
+        }
         { //::SireFF::ForceFields::add
         
             typedef void ( ::SireFF::ForceFields::*add_function_type )( ::SireFF::FF const & ) ;
@@ -1083,6 +1093,16 @@ void register_ForceFields_class(){
                 , names_function_value );
         
         }
+        { //::SireFF::ForceFields::needsAccepting
+        
+            typedef bool ( ::SireFF::ForceFields::*needsAccepting_function_type )(  ) const;
+            needsAccepting_function_type needsAccepting_function_value( &::SireFF::ForceFields::needsAccepting );
+            
+            ForceFields_exposer.def( 
+                "needsAccepting"
+                , needsAccepting_function_value );
+        
+        }
         ForceFields_exposer.def( bp::self != bp::self );
         { //::SireFF::ForceFields::operator=
         
@@ -1616,35 +1636,35 @@ void register_ForceFields_class(){
         }
         { //::SireFF::ForceFields::update
         
-            typedef void ( ::SireFF::ForceFields::*update_function_type )( ::SireMol::MoleculeData const & ) ;
+            typedef void ( ::SireFF::ForceFields::*update_function_type )( ::SireMol::MoleculeData const &,bool ) ;
             update_function_type update_function_value( &::SireFF::ForceFields::update );
             
             ForceFields_exposer.def( 
                 "update"
                 , update_function_value
-                , ( bp::arg("moldata") ) );
+                , ( bp::arg("moldata"), bp::arg("auto_commit")=(bool)(true) ) );
         
         }
         { //::SireFF::ForceFields::update
         
-            typedef void ( ::SireFF::ForceFields::*update_function_type )( ::SireMol::Molecules const & ) ;
+            typedef void ( ::SireFF::ForceFields::*update_function_type )( ::SireMol::Molecules const &,bool ) ;
             update_function_type update_function_value( &::SireFF::ForceFields::update );
             
             ForceFields_exposer.def( 
                 "update"
                 , update_function_value
-                , ( bp::arg("molecules") ) );
+                , ( bp::arg("molecules"), bp::arg("auto_commit")=(bool)(true) ) );
         
         }
         { //::SireFF::ForceFields::update
         
-            typedef void ( ::SireFF::ForceFields::*update_function_type )( ::SireMol::MoleculeGroup const & ) ;
+            typedef void ( ::SireFF::ForceFields::*update_function_type )( ::SireMol::MoleculeGroup const &,bool ) ;
             update_function_type update_function_value( &::SireFF::ForceFields::update );
             
             ForceFields_exposer.def( 
                 "update"
                 , update_function_value
-                , ( bp::arg("molgroup") ) );
+                , ( bp::arg("molgroup"), bp::arg("auto_commit")=(bool)(true) ) );
         
         }
         { //::SireFF::ForceFields::userProperties

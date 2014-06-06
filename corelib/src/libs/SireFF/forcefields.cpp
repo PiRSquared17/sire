@@ -5091,36 +5091,32 @@ bool ForceFields::remove(const QSet<MolNum> &molnums, const MGID &mgid)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void ForceFields::update(const MoleculeData &moldata)
+void ForceFields::update(const MoleculeData &moldata, bool auto_commit)
 {
     if (not this->contains(moldata.number()))
         return;
-        
+
+    if (auto_commit and this->needsAccepting())
+        this->accept();
+    
     const QList<MGNum> &mgnums = this->groupsContaining(moldata.number());
 
     BOOST_ASSERT(not mgnums.isEmpty());
 
     if (mgnums.count() == 1)
     {
-        this->_pvt_forceField(mgnums.at(0)).update(moldata);
+        this->_pvt_forceField(mgnums.at(0)).update(moldata,auto_commit);
     }
     else
     {
-        ForceFields old_state( *this );
-    
-        try
+        foreach (const MGNum &mgnum, mgnums)
         {
-            foreach (const MGNum &mgnum, mgnums)
-            {
-                this->_pvt_forceField(mgnum).update(moldata);
-            }
-        }
-        catch(...)
-        {
-            this->operator=(old_state);
-            throw;
+            this->_pvt_forceField(mgnum).update(moldata,auto_commit);
         }
     }
+
+    if (auto_commit and this->needsAccepting())
+        this->accept();
 }
 
 /** Update all of the forcefields in this group so that they have the 
@@ -5130,34 +5126,30 @@ void ForceFields::update(const MoleculeData &moldata)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void ForceFields::update(const Molecules &molecules)
+void ForceFields::update(const Molecules &molecules, bool auto_commit)
 {
     if (molecules.isEmpty())
         return;
     
     else if (molecules.count() == 1)
     {
-        this->update( molecules.constBegin()->data() );
+        this->update( molecules.constBegin()->data(), auto_commit );
     }
     else
     {
-        ForceFields old_state( *this );
+        if (auto_commit and this->needsAccepting())
+            this->accept();
+
+        int nffields = ffields_by_idx.count();
+        FFPtr *ffields_array = ffields_by_idx.data();
         
-        try
+        for (int i=0; i<nffields; ++i)
         {
-            int nffields = ffields_by_idx.count();
-            FFPtr *ffields_array = ffields_by_idx.data();
-            
-            for (int i=0; i<nffields; ++i)
-            {
-                ffields_array[i].edit().update(molecules);
-            }
+            ffields_array[i].edit().update(molecules,auto_commit);
         }
-        catch(...)
-        {
-            this->operator=(old_state);
-            throw;
-        }
+
+        if (auto_commit and this->needsAccepting())
+            this->accept();
     }
 }
 
@@ -5169,9 +5161,9 @@ void ForceFields::update(const Molecules &molecules)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void ForceFields::update(const MoleculeGroup &molgroup)
+void ForceFields::update(const MoleculeGroup &molgroup, bool auto_commit)
 {
-    this->update( molgroup.molecules() );
+    this->update( molgroup.molecules(), auto_commit );
 }
 
 /** Set the contents of the molecule groups identified by the ID 'mgid'
@@ -5375,6 +5367,33 @@ void ForceFields::setContents(const MGID &mgid, const Molecules &molecules)
 void ForceFields::setContents(const MGID &mgid, const MoleculeGroup &molgroup)
 {
     this->setContents(mgid, molgroup, PropertyMap());
+}
+
+/** Return whether or not these forcefields are using any temporary workspace that needs
+    to be accepted */
+bool ForceFields::needsAccepting() const
+{
+    for (int i=0; i<ffields_by_idx.count(); ++i)
+    {
+        if (ffields_by_idx.constData()[i].read().needsAccepting())
+            return true;
+    }
+    
+    return false;
+}
+
+/** Ensure that any forcefields that are using temporary workspace have that accepted */
+void ForceFields::accept()
+{
+    FFPtr *ffs = ffields_by_idx.data();
+
+    for (int i=0; i<ffields_by_idx.count(); ++i)
+    {
+        if (ffs[i].read().needsAccepting())
+        {
+            ffs[i].edit().accept();
+        }
+    }
 }
 
 const char* ForceFields::typeName()

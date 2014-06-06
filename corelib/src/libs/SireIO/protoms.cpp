@@ -1380,7 +1380,7 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
                                                                  bond_property, 
                                                                  workspace);
                                                                  
-                if (not pert.constData() == 0)
+                if (pert.constData() != 0)
                     perturbations.append(pert);
             }    
             else if (words[1] == "Connect")
@@ -1399,7 +1399,7 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
                                                                   angle_property, 
                                                                   workspace);
                                                                   
-                if (not pert.constData() == 0)
+                if (pert.constData() != 0)
                     perturbations.append(pert);
             }
             else if (words[1] == "AngleDelta")
@@ -1413,7 +1413,7 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
                 PerturbationPtr pert = this->processUBPertLine(words, editmol, type, 
                                                                ub_property, workspace);
                                                                
-                if (not pert.constData() == 0)
+                if (pert.constData() != 0)
                     perturbations.append(pert);
             }
             else if (words[1] == "Dihedral")

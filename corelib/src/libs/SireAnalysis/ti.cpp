@@ -600,11 +600,11 @@ static const RegisterAlternativeName<Gradients> r_altgrads("Soiree::Gradients");
 
 QDataStream SIREANALYSIS_EXPORT &operator<<(QDataStream &ds, const Gradients &grads)
 {
-    writeHeader(ds, r_grads, 1);
+    writeHeader(ds, r_grads, 2);
     
     SharedDataStream sds(ds);
     
-    sds << grads.fwds << grads.bwds << grads.delta_lam;
+    sds << grads.analytic << grads.fwds << grads.bwds << grads.delta_lam;
     
     return ds;
 }
@@ -613,14 +613,22 @@ QDataStream SIREANALYSIS_EXPORT &operator>>(QDataStream &ds, Gradients &grads)
 {
     VersionID v = readHeader(ds, r_grads);
     
-    if (v == 1)
+    if (v == 2)
     {
         SharedDataStream sds(ds);
+        
+        sds >> grads.analytic >> grads.fwds >> grads.bwds >> grads.delta_lam;
+    }
+    else if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        grads.analytic.clear();
         
         sds >> grads.fwds >> grads.bwds >> grads.delta_lam;
     }
     else
-        throw version_error(v, "1", r_grads, CODELOC);
+        throw version_error(v, "1,2", r_grads, CODELOC);
     
     return ds;
 }
@@ -631,6 +639,9 @@ Gradients::Gradients() : ConcreteProperty<Gradients,Property>(), delta_lam(0)
 
 void Gradients::checkSane() const
 {
+    if (fwds.isEmpty() and bwds.isEmpty())
+        return;
+
     Temperature t;
     bool have_first = false;
     
@@ -673,7 +684,13 @@ void Gradients::checkSane() const
     }
 }
 
-/** Construct from the passed full TI gradients */
+/** Construct from the passed analytic TI gradients */
+Gradients::Gradients(const QMap<double,AverageAndStddev> &gradients)
+          : ConcreteProperty<Gradients,Property>(),
+            analytic(gradients), delta_lam(0)
+{}
+
+/** Construct from the passed full finite difference TI gradients */
 Gradients::Gradients(const QMap<double,FreeEnergyAverage> &gradients)
           : ConcreteProperty<Gradients,Property>(),
             fwds(gradients), bwds(gradients), delta_lam(0)
@@ -747,6 +764,7 @@ Gradients::Gradients(const QMap<double,FreeEnergyAverage> &forwards,
 /** Copy constructor */
 Gradients::Gradients(const Gradients &other)
           : ConcreteProperty<Gradients,Property>(other),
+            analytic(other.analytic),
             fwds(other.fwds), bwds(other.bwds), delta_lam(other.delta_lam)
 {}
 
@@ -757,7 +775,7 @@ Gradients::~Gradients()
 /** Return whether or not this is empty */
 bool Gradients::isEmpty() const
 {
-    return (fwds.isEmpty() and bwds.isEmpty());
+    return (analytic.isEmpty() and fwds.isEmpty() and bwds.isEmpty());
 }
 
 /** Copy assignment operator */
@@ -765,6 +783,7 @@ Gradients& Gradients::operator=(const Gradients &other)
 {
     if (this != &other)
     {
+        analytic = other.analytic;
         fwds = other.fwds;
         bwds = other.bwds;
         delta_lam = other.delta_lam;
@@ -776,7 +795,8 @@ Gradients& Gradients::operator=(const Gradients &other)
 /** Comparison operator */
 bool Gradients::operator==(const Gradients &other) const
 {
-    return fwds == other.fwds and bwds == other.bwds and delta_lam == other.delta_lam;
+    return analytic == other.analytic and fwds == other.fwds and
+           bwds == other.bwds and delta_lam == other.delta_lam;
 }
 
 /** Comparison operator */
@@ -798,7 +818,9 @@ Temperature Gradients::temperature() const
         return Temperature(0);
     else
     {
-        if (not fwds.isEmpty())
+        if (not analytic.isEmpty())
+            return Temperature(0);
+        else if (not fwds.isEmpty())
             return fwds.constBegin()->temperature();
         else
             return bwds.constBegin()->temperature();
@@ -807,7 +829,12 @@ Temperature Gradients::temperature() const
 
 QString Gradients::toString() const
 {
-    return QObject::tr("Gradients( nLambdaValues() == %1, nSamples() == %2, temperature() == %3 )")
+    if (not analytic.isEmpty())
+    return QObject::tr("Gradients( nLambdaValues() == %1, nSamples() == %2 )")
+                .arg(nLambdaValues()).arg(nSamples());
+    else
+        return QObject::tr("Gradients( nLambdaValues() == %1, nSamples() == %2, "
+                           "temperature() == %3 )")
                 .arg(nLambdaValues()).arg(nSamples()).arg(temperature().toString());
 }
 
@@ -848,58 +875,87 @@ Gradients& Gradients::operator+=(const Gradients &other)
                     .arg(temperature().toString())
                     .arg(other.temperature().toString()), CODELOC );
         
-        QMap<double,FreeEnergyAverage> new_fwds = fwds;
-        QMap<double,FreeEnergyAverage> new_bwds = bwds;
-    
-        for (QMap<double,FreeEnergyAverage>::const_iterator it = other.fwds.constBegin();
-             it != other.fwds.constEnd();
-             ++it)
+        if (analytic.isEmpty())
         {
-            double lam = it.key();
-            const FreeEnergyAverage &grad = it.value();
-            
-            if (not grad.nSamples() == 0)
+            QMap<double,FreeEnergyAverage> new_fwds = fwds;
+            QMap<double,FreeEnergyAverage> new_bwds = bwds;
+        
+            for (QMap<double,FreeEnergyAverage>::const_iterator it = other.fwds.constBegin();
+                 it != other.fwds.constEnd();
+                 ++it)
             {
-                if (new_fwds.contains(lam))
+                double lam = it.key();
+                const FreeEnergyAverage &grad = it.value();
+                
+                if (grad.nSamples() != 0)
                 {
-                    new_fwds[lam] += grad;
-                }
-                else
-                {
-                    new_fwds.insert(lam, grad);
+                    if (new_fwds.contains(lam))
+                    {
+                        new_fwds[lam] += grad;
+                    }
+                    else
+                    {
+                        new_fwds.insert(lam, grad);
+                    }
                 }
             }
-        }
-        
-        for (QMap<double,FreeEnergyAverage>::const_iterator it = other.bwds.constBegin();
-             it != other.bwds.constEnd();
-             ++it)
-        {
-            double lam = it.key();
-            const FreeEnergyAverage &grad = it.value();
             
-            if (not grad.nSamples() == 0)
+            for (QMap<double,FreeEnergyAverage>::const_iterator it = other.bwds.constBegin();
+                 it != other.bwds.constEnd();
+                 ++it)
             {
-                if (new_bwds.contains(lam))
+                double lam = it.key();
+                const FreeEnergyAverage &grad = it.value();
+                
+                if (grad.nSamples() != 0)
                 {
-                    new_bwds[lam] += grad;
-                }
-                else
-                {
-                    new_bwds.insert(lam, grad);
+                    if (new_bwds.contains(lam))
+                    {
+                        new_bwds[lam] += grad;
+                    }
+                    else
+                    {
+                        new_bwds.insert(lam, grad);
+                    }
                 }
             }
-        }
-        
-        if (new_fwds == new_bwds)
-        {
-            fwds = new_fwds;
-            bwds = new_fwds;
+            
+            if (new_fwds == new_bwds)
+            {
+                fwds = new_fwds;
+                bwds = new_fwds;
+            }
+            else
+            {
+                fwds = new_fwds;
+                bwds = new_bwds;
+            }
         }
         else
         {
-            fwds = new_fwds;
-            bwds = new_bwds;
+            QMap<double,AverageAndStddev> new_analytic = analytic;
+        
+            for (QMap<double,AverageAndStddev>::const_iterator it = other.analytic.constBegin();
+                 it != other.analytic.constEnd();
+                 ++it)
+            {
+                double lam = it.key();
+                const AverageAndStddev &grad = it.value();
+                
+                if (grad.nSamples() != 0)
+                {
+                    if (new_analytic.contains(lam))
+                    {
+                        new_analytic[lam] += grad;
+                    }
+                    else
+                    {
+                        new_analytic.insert(lam, grad);
+                    }
+                }
+            }
+            
+            analytic = new_analytic;
         }
         
         return *this;
@@ -937,7 +993,13 @@ Gradients Gradients::merge(const QList<Gradients> &gradients)
 /** Return the (sorted) list of the lambda values */
 QList<double> Gradients::lambdaValues() const
 {
-    if (delta_lam == 0 or fwds == bwds)
+    if (not analytic.isEmpty())
+    {
+        QList<double> lams = analytic.keys();
+        qSort(lams);
+        return lams;
+    }
+    else if (delta_lam == 0 or fwds == bwds)
     {
         QList<double> lams = fwds.keys();
         qSort(lams);
@@ -981,7 +1043,16 @@ qint64 Gradients::nSamples() const
 {
     qint64 n = 0;
 
-    if (delta_lam == 0 or fwds == bwds)
+    if (not analytic.isEmpty())
+    {
+        for (QMap<double,AverageAndStddev>::const_iterator it = analytic.constBegin();
+             it != analytic.constEnd();
+             ++it)
+        {
+            n += it.value().nSamples();
+        }
+    }
+    else if (delta_lam == 0 or fwds == bwds)
     {
         for (QMap<double,FreeEnergyAverage>::const_iterator it = fwds.constBegin();
              it != fwds.constEnd();
@@ -1013,38 +1084,62 @@ qint64 Gradients::nSamples() const
 /** Return the forwards gradient for the passed lambda value */
 MolarEnergy Gradients::forwards(double lam) const
 {
-    if (not fwds.contains(lam))
-        throw SireError::invalid_key( QObject::tr(
-                "There is no gradient value at lambda == %1. Available lambda values "
-                "are %2.").arg(lam).arg( Sire::toString(lambdaValues()) ), CODELOC );
-    
-    if (delta_lam == 0)
-        //pure TI, so just need the normal average energy
-        return MolarEnergy( fwds[lam].histogram().mean() );
+    if (not analytic.isEmpty())
+    {
+        if (not analytic.contains(lam))
+            throw SireError::invalid_key( QObject::tr(
+                    "There is no gradient value at lambda == %1. Available lambda values "
+                    "are %2.").arg(lam).arg( Sire::toString(lambdaValues()) ), CODELOC );
+
+        return MolarEnergy( analytic[lam].average() );
+    }
     else
     {
-        //finite difference TI, so take the average of the forwards and backwards
-        //values and divide by delta lambda
-        return MolarEnergy( fwds[lam].average() / delta_lam );
+        if (not fwds.contains(lam))
+            throw SireError::invalid_key( QObject::tr(
+                    "There is no gradient value at lambda == %1. Available lambda values "
+                    "are %2.").arg(lam).arg( Sire::toString(lambdaValues()) ), CODELOC );
+        
+        if (delta_lam == 0)
+            //pure TI, so just need the normal average energy
+            return MolarEnergy( fwds[lam].histogram().mean() );
+        else
+        {
+            //finite difference TI, so take the average of the forwards and backwards
+            //values and divide by delta lambda
+            return MolarEnergy( fwds[lam].fepFreeEnergy() / delta_lam );
+        }
     }
 }
 
 /** Return the backwards gradient for the passed lambda value */
 MolarEnergy Gradients::backwards(double lam) const
 {
-    if (not fwds.contains(lam))
-        throw SireError::invalid_key( QObject::tr(
-                "There is no gradient value at lambda == %1. Available lambda values "
-                "are %2.").arg(lam).arg( Sire::toString(lambdaValues()) ), CODELOC );
-    
-    if (delta_lam == 0)
-        //pure TI, so just need the normal average energy
-        return MolarEnergy( fwds[lam].histogram().mean() );
+    if (not analytic.isEmpty())
+    {
+        if (not analytic.contains(lam))
+            throw SireError::invalid_key( QObject::tr(
+                    "There is no gradient value at lambda == %1. Available lambda values "
+                    "are %2.").arg(lam).arg( Sire::toString(lambdaValues()) ), CODELOC );
+
+        return MolarEnergy( analytic[lam].average() );
+    }
     else
     {
-        //finite difference TI, so take the average of the forwards and backwards
-        //values and divide by delta lambda
-        return MolarEnergy( bwds[lam].average() / delta_lam );
+        if (not fwds.contains(lam))
+            throw SireError::invalid_key( QObject::tr(
+                    "There is no gradient value at lambda == %1. Available lambda values "
+                    "are %2.").arg(lam).arg( Sire::toString(lambdaValues()) ), CODELOC );
+        
+        if (delta_lam == 0)
+            //pure TI, so just need the normal average energy
+            return MolarEnergy( fwds[lam].histogram().mean() );
+        else
+        {
+            //finite difference TI, so take the average of the forwards and backwards
+            //values and divide by delta lambda
+            return MolarEnergy( bwds[lam].fepFreeEnergy() / delta_lam );
+        }
     }
 }
 
@@ -1053,19 +1148,32 @@ MolarEnergy Gradients::backwards(double lam) const
     is used */
 MolarEnergy Gradients::gradient(double lam) const
 {
-    if (not fwds.contains(lam))
-        throw SireError::invalid_key( QObject::tr(
-                "There is no gradient value at lambda == %1. Available lambda values "
-                "are %2.").arg(lam).arg( Sire::toString(lambdaValues()) ), CODELOC );
-    
-    if (delta_lam == 0)
-        //pure TI, so just need the normal average energy
-        return MolarEnergy( fwds[lam].histogram().mean() );
+    if (not analytic.isEmpty())
+    {
+        if (not analytic.contains(lam))
+            throw SireError::invalid_key( QObject::tr(
+                    "There is no gradient value at lambda == %1. Available lambda values "
+                    "are %2.").arg(lam).arg( Sire::toString(lambdaValues()) ), CODELOC );
+
+        return MolarEnergy( analytic[lam].average() );
+    }
     else
     {
-        //finite difference TI, so take the average of the forwards and backwards
-        //values and divide by delta lambda
-        return MolarEnergy( 0.5 * (fwds[lam].average() + bwds[lam].average()) / delta_lam );
+        if (not fwds.contains(lam))
+            throw SireError::invalid_key( QObject::tr(
+                    "There is no gradient value at lambda == %1. Available lambda values "
+                    "are %2.").arg(lam).arg( Sire::toString(lambdaValues()) ), CODELOC );
+        
+        if (delta_lam == 0)
+            //pure TI, so just need the normal average energy
+            return MolarEnergy( fwds[lam].histogram().mean() );
+        else
+        {
+            //finite difference TI, so take the average of the forwards and backwards
+            //values and divide by delta lambda
+            return MolarEnergy( 0.5 * (fwds[lam].fepFreeEnergy() + bwds[lam].fepFreeEnergy())
+                                    / delta_lam );
+        }
     }
 }
 
@@ -1074,6 +1182,12 @@ MolarEnergy Gradients::gradient(double lam) const
 double Gradients::deltaLambda() const
 {
     return delta_lam;
+}
+
+/** Return the raw data for the analytic gradients */
+QMap<double,AverageAndStddev> Gradients::analyticData() const
+{
+    return analytic;
 }
 
 /** Return the raw data for the forwards free energy gradients */
@@ -1101,72 +1215,75 @@ QVector<DataPoint> Gradients::values() const
     
     QVector<DataPoint> points( lamvals.count() );
     
-    for (int i=0; i<lamvals.count(); ++i)
+    if (not analytic.isEmpty())
     {
-        double lam = lamvals[i];
-    
-        if (delta_lam == 0)
+        for (int i=0; i<lamvals.count(); ++i)
         {
-            //pure TI data
-            if (fwds.contains(lam))
-            {
-                const FreeEnergyAverage &avg = *(fwds.constFind(lam));
-                points[i] = DataPoint(lam, avg.histogram().mean(), 0,
-                                           avg.histogram().standardError(90));
-            }
+            double lam = lamvals[i];
+        
+            const AverageAndStddev &avg = *(analytic.constFind(lam));
+            points[i] = DataPoint(lam, avg.average(), 0, avg.standardError(90));
         }
-        else
+    }
+    else
+    {
+        for (int i=0; i<lamvals.count(); ++i)
         {
-            const FreeEnergyAverage *fwdsavg = 0;
-            const FreeEnergyAverage *bwdsavg = 0;
-            
-            if (fwds.contains(lam))
-                fwdsavg = &(*(fwds.constFind(lam)));
-            
-            if (bwds.contains(lam))
-                bwdsavg = &(*(bwds.constFind(lam)));
-
-            if (bwdsavg == 0)
-                bwdsavg = fwdsavg;
-            else if (fwdsavg == 0)
-                fwdsavg = bwdsavg;
-            
-            if (fwdsavg == bwdsavg or (*fwdsavg == *bwdsavg))
+            double lam = lamvals[i];
+        
+            if (delta_lam == 0)
             {
-                double fwdsval = fwdsavg->average() / delta_lam;
-                double fwdstay = fwdsavg->taylorExpansion() / delta_lam;
-                double fwdserr = fwdsavg->histogram().standardError(90) / delta_lam;
-                
-                double val = 0.5 * (fwdsval + fwdstay);
-                double maxerr = std::abs(fwdsval - fwdstay);
-                
-                if (fwdserr > maxerr)
-                    qSwap(fwdserr, maxerr);
-            
-                points[i] = DataPoint(lam, val, 0, fwdserr, 0, maxerr);
+                //pure TI data
+                if (fwds.contains(lam))
+                {
+                    const FreeEnergyAverage &avg = *(fwds.constFind(lam));
+                    points[i] = DataPoint(lam, avg.histogram().mean(), 0,
+                                               avg.histogram().standardError(90));
+                }
             }
             else
             {
-                double fwdsval = fwdsavg->average() / delta_lam;
-                double bwdsval = bwdsavg->average() / delta_lam;
-                double fwdstay = fwdsavg->taylorExpansion() / delta_lam;
-                double bwdstay = bwdsavg->taylorExpansion() / delta_lam;
+                const FreeEnergyAverage *fwdsavg = 0;
+                const FreeEnergyAverage *bwdsavg = 0;
                 
-                double fwdserr = fwdsavg->histogram().standardError(90) / delta_lam;
-                double bwdserr = bwdsavg->histogram().standardError(90) / delta_lam;
+                if (fwds.contains(lam))
+                    fwdsavg = &(*(fwds.constFind(lam)));
                 
-                double val = 0.25 * (fwdsval + bwdsval + fwdstay + bwdstay);
-                double maxerr = qMax(fwdserr, bwdserr);
+                if (bwds.contains(lam))
+                    bwdsavg = &(*(bwds.constFind(lam)));
+
+                if (bwdsavg == 0)
+                    bwdsavg = fwdsavg;
+                else if (fwdsavg == 0)
+                    fwdsavg = bwdsavg;
                 
-                //get the biggest difference between the four estimates of
-                //the free energy
-                double minerr = 0.5 * ( qMax(fwdsval,qMax(bwdsval,qMax(fwdstay,bwdstay))) -
-                                        qMin(fwdsval,qMin(bwdsval,qMin(fwdstay,bwdstay))) );
+                if (fwdsavg == bwdsavg or (*fwdsavg == *bwdsavg))
+                {
+                    double fwdsval = fwdsavg->average() / delta_lam;
+                    double fwdserr = fwdsavg->histogram().standardError(90) / delta_lam;
+                    
+                    double val = fwdsval;
+                    double maxerr = fwdserr;
+                    
+                    if (fwdserr > maxerr)
+                        qSwap(fwdserr, maxerr);
                 
-                if (maxerr < minerr)
-                    qSwap(maxerr, minerr);
-                
-                points[i] = DataPoint(lam, val, 0, minerr, 0, maxerr);
+                    points[i] = DataPoint(lam, val, 0, fwdserr, 0, maxerr);
+                }
+                else
+                {
+                    double fwdsval = fwdsavg->average() / delta_lam;
+                    double bwdsval = bwdsavg->average() / delta_lam;
+                    
+                    double fwdserr = fwdsavg->histogram().standardError(90) / delta_lam;
+                    double bwdserr = bwdsavg->histogram().standardError(90) / delta_lam;
+                    
+                    double val = 0.5 * (fwdsval + bwdsval);
+                    double minerr = std::abs( fwdsval - bwdsval );
+                    double maxerr = minerr + fwdserr + bwdserr;
+                    
+                    points[i] = DataPoint(lam, val, 0, minerr, 0, maxerr);
+                }
             }
         }
     }
@@ -1179,6 +1296,9 @@ QVector<DataPoint> Gradients::values() const
     standard error at the 90% confidence level */
 QVector<DataPoint> Gradients::forwardsValues() const
 {
+    if (not analytic.isEmpty())
+        return values();
+
     QList<double> lamvals = this->lambdaValues();
  
     if (lamvals.isEmpty())
@@ -1203,12 +1323,11 @@ QVector<DataPoint> Gradients::forwardsValues() const
             {
                 const FreeEnergyAverage &fwdsavg = *(fwds.constFind(lam));
                 
-                double fwdsval = fwdsavg.average() / delta_lam;
-                double fwdstay = fwdsavg.taylorExpansion() / delta_lam;
+                double fwdsval = fwdsavg.fepFreeEnergy() / delta_lam;
                 double fwdserr = fwdsavg.histogram().standardError(90) / delta_lam;
                 
-                double val = 0.5 * (fwdsavg + fwdstay);
-                double maxerr = std::abs(fwdsval - fwdstay);
+                double val = fwdsval;
+                double maxerr = fwdserr;
                 
                 if (fwdserr > maxerr)
                     qSwap(fwdserr, maxerr);
@@ -1226,6 +1345,9 @@ QVector<DataPoint> Gradients::forwardsValues() const
     standard error at the 90% confidence level */
 QVector<DataPoint> Gradients::backwardsValues() const
 {
+    if (not analytic.isEmpty())
+        return values();
+
     QList<double> lamvals = this->lambdaValues();
  
     if (lamvals.isEmpty())
@@ -1250,12 +1372,11 @@ QVector<DataPoint> Gradients::backwardsValues() const
             {
                 const FreeEnergyAverage &bwdsavg = *(bwds.constFind(lam));
                 
-                double bwdsval = bwdsavg.average() / delta_lam;
-                double bwdstay = bwdsavg.taylorExpansion() / delta_lam;
+                double bwdsval = bwdsavg.fepFreeEnergy() / delta_lam;
                 double bwdserr = bwdsavg.histogram().standardError(90) / delta_lam;
                 
-                double val = 0.5 * (bwdsavg + bwdstay);
-                double maxerr = std::abs(bwdsval - bwdstay);
+                double val = bwdsval;
+                double maxerr = bwdserr;
                 
                 if (bwdserr > maxerr)
                     qSwap(bwdserr, maxerr);
@@ -1284,7 +1405,7 @@ TIPMF Gradients::integrate(double range_min, double range_max, int order) const
     a polynomial of order 10 and return them as a potential of mean force (PMF) */
 TIPMF Gradients::integrate(double range_min, double range_max) const
 {
-    return this->integrate(range_min, range_max, qMax(2, fwds.count() - 2));
+    return this->integrate(range_min, range_max, qMax(2, lambdaValues().count() - 2));
 }
 
 /** Integrate these gradients between 0 and 1 using a polynomial
@@ -1298,7 +1419,7 @@ TIPMF Gradients::integrate(int order) const
     order ngradients-2 and return them as a potential of mean force (PMF) */
 TIPMF Gradients::integrate() const
 {
-    return this->integrate(0, 1, qMax(2, fwds.count() - 2));
+    return this->integrate(0, 1, qMax(2, lambdaValues().count() - 2));
 }
 
 /////////
@@ -1396,6 +1517,14 @@ const char* TI::what() const
 QList<Gradients> TI::gradients() const
 {
     return grads;
+}
+
+/** Add the passed free energy gradients to the TI calculation. The gradients
+    are in a dictionary, indexed by lambda value, and are analytic TI gradients */
+void TI::add(const QMap<double,AverageAndStddev> &gradients)
+{
+    if (not gradients.isEmpty())
+        grads.append( Gradients(gradients) );
 }
 
 /** Add the passed free energy gradients to the TI calculation. The gradients
@@ -1517,6 +1646,23 @@ Gradients TI::operator[](int i) const
 Gradients TI::at(int i) const
 {
     return operator[](i);
+}
+
+/** Set the gradients for the ith iteration equal to 'gradients'. These
+    are analytic TI gradients */
+void TI::set(int i, const QMap<double,AverageAndStddev> &gradients)
+{
+    while (i >= grads.count())
+    {
+        grads.append( Gradients() );
+    }
+
+    i = Index(i).map(grads.count());
+    
+    if (gradients.isEmpty())
+        grads[i] = Gradients();
+    else
+        grads[i] = Gradients(gradients);
 }
 
 /** Set the gradients for the ith iteration equal to 'gradients'. These

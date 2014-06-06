@@ -295,17 +295,17 @@ void NullFF::group_removeAll(quint32 i)
     throwNoRemove();
 }
 
-bool NullFF::group_update(quint32 i, const MoleculeData &moldata)
+bool NullFF::group_update(quint32 i, const MoleculeData &moldata, bool auto_commit)
 {
     return false;
 }
 
-QList<Molecule> NullFF::group_update(quint32 i, const Molecules &molecules)
+QList<Molecule> NullFF::group_update(quint32 i, const Molecules &molecules, bool auto_commit)
 {
     return QList<Molecule>();
 }
 
-QList<Molecule> NullFF::group_update(quint32 i, const MoleculeGroup &molgroup)
+QList<Molecule> NullFF::group_update(quint32 i, const MoleculeGroup &molgroup, bool auto_commmit)
 {
     return QList<Molecule>();
 }
@@ -387,6 +387,14 @@ void NullFF::reindex()
 {
     MolGroupsBase::clearIndex();
 }
+
+bool NullFF::needsAccepting() const
+{
+    return false;
+}
+
+void NullFF::accept()
+{}
 
 const char* NullFF::typeName()
 {

@@ -17,6 +17,8 @@ namespace bp = boost::python;
 
 #include "accumulator.h"
 
+#include "histogram.h"
+
 #include <QDebug>
 
 #include <QMutex>

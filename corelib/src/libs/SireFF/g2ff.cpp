@@ -926,7 +926,7 @@ void G2FF::group_removeAll(quint32 i)
 
 /** Update the molecule whose data is in 'moldata' to use this
     version of the molecule data in this forcefield */
-bool G2FF::group_update(quint32 i, const MoleculeData &moldata)
+bool G2FF::group_update(quint32 i, const MoleculeData &moldata, bool auto_commit)
 {
     assertValidGroup(i);
     
@@ -934,9 +934,9 @@ bool G2FF::group_update(quint32 i, const MoleculeData &moldata)
     
     try
     {
-        if (molgroup[i].update(moldata))
+        if (molgroup[i].update(moldata,auto_commit))
         {
-            this->_pvt_changed( i, Molecule(moldata) );
+            this->_pvt_changed( i, Molecule(moldata), auto_commit );
             
             FF::incrementVersion();
             
@@ -954,7 +954,7 @@ bool G2FF::group_update(quint32 i, const MoleculeData &moldata)
 
 /** Update this forcefield so that it uses the same version of the
     molecules as in 'molecules' */
-QList<Molecule> G2FF::group_update(quint32 i, const Molecules &molecules)
+QList<Molecule> G2FF::group_update(quint32 i, const Molecules &molecules, bool auto_commit)
 {
     assertValidGroup(i);
     
@@ -962,11 +962,11 @@ QList<Molecule> G2FF::group_update(quint32 i, const Molecules &molecules)
     
     try
     {
-        QList<Molecule> updated_mols = molgroup[i].update(molecules);
+        QList<Molecule> updated_mols = molgroup[i].update(molecules, auto_commit);
         
         if (not updated_mols.isEmpty())
         {
-            this->_pvt_changed(i, updated_mols);
+            this->_pvt_changed(i, updated_mols, auto_commit);
             
             FF::incrementVersion();
         }
@@ -984,9 +984,9 @@ QList<Molecule> G2FF::group_update(quint32 i, const Molecules &molecules)
 
 /** Update the molecule group in this forcefield so that it has
     the same molecule versions as in 'new_group' */
-QList<Molecule> G2FF::group_update(quint32 i, const MoleculeGroup &new_group)
+QList<Molecule> G2FF::group_update(quint32 i, const MoleculeGroup &new_group, bool auto_commit)
 {
-    return G2FF::group_update(i, new_group.molecules());
+    return G2FF::group_update(i, new_group.molecules(), auto_commit);
 }
 
 /** Set the contents of this forcefield so that it only contains the 
@@ -1193,4 +1193,23 @@ bool G2FF::group_setContents(quint32 i, const MoleculeGroup &new_group,
     }
     
     return false;
+}
+
+/** Return whether or not this forcefield is using any temporary workspace
+    that needs to be accepted */
+bool G2FF::needsAccepting() const
+{
+    return molgroup[0].needsAccepting() or molgroup[1].needsAccepting();
+}
+
+/** Tell the forcefield that the last move was accepted. This tells the
+    forcefield to make permanent any temporary changes that were used a workspace
+    to avoid memory allocation during a move */
+void G2FF::accept()
+{
+    if (molgroup[0].needsAccepting())
+        molgroup[0].accept();
+    
+    if (molgroup[1].needsAccepting())
+        molgroup[1].accept();
 }

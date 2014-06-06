@@ -35,6 +35,10 @@
 
 #include "vector.h"
 
+#include <gsl/gsl_matrix.h>
+
+#include <boost/tuple/tuple.hpp>
+
 SIRE_BEGIN_HEADER
 
 namespace SireMaths
@@ -85,6 +89,7 @@ public:
     Matrix(const tuple<Vector,Vector,Vector> &rows);
 
     Matrix(const NMatrix &m);
+    Matrix(const gsl_matrix *m);
 
     Matrix(const Matrix& m);
 
@@ -108,6 +113,8 @@ public:
     int offset(int i, int j) const;
     int checkedOffset(int i, int j) const;
 
+    double at(int i, int j) const;
+
     Matrix transpose() const;
     Matrix inverse() const;
     Vector trace() const;
@@ -118,7 +125,10 @@ public:
     void enforceSymmetric();
     Matrix getPrincipalAxes() const;
 
-    std::pair<Vector,Matrix> diagonalise() const;
+    boost::tuple<Vector,Matrix> diagonalise() const;
+
+    boost::tuple<Matrix,Matrix,Matrix> svd() const;
+    boost::tuple<Matrix,Matrix,Matrix> singleValueDecomposition() const;
 
     double xx() const;
     double xy() const;
@@ -166,6 +176,10 @@ public:
     friend const Vector operator*(const Matrix &m, const Vector &p);
     friend const Matrix operator*(const Matrix &m, double c);
     friend const Matrix operator*(double c, const Matrix &m);
+
+    static Matrix covariance(const QVector<Vector> &p,
+                             const QVector<Vector> &q,
+                             int n=-1);
 
 protected:
     /** The components of the matrix */

@@ -250,11 +250,13 @@ def fix_Mover(c):
     c.decls("mapInto").call_policies = call_policies.return_self()
     c.decls("translate").call_policies = call_policies.return_self()
     c.decls("rotate").call_policies = call_policies.return_self()
+    c.decls("transform").call_policies = call_policies.return_self()
     c.decls("changeFrame").call_policies = call_policies.return_self()
     c.decls("change").call_policies = call_policies.return_self()
     c.decls("set").call_policies = call_policies.return_self()
     c.decls("setAll").call_policies = call_policies.return_self()
     c.decls("alignTo").call_policies = call_policies.return_self()
+    c.decls("align").call_policies = call_policies.return_self()
 
     #also include all of the header files included in mover.cpp
     for header in active_headers["mover.h"].dependencies():

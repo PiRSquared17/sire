@@ -17,6 +17,8 @@ namespace bp = boost::python;
 
 #include "accumulator.h"
 
+#include "histogram.h"
+
 #include <QDebug>
 
 #include <QMutex>
@@ -92,6 +94,27 @@ void register_AverageAndStddev_class(){
             AverageAndStddev_exposer.def( 
                 "standardDeviation"
                 , standardDeviation_function_value );
+        
+        }
+        { //::SireMaths::AverageAndStddev::standardError
+        
+            typedef double ( ::SireMaths::AverageAndStddev::*standardError_function_type )(  ) const;
+            standardError_function_type standardError_function_value( &::SireMaths::AverageAndStddev::standardError );
+            
+            AverageAndStddev_exposer.def( 
+                "standardError"
+                , standardError_function_value );
+        
+        }
+        { //::SireMaths::AverageAndStddev::standardError
+        
+            typedef double ( ::SireMaths::AverageAndStddev::*standardError_function_type )( int ) const;
+            standardError_function_type standardError_function_value( &::SireMaths::AverageAndStddev::standardError );
+            
+            AverageAndStddev_exposer.def( 
+                "standardError"
+                , standardError_function_value
+                , ( bp::arg("level") ) );
         
         }
         { //::SireMaths::AverageAndStddev::stddev

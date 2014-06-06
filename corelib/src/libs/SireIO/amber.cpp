@@ -212,6 +212,13 @@ static const double AMBER14LJ = 0.50 ;
 /** Processes a line that starts with %FLAG*/
 static void processFlagLine(const QStringList &words, int &flag)
 {
+    if (words.count() < 2)
+    {
+        qDebug() << "WARNING: No flag given for this section of the topology file?";
+        flag = UNKNOWN;
+        return;
+    }
+
     //%FLAG TITLE
     if (words[1] == "TITLE")
         flag = TITLE;
@@ -302,8 +309,10 @@ static void processFlagLine(const QStringList &words, int &flag)
     else if (words[1] == "IPOL")
         flag = UNKNOWN;
     else
-        throw SireError::unsupported( QObject::tr(
-                                          "The flag \"%1\" is not supported...").arg(words[1]), CODELOC );
+    {
+        qDebug() << "WARNING: Skipping section" << words[1] << "in the topology file.";
+        flag = UNKNOWN;
+    }
 }
 
 /** Processes a line that starts with %FORMAT*/
@@ -313,18 +322,21 @@ static void processFormatLine(const QStringList &words, FortranFormat &format)
     QString tmp = words[0];
 
     tmp = tmp.remove( QString("%FORMAT(") );
-    tmp = tmp.remove( QChar(')') );
+    tmp = tmp.remove( QChar(')') ).toUpper();
 
-    // QRegExp must match either (a,I,E)
+    // QRegExp must match either (a,I,E) (case insensitive)
     QString match = " ";
-    QRegExp rx("[aIE]");
+    QRegExp rx("[AIE]");
 
-    if (tmp.contains(rx) )
+    if (tmp.toUpper().contains(rx))
         match = rx.cap(0);
     else
+    {
+        qDebug() << "The format line" << words[0] << "cannot be read";
         throw SireError::program_bug( QObject::tr(
-                                          "The format line '%1' does not contain a supported format type")
+                            "The format line '%1' does not contain a supported format type")
                                       .arg(tmp), CODELOC);
+    }
 
     QStringList elements = tmp.split(match);
 
@@ -347,12 +359,13 @@ static void processFormatLine(const QStringList &words, FortranFormat &format)
         decimal = 0;
     }
 
+    if (match == "A")
+        match = "a";
+
     format.repeat = repeat;
     format.type = match;
     format.size = size;
     format.decimal = decimal;
-    //qDebug() << "MY FORMAT " << format.repeat << " " << format.type << " "
-    //         << format.size << " " << format.decimal;
 }
 
 /** Processes the line that contains the VERSION of the top file*/
@@ -379,7 +392,7 @@ static void processIntegerLine(const QString &line, const FortranFormat &format,
     //FORMAT(10i8) reads up to 10 times 8 characters and treat them as an integer
     if ( format.type != "I")
         throw SireError::program_bug( QObject::tr(
-                                          "Format '%1' is not supported, should be I").arg(format.type), CODELOC);
+                    "Format '%1' is not supported, should be I").arg(format.type), CODELOC);
 
     int count = 0;
 
@@ -402,7 +415,7 @@ static void processStringLine(const QString &line, const FortranFormat &format,
     //FORMAT(20a4)
     if ( format.type != "a")
         throw SireError::program_bug( QObject::tr(
-                                          "Format '%1' is not supported, should be a").arg(format.type), CODELOC);
+                "Format '%1' is not supported, should be a").arg(format.type), CODELOC);
 
     int count = 0;
 
@@ -430,7 +443,7 @@ static void processDoubleLine(const QString &line, const FortranFormat &format,
     //FORMAT(5E16.8)
     if ( format.type != "E")
         throw SireError::program_bug( QObject::tr(
-                                          "Format '%1' is not supported, should be E").arg(format.type), CODELOC);
+                "Format '%1' is not supported, should be E").arg(format.type), CODELOC);
 
     int count = 0;
 
@@ -874,7 +887,8 @@ static void setNonBondedPairs(MolEditor &editmol, int pointer,
                               const QList<int> &exc_atom_list,
                               CLJNBPairs &nbpairs,
                               const PropertyName &nb_property,
-                              const QHash<AtomNum, QList<AtomNum> > &atoms14)
+                              const QHash<AtomNum, QList<AtomNum> > &atoms14,
+                              double coul_14scl, double lj_14scl)
 {
     // For each pair of atoms within a molecule
     // --> if 1,2 or 1,3 CLJScaleFactor(0,0)
@@ -886,6 +900,14 @@ static void setNonBondedPairs(MolEditor &editmol, int pointer,
     // solution is to get setDihedrals to return a list of 1,4 atoms.
 
     // --> if 1,5 or more CLJScaleFactor ( 1, 1 )
+
+    // if the number of atoms is less than or equal to 3, then everything is bonded
+    if (editmol.nAtoms() <= 3)
+    {
+        nbpairs = CLJNBPairs(editmol.data().info(), CLJScaleFactor(0,0));
+        editmol.setProperty( nb_property, nbpairs );
+        return;
+    }
 
     // this is the default situation
     nbpairs = CLJNBPairs(editmol.data().info(), CLJScaleFactor(1.0,1.0));
@@ -947,8 +969,8 @@ static void setNonBondedPairs(MolEditor &editmol, int pointer,
             {
                 //qDebug() << " ATOMS " << atom0.number() << " and "
                 //          << atom1.number() << " are 14";
-                cscl = AMBER14COUL;
-                ljscl = AMBER14LJ;
+                cscl = coul_14scl;
+                ljscl = lj_14scl;
             }
             else
             {
@@ -1075,8 +1097,10 @@ static const RegisterMetaType<Amber> r_amber(NO_ROOT);
 QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds, const Amber &amber)
 {
     //empty class so nothing to stream
-
-    writeHeader(ds, r_amber, 0);
+    writeHeader(ds, r_amber, 1);
+    
+    ds << amber.coul_14scl << amber.lj_14scl;
+    
     return ds;
 }
 
@@ -1087,22 +1111,56 @@ QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, Amber &amber)
 
     VersionID v = readHeader(ds, r_amber);
 
-    if (v != 0)
-        throw version_error( v, "0", r_amber, CODELOC );
+    if (v == 1)
+    {
+        ds >> amber.coul_14scl >> amber.lj_14scl;
+    }
+    else if (v == 0)
+    {
+        amber.coul_14scl = AMBER14COUL;
+        amber.lj_14scl = AMBER14LJ;
+    }
+    else
+        throw version_error( v, "1,0", r_amber, CODELOC );
 
     return ds;
 }
 
 /** Constructor */
-Amber::Amber()
+Amber::Amber() : coul_14scl(AMBER14COUL), lj_14scl(AMBER14LJ)
+{}
+
+/** Copy constructor */
+Amber::Amber(const Amber &other)
+      : coul_14scl(other.coul_14scl), lj_14scl(other.lj_14scl)
 {}
 
 /** Destructor */
 Amber::~Amber()
 {}
 
+/** Copy assignment operator */
+Amber& Amber::operator=(const Amber &other)
+{
+    coul_14scl = other.coul_14scl;
+    lj_14scl = other.lj_14scl;
+    return *this;
+}
+
+/** Comparison operator */
+bool Amber::operator==(const Amber &other) const
+{
+    return coul_14scl == other.coul_14scl and lj_14scl == other.lj_14scl;
+}
+
+/** Comparison operator */
+bool Amber::operator!=(const Amber &other) const
+{
+    return not operator==(other);
+}
+
 /** Reads the contents of a topfile and associated crdfile and returns a molecule group */
-tuple<Molecules,SpacePtr> Amber::readCrdTop(const QString &crdfile,
+tuple<MoleculeGroup,SpacePtr> Amber::readCrdTop(const QString &crdfile,
         const QString &topfile, QString flag_cutting) const
 {
     /**
@@ -1425,7 +1483,7 @@ tuple<Molecules,SpacePtr> Amber::readCrdTop(const QString &crdfile,
     // The following holds the data read from the top file
     int currentFlag = 0;
 
-    FortranFormat currentFormat = FortranFormat();
+    FortranFormat currentFormat;
 
     //QString currentVersion = " ";
     QString title = " ";
@@ -1477,7 +1535,6 @@ tuple<Molecules,SpacePtr> Amber::readCrdTop(const QString &crdfile,
     //processVersionLine(words, currentVersion);
     while (not line.isNull() )
     {
-        //qDebug() << line;
         line = ts.readLine();
 
         if (line.startsWith("%"))
@@ -1489,10 +1546,15 @@ tuple<Molecules,SpacePtr> Amber::readCrdTop(const QString &crdfile,
                 processFlagLine(words, currentFlag);
             else if (line.startsWith("%FORMAT"))
                 processFormatLine(words, currentFormat);
+            else if (line.startsWith("%COMMENT"))
+                continue;
             else
+            {
+                qDebug() << "ERROR" << line;
                 throw SireError::program_bug( QObject::tr(
                                                   "Does not know what to do with a '%1' statement")
                                               .arg(words[0]), CODELOC );
+            }
         }
         else
         {
@@ -1502,136 +1564,142 @@ tuple<Molecules,SpacePtr> Amber::readCrdTop(const QString &crdfile,
             //qDebug() << "FORMAT IS " << currentFormat.type << " FLAG IS " << currentFlag;
             switch ( currentFlag )
             {
-            case TITLE:
-                processTitleLine(line, currentFormat, title);
-                break;
-            case POINTERS:
-                processIntegerLine(line, currentFormat, pointers);
-                break;
-            case ATOM_NAME:
-                processStringLine(line, currentFormat, atom_name);
-                break;
-            case CHARGE:
-                processDoubleLine(line, currentFormat, charge);
-                break;
-            case MASS:
-                processDoubleLine(line, currentFormat, mass);
-                break;
-            case ATOM_TYPE_INDEX:
-                processIntegerLine(line, currentFormat, atom_type_index);
-                break;
-            case NUMBER_EXCLUDED_ATOMS:
-                processIntegerLine(line, currentFormat, num_excluded_atoms);
-                break;
-            case NONBONDED_PARM_INDEX:
-                processIntegerLine(line, currentFormat, nb_parm_index);
-                break;
-            case RESIDUE_LABEL:
-                processStringLine(line, currentFormat, res_label);
-                break;
-            case RESIDUE_POINTER:
-                processIntegerLine(line, currentFormat, res_pointer);
-                break;
-            case BOND_FORCE_CONSTANT:
-                processDoubleLine(line, currentFormat, bond_force_constant);
-                break;
-            case BOND_EQUIL_VALUE:
-                processDoubleLine(line, currentFormat, bond_equil_value);
-                break;
-            case ANGLE_FORCE_CONSTANT:
-                processDoubleLine(line, currentFormat, ang_force_constant);
-                break;
-            case ANGLE_EQUIL_VALUE:
-                processDoubleLine(line, currentFormat, ang_equil_value);
-                break;
-            case DIHEDRAL_FORCE_CONSTANT:
-                processDoubleLine(line, currentFormat, dih_force_constant);
-                break;
-            case DIHEDRAL_PERIODICITY:
-                processDoubleLine(line, currentFormat, dih_periodicity);
-                break;
-            case DIHEDRAL_PHASE:
-                processDoubleLine(line, currentFormat, dih_phase);
-                break;
-            case SOLTY:
-                processDoubleLine(line, currentFormat, solty);
-                break;
-            case LENNARD_JONES_ACOEF:
-                processDoubleLine(line, currentFormat, lj_a_coeff);
-                break;
-            case LENNARD_JONES_BCOEF:
-                processDoubleLine(line, currentFormat, lj_b_coeff);
-                break;
-            case BONDS_INC_HYDROGEN:
-                processIntegerLine(line, currentFormat, bond_inc_h);
-                break;
-            case BONDS_WITHOUT_HYDROGEN:
-                processIntegerLine(line, currentFormat, bonds_exc_h);
-                break;
-            case ANGLES_INC_HYDROGEN:
-                processIntegerLine(line, currentFormat, angs_inc_h);
-                break;
-            case ANGLES_WITHOUT_HYDROGEN:
-                processIntegerLine(line, currentFormat, angs_exc_h);
-                break;
-            case DIHEDRALS_INC_HYDROGEN:
-                processIntegerLine(line, currentFormat, dihs_inc_h);
-                break;
-            case DIHEDRALS_WITHOUT_HYDROGEN:
-                processIntegerLine(line, currentFormat, dihs_exc_h);
-                break;
-            case EXCLUDED_ATOMS_LIST:
-                processIntegerLine(line, currentFormat, exc_atom_list);
-                break;
-            case HBOND_ACOEF:
-                processDoubleLine(line, currentFormat, hbond_a_coeff);
-                break;
-            case HBOND_BCOEF:
-                processDoubleLine(line, currentFormat, hbond_b_coeff);
-                break;
-            case HBCUT:
-                processDoubleLine(line, currentFormat, hbcut);
-                break;
-            case AMBER_ATOM_TYPE:
-                processStringLine(line, currentFormat, amber_type);
-                break;
-            case TREE_CHAIN_CLASSIFICATION:
-                processStringLine(line, currentFormat, tree_chain_class);
-                break;
-            case JOIN_ARRAY:
-                processIntegerLine(line, currentFormat, join_array);
-                break;
-            case IROTAT:
-                processIntegerLine(line, currentFormat, irotat);
-                break;
-            case SOLVENT_POINTERS:
-                processIntegerLine(line, currentFormat, svn_pointers);
-                break;
-            case ATOMS_PER_MOLECULE:
-                processIntegerLine(line, currentFormat, atoms_per_mol);
-                break;
-            case BOX_DIMENSIONS:
-                processDoubleLine(line, currentFormat, box_dims);
-                break;
-            case RADIUS_SET:
-                processStringLine(line, currentFormat, radius_set);
-                break;
-            case RADII:
-                processDoubleLine(line, currentFormat, radii);
-                break;
-            case SCREEN:
-                processDoubleLine(line, currentFormat, screen);
-                break;
-            case ATOMIC_NUMBER:
-                processIntegerLine(line, currentFormat, element);
-                break;
-            case UNKNOWN:
-                break;
-            default:
-                throw SireError::program_bug( QObject::tr(
-                                                  "Serious problem with the value of the variable "
-                                                  "currentFlag, '%1'").arg(currentFlag),
-                                              CODELOC);
+                case TITLE:
+                    processTitleLine(line, currentFormat, title);
+                    break;
+                case POINTERS:
+                    processIntegerLine(line, currentFormat, pointers);
+                    break;
+                case ATOM_NAME:
+                    processStringLine(line, currentFormat, atom_name);
+                    break;
+                case CHARGE:
+                    processDoubleLine(line, currentFormat, charge);
+                    break;
+                case MASS:
+                    processDoubleLine(line, currentFormat, mass);
+                    break;
+                case ATOM_TYPE_INDEX:
+                    processIntegerLine(line, currentFormat, atom_type_index);
+                    break;
+                case NUMBER_EXCLUDED_ATOMS:
+                    processIntegerLine(line, currentFormat, num_excluded_atoms);
+                    break;
+                case NONBONDED_PARM_INDEX:
+                    processIntegerLine(line, currentFormat, nb_parm_index);
+                    break;
+                case RESIDUE_LABEL:
+                    processStringLine(line, currentFormat, res_label);
+                    break;
+                case RESIDUE_POINTER:
+                    processIntegerLine(line, currentFormat, res_pointer);
+                    break;
+                case BOND_FORCE_CONSTANT:
+                    processDoubleLine(line, currentFormat, bond_force_constant);
+                    break;
+                case BOND_EQUIL_VALUE:
+                    processDoubleLine(line, currentFormat, bond_equil_value);
+                    break;
+                case ANGLE_FORCE_CONSTANT:
+                    processDoubleLine(line, currentFormat, ang_force_constant);
+                    break;
+                case ANGLE_EQUIL_VALUE:
+                    processDoubleLine(line, currentFormat, ang_equil_value);
+                    break;
+                case DIHEDRAL_FORCE_CONSTANT:
+                    processDoubleLine(line, currentFormat, dih_force_constant);
+                    break;
+                case DIHEDRAL_PERIODICITY:
+                    processDoubleLine(line, currentFormat, dih_periodicity);
+                    break;
+                case DIHEDRAL_PHASE:
+                    processDoubleLine(line, currentFormat, dih_phase);
+                    break;
+                case SOLTY:
+                    processDoubleLine(line, currentFormat, solty);
+                    break;
+                case LENNARD_JONES_ACOEF:
+                    processDoubleLine(line, currentFormat, lj_a_coeff);
+                    break;
+                case LENNARD_JONES_BCOEF:
+                    processDoubleLine(line, currentFormat, lj_b_coeff);
+                    break;
+                case BONDS_INC_HYDROGEN:
+                    processIntegerLine(line, currentFormat, bond_inc_h);
+                    break;
+                case BONDS_WITHOUT_HYDROGEN:
+                    processIntegerLine(line, currentFormat, bonds_exc_h);
+                    break;
+                case ANGLES_INC_HYDROGEN:
+                    processIntegerLine(line, currentFormat, angs_inc_h);
+                    break;
+                case ANGLES_WITHOUT_HYDROGEN:
+                    processIntegerLine(line, currentFormat, angs_exc_h);
+                    break;
+                case DIHEDRALS_INC_HYDROGEN:
+                    processIntegerLine(line, currentFormat, dihs_inc_h);
+                    break;
+                case DIHEDRALS_WITHOUT_HYDROGEN:
+                    processIntegerLine(line, currentFormat, dihs_exc_h);
+                    break;
+                case EXCLUDED_ATOMS_LIST:
+                    processIntegerLine(line, currentFormat, exc_atom_list);
+                    break;
+                case HBOND_ACOEF:
+                    processDoubleLine(line, currentFormat, hbond_a_coeff);
+                    break;
+                case HBOND_BCOEF:
+                    processDoubleLine(line, currentFormat, hbond_b_coeff);
+                    break;
+                case HBCUT:
+                    processDoubleLine(line, currentFormat, hbcut);
+                    break;
+                case AMBER_ATOM_TYPE:
+                    processStringLine(line, currentFormat, amber_type);
+                    break;
+                case TREE_CHAIN_CLASSIFICATION:
+                    processStringLine(line, currentFormat, tree_chain_class);
+                    break;
+                case JOIN_ARRAY:
+                    processIntegerLine(line, currentFormat, join_array);
+                    break;
+                case IROTAT:
+                    processIntegerLine(line, currentFormat, irotat);
+                    break;
+                case SOLVENT_POINTERS:
+                    processIntegerLine(line, currentFormat, svn_pointers);
+                    break;
+                case ATOMS_PER_MOLECULE:
+                    processIntegerLine(line, currentFormat, atoms_per_mol);
+                    break;
+                case BOX_DIMENSIONS:
+                    processDoubleLine(line, currentFormat, box_dims);
+                    break;
+                case RADIUS_SET:
+                    processStringLine(line, currentFormat, radius_set);
+                    break;
+                case RADII:
+                    processDoubleLine(line, currentFormat, radii);
+                    break;
+                case SCREEN:
+                    processDoubleLine(line, currentFormat, screen);
+                    break;
+                case ATOMIC_NUMBER:
+                    processIntegerLine(line, currentFormat, element);
+                    break;
+                case UNKNOWN:
+                    break;
+                default:
+                {
+                    qDebug() << "PROCESSING UNKNOWN LINE";
+                    qDebug() << currentFlag;
+                    qDebug() << line;
+                    throw SireError::program_bug( QObject::tr(
+                                                      "Serious problem with the value of the variable "
+                                                      "currentFlag, '%1'").arg(currentFlag),
+                                                  CODELOC );
+                    break;
+                }
             }
         }
     }
@@ -1644,10 +1712,8 @@ tuple<Molecules,SpacePtr> Amber::readCrdTop(const QString &crdfile,
         cutting = PERATOM;
     else
         throw SireError::program_bug(QObject::tr(
-                                         "The Cutting method has not been correctly specified. Possible choises: perresidue, peratom"),
+    "The Cutting method has not been correctly specified. Possible choises: perresidue, peratom"),
                                      CODELOC);
-
-
 
     //DEBUG STUFF
     //qDebug() << " POINTERS " << pointers << " ATOMNAME "
@@ -1743,7 +1809,7 @@ tuple<Molecules,SpacePtr> Amber::readCrdTop(const QString &crdfile,
 
     PropertyName amberparameters_property = PropertyName("amberparameters");
 
-    Molecules molecules;
+    MoleculeGroup molecules( QString("%1:%2").arg(crdfile,topfile) );
 
     int molnum = 1;
     int resnum = 1;
@@ -1946,7 +2012,7 @@ tuple<Molecules,SpacePtr> Amber::readCrdTop(const QString &crdfile,
             setNonBondedPairs(editmol, pointers[NEXT],
                               num_excluded_atoms, exc_atom_list,
                               nbpairs, nb_property,
-                              atoms14);
+                              atoms14, coul_14scl, lj_14scl);
         }
 
         molecule = editmol.commit();
@@ -1955,7 +2021,7 @@ tuple<Molecules,SpacePtr> Amber::readCrdTop(const QString &crdfile,
         ++molnum;
     }
 
-    //qDebug() << " Getting space information ";
+    qDebug() << " Getting space information ";
     // Now the box information
     SpacePtr spce;
 
@@ -1972,7 +2038,7 @@ tuple<Molecules,SpacePtr> Amber::readCrdTop(const QString &crdfile,
             throw SireError::incompatible_error( QObject::tr(
                     "The top file specifies a rectangular box, "
                     "but the box angles are not 90 degrees ('%1', '%2', '%3' )")
-                                                 .arg(crd_box[3]).arg(crd_box[4]).arg(crd_box[5]), CODELOC );
+                                .arg(crd_box[3]).arg(crd_box[4]).arg(crd_box[5]), CODELOC );
 
         spce = PeriodicBox( dimensions );
         //spce = PeriodicBox( Vector ( crdBox[0], crdBox[1], crdBox[2] ) ).asA<Space>() ;
@@ -1991,14 +2057,32 @@ tuple<Molecules,SpacePtr> Amber::readCrdTop(const QString &crdfile,
         spce = Cartesian();
     }
 
+    qDebug() << "Read space" << spce.read().toString();
+
     qDebug() << "...complete";
 
-    return tuple<Molecules, SpacePtr>(molecules, spce);
+    return tuple<MoleculeGroup, SpacePtr>(molecules, spce);
 }
 
 const char* Amber::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Amber>() );
+}
+
+void Amber::set14Factors(double coul_14, double lj_14)
+{
+    coul_14scl = coul_14;
+    lj_14scl = lj_14;
+}
+
+double Amber::coulomb14Factor() const
+{
+    return coul_14scl;
+}
+
+double Amber::lj14Factor() const
+{
+    return lj_14scl;
 }
 
 const char* Amber::what() const

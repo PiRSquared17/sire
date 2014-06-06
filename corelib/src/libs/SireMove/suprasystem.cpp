@@ -188,6 +188,11 @@ const SupraSystem& SupraSystem::null()
     return *(supraSystem());
 }
 
+/** This function is called after each SupraMove to collect any statistics
+    about the SupraSystem */
+void SupraSystem::collectSupraStats()
+{}
+
 /** This function is called just before all of the sub-systems are packed */
 void SupraSystem::_pre_pack()
 {}

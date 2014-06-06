@@ -51,6 +51,10 @@
 
 #include "MultiFloat.pypp.hpp"
 
+#include "MultiInt.pypp.hpp"
+
+#include "MultiUInt.pypp.hpp"
+
 #include "N4Matrix.pypp.hpp"
 
 #include "NMatrix.pypp.hpp"
@@ -70,6 +74,8 @@
 #include "Sphere.pypp.hpp"
 
 #include "Torsion.pypp.hpp"
+
+#include "Transform.pypp.hpp"
 
 #include "Triangle.pypp.hpp"
 
@@ -152,6 +158,10 @@ BOOST_PYTHON_MODULE(_Maths){
 
     register_MultiFloat_class();
 
+    register_MultiInt_class();
+
+    register_MultiUInt_class();
+
     register_N4Matrix_class();
 
     register_NMatrix_class();
@@ -171,6 +181,8 @@ BOOST_PYTHON_MODULE(_Maths){
     register_Sphere_class();
 
     register_Torsion_class();
+
+    register_Transform_class();
 
     register_Triangle_class();
 

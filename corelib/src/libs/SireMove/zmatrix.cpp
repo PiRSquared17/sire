@@ -1495,7 +1495,7 @@ const QVector<int>& ZMatrix::atomBuildOrder() const
 PropertyPtr ZMatrix::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
                                              const AtomMatcher &atommatcher) const
 {
-    if (atommatcher.unchangedAtomOrder(this->info(), molinfo))
+    if (not atommatcher.changesOrder(this->info(), molinfo))
     {
         //the order and number of atoms is the same - the z-matrix
         //can just be copied

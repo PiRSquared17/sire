@@ -2,6 +2,7 @@
 set ( PYPP_SOURCES
        Mover_Molecule_.pypp.cpp
        Chain.pypp.cpp
+       AtomMCSMatcher.pypp.cpp
        ResEditorBase.pypp.cpp
        IDOrSet_MolID_.pypp.cpp
        IDAndSet_MolID_.pypp.cpp
@@ -11,6 +12,7 @@ set ( PYPP_SOURCES
        CutGroup.pypp.cpp
        Perturbation.pypp.cpp
        Specify_MGID_.pypp.cpp
+       AtomMultiMatcher.pypp.cpp
        Molecules.pypp.cpp
        AtomMasses.pypp.cpp
        ChainResID.pypp.cpp
@@ -21,6 +23,7 @@ set ( PYPP_SOURCES
        DihedralPerturbation.pypp.cpp
        Force3D.pypp.cpp
        CovalentBondHunterParameters.pypp.cpp
+       AtomResultMatcher.pypp.cpp
        UserBeading.pypp.cpp
        BondID.pypp.cpp
        MolInfo.pypp.cpp
@@ -112,6 +115,7 @@ set ( PYPP_SOURCES
        ChemicalBondHunter.pypp.cpp
        MoleculeGroup.pypp.cpp
        AtomIdxMatcher.pypp.cpp
+       VolumeMap.pypp.cpp
        MolStructureEditor.pypp.cpp
        Mover_PartialMolecule_.pypp.cpp
        ResName.pypp.cpp
@@ -138,6 +142,7 @@ set ( PYPP_SOURCES
        AbsFromNumber.pypp.cpp
        MGNum.pypp.cpp
        MolEditorBase.pypp.cpp
+       MolResNum.pypp.cpp
        Specify_AtomID_.pypp.cpp
        Mover_Chain_.pypp.cpp
        MolViewProperty.pypp.cpp
@@ -152,6 +157,7 @@ set ( PYPP_SOURCES
        CGChainID.pypp.cpp
        ChainVariantProperty.pypp.cpp
        IDOrSet_MGID_.pypp.cpp
+       AtomIDMatcher.pypp.cpp
        Within.pypp.cpp
        Mover_Segment_.pypp.cpp
        IDAndSet_ResID_.pypp.cpp
@@ -171,6 +177,7 @@ set ( PYPP_SOURCES
        ChainFloatProperty.pypp.cpp
        SegName.pypp.cpp
        IDAndSet_MGID_.pypp.cpp
+       MolResID.pypp.cpp
        AtomCoords.pypp.cpp
        IDAndSet_SegID_.pypp.cpp
        DihedralID.pypp.cpp
@@ -187,6 +194,7 @@ set ( PYPP_SOURCES
        BeadFloatProperty.pypp.cpp
        Selector_CutGroup_.pypp.cpp
        NullPerturbation.pypp.cpp
+       _Mol_free_functions.pypp.cpp
        AtomElements.pypp.cpp
        CovalentBondHunter.pypp.cpp
        AtomsIn_SegID_.pypp.cpp
@@ -204,8 +212,10 @@ set ( PYPP_SOURCES
        AtomsIn_ResID_.pypp.cpp
        Velocity3D.pypp.cpp
        MoverBase.pypp.cpp
+       MolWithResID.pypp.cpp
        SegStringProperty.pypp.cpp
        IDOrSet_ChainID_.pypp.cpp
+       AtomMatchInverter.pypp.cpp
        AtomIntProperty.pypp.cpp
        AtomCharges.pypp.cpp
        AtomsIn_CGID_.pypp.cpp

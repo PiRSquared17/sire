@@ -237,6 +237,17 @@ void register_DistVector_class(){
                 , ( bp::arg("dst"), bp::arg("v1"), bp::arg("ang"), bp::arg("v2"), bp::arg("dih"), bp::arg("v3") ) );
         
         }
+        { //::SireMaths::DistVector::getitem
+        
+            typedef double ( ::SireMaths::DistVector::*getitem_function_type )( int ) const;
+            getitem_function_type getitem_function_value( &::SireMaths::DistVector::getitem );
+            
+            DistVector_exposer.def( 
+                "getitem"
+                , getitem_function_value
+                , ( bp::arg("i") ) );
+        
+        }
         { //::SireMaths::DistVector::invDistance
         
             typedef double ( *invDistance_function_type )( ::SireMaths::DistVector const &,::SireMaths::DistVector const & );

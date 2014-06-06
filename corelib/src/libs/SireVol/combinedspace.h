@@ -160,6 +160,7 @@ public:
 
     bool beyond(double dist, const AABox &aabox0, const AABox &aabox1) const;
 
+    double minimumDistance(const AABox &box0, const AABox &box1) const;
     double minimumDistance(const CoordGroup &group0, const CoordGroup &group1) const;
     double minimumDistance(const CoordGroup &group) const;
 
@@ -181,6 +182,8 @@ public:
     AABox getMinimumImage(const AABox &aabox, const Vector &center) const;
     
     Vector getMinimumImage(const Vector &point, const Vector &center) const;
+
+    QVector<Vector> getImagesWithin(const Vector &point, const Vector &center, double dist) const;
 
     QList< boost::tuple<double,CoordGroup> >
                getCopiesWithin(const CoordGroup &group, const CoordGroup &center,

@@ -104,6 +104,8 @@ public:
     QVector<DataPoint> numerators() const;
     QVector<DataPoint> denominators() const;
 
+    QVector<DataPoint> constants() const;
+
     QMap<double,BennettsFreeEnergyAverage> forwardsData() const;
     QMap<double,BennettsFreeEnergyAverage> backwardsData() const;
 

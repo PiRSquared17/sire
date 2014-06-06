@@ -5,6 +5,7 @@
 
 #include "amber.h"
 #include "cube.h"
+#include "dx.h"
 #include "flexibilitylibrary.h"
 #include "iobase.h"
 #include "pdb.h"

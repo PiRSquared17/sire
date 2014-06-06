@@ -344,7 +344,7 @@ Process Process::run(const QString &command,  const QStringList &arguments)
         
         QByteArray cmd = command.toUtf8();
         QList<QByteArray> args;
-        char* char_args[ arguments.count() + 2 ];
+        char** char_args = new char*[ arguments.count() + 2 ];
         
         char_args[0] = cmd.data();
         
@@ -354,10 +354,12 @@ Process Process::run(const QString &command,  const QStringList &arguments)
             char_args[i+1] = args[i].data();
         }
         
-        char_args[arguments.count()+1] = '\0';
+        char_args[arguments.count()+1] = 0;
        
         //now run the command
         int status = execvp( char_args[0], char_args );
+        
+        delete[] char_args;
         
         if (status != 0)
         {

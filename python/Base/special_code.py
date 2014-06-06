@@ -15,11 +15,13 @@ implicitly_convertible = [ ("QString", "SireBase::PropertyName"),
                            ("SireBase::StringProperty", "QString"),
                            ("double", "SireBase::NumberProperty"),
                            ("int", "SireBase::NumberProperty"),
+                           ("SireBase::LengthProperty", "SireUnits::Dimension::Length"),
                            ("QHash<QString,SireBase::PropertyName>", "SireBase::PropertyMap") ] 
 
 def fixMB(mb):
     mb.add_declaration_code( "#include \"SireBase/propertymap.h\"" )
     mb.add_declaration_code( "#include \"SireBase/stringproperty.h\"" )
     mb.add_declaration_code( "#include \"SireBase/numberproperty.h\"" )
+    mb.add_declaration_code( "#include \"SireBase/lengthproperty.h\"" )
     mb.add_declaration_code( "#include <QString>" )
 

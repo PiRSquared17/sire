@@ -150,10 +150,10 @@ public:
 
     void removeAll();
 
-    bool update(const MoleculeData &moldata);
+    bool update(const MoleculeData &moldata, bool auto_commit=true);
 
-    QList<Molecule> update(const Molecules &molecules);
-    QList<Molecule> update(const MoleculeGroup &molgroup);
+    QList<Molecule> update(const Molecules &molecules, bool auto_commit=true);
+    QList<Molecule> update(const MoleculeGroup &molgroup, bool auto_commit=true);
     
     bool setContents(const MoleculeView &molview);
     bool setContents(const ViewsOfMol &molviews);
@@ -164,6 +164,9 @@ public:
     bool setContents(const ViewsOfMol &molviews, const PropertyMap &map);
     bool setContents(const Molecules &molecules, const PropertyMap &map);
     bool setContents(const MoleculeGroup &molgroup, const PropertyMap &map);
+    
+    bool needsAccepting() const;
+    void accept();
     
 private:
     void assertNotNull() const;

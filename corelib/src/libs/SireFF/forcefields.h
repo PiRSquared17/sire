@@ -316,9 +316,9 @@ public:
     bool remove(MolNum molnum, const MGID &mgid);
     bool remove(const QSet<MolNum> &molnums, const MGID &mgid);
 
-    void update(const MoleculeData &moldata);
-    void update(const Molecules &molecules);
-    void update(const MoleculeGroup &molgroup);
+    void update(const MoleculeData &moldata, bool auto_commit=true);
+    void update(const Molecules &molecules, bool auto_commit=true);
+    void update(const MoleculeGroup &molgroup, bool auto_commit=true);
     
     void setContents(const MGID &mgid, const MoleculeView &molview,
                      const PropertyMap &map);
@@ -333,6 +333,9 @@ public:
     void setContents(const MGID &mgid, const ViewsOfMol &molviews);
     void setContents(const MGID &mgid, const Molecules &molecules);
     void setContents(const MGID &mgid, const MoleculeGroup &molgroup);    
+
+    bool needsAccepting() const;
+    void accept();
 
 protected:
     const MoleculeGroup& getGroup(MGNum mgnum) const;

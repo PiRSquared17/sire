@@ -125,8 +125,8 @@ protected:
 
     void _pvt_removed(const PartialMolecule &mol);
 
-    void _pvt_changed(const SireMol::Molecule &molecule);
-    void _pvt_changed(const QList<SireMol::Molecule> &molecules);
+    void _pvt_changed(const SireMol::Molecule &molecule, bool auto_commit);
+    void _pvt_changed(const QList<SireMol::Molecule> &molecules, bool auto_commit);
     
     void _pvt_removedAll();
         
@@ -435,7 +435,7 @@ void Intra2BFF<Potential>::_pvt_removed(const PartialMolecule &molecule)
 */
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
-void Intra2BFF<Potential>::_pvt_changed(const SireMol::Molecule &molecule)
+void Intra2BFF<Potential>::_pvt_changed(const SireMol::Molecule &molecule, bool auto_commit)
 {
     if (this->recordingChanges())
     {
@@ -457,7 +457,8 @@ void Intra2BFF<Potential>::_pvt_changed(const SireMol::Molecule &molecule)
 */
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
-void Intra2BFF<Potential>::_pvt_changed(const QList<SireMol::Molecule> &molecules)
+void Intra2BFF<Potential>::_pvt_changed(const QList<SireMol::Molecule> &molecules,
+                                        bool auto_commit)
 {
     Molecules old_mols = mols;
     QHash<MolNum,ChangedMolecule> old_changed_mols = changed_mols;

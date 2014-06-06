@@ -126,6 +126,7 @@ void register_SireMol_containers()
     register_tuple< boost::tuple<AtomIdx,AtomIdx,AtomIdx,AtomIdx> >();
     
     register_tuple< boost::tuple<Molecules,SireVol::SpacePtr> >();
+    register_tuple< boost::tuple<MoleculeGroup,SireVol::SpacePtr> >();
     
     register_tuple< boost::tuple<AtomIdentifier,AtomIdentifier> >();
 
@@ -150,6 +151,8 @@ void register_SireMol_containers()
     register_dict< QHash<MolNum,Selector<Chain> >();
     register_dict< QHash<MolNum,Selector<Segment> >();
     register_dict< QHash<MolNum,double> >();
+    register_dict< QHash<AtomIdx,AtomIdx> >();
+    register_dict< QHash<AtomIdentifier,AtomIdentifier> >();
 
     register_set< QSet<AtomIdx> >();
     register_set< QSet<ResIdx> >();
@@ -164,6 +167,8 @@ void register_SireMol_containers()
     register_dict< QHash< MolNum,Selector<Chain> >, MolNum, Selector<Chain> >();
     register_dict< QHash< MolNum,Selector<Segment> >, MolNum, Selector<Segment> >();
     register_dict< QHash<MolNum,double>, MolNum, double >();
+    register_dict< QHash<AtomIdx,AtomIdx>, AtomIdx, AtomIdx >();
+    register_dict< QHash<AtomIdentifier,AtomIdentifier>, AtomIdentifier, AtomIdentifier >();
 
     register_set< QSet<AtomIdx>, AtomIdx >();
     register_set< QSet<ResIdx>, ResIdx >();

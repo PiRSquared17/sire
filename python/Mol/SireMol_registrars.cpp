@@ -18,6 +18,8 @@
 #include "moleditor.h"
 #include "evaluator.h"
 #include "chainresid.h"
+#include "molresid.h"
+#include "volumemap.h"
 #include "geometryperturbation.h"
 #include "specifymol.h"
 #include "cgidx.h"
@@ -55,6 +57,7 @@
 #include "cgname.h"
 #include "mgname.h"
 #include "chainidx.h"
+#include "molwithresid.h"
 #include "cgatomidx.h"
 #include "beads.h"
 #include "bead.h"
@@ -72,6 +75,7 @@
 #include "within.h"
 #include "molname.h"
 #include "withatoms.h"
+#include "atommatchers.h"
 #include "mgidsandmaps.h"
 #include "mgnum.h"
 #include "atomidentifier.h"
@@ -132,6 +136,9 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::MolStructureEditor >();
     ObjectRegistry::registerConverterFor< SireMol::Evaluator >();
     ObjectRegistry::registerConverterFor< SireMol::ChainResID >();
+    ObjectRegistry::registerConverterFor< SireMol::MolResID >();
+    ObjectRegistry::registerConverterFor< SireMol::MolResNum >();
+    ObjectRegistry::registerConverterFor< SireMol::VolumeMap >();
     ObjectRegistry::registerConverterFor< SireMol::NullGeometryPerturbation >();
     ObjectRegistry::registerConverterFor< SireMol::GeometryPerturbations >();
     ObjectRegistry::registerConverterFor< SireMol::BondPerturbation >();
@@ -202,6 +209,7 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::CGName >();
     ObjectRegistry::registerConverterFor< SireMol::MGName >();
     ObjectRegistry::registerConverterFor< SireMol::ChainIdx >();
+    ObjectRegistry::registerConverterFor< SireMol::MolWithResID >();
     ObjectRegistry::registerConverterFor< SireMol::CGAtomIdx >();
     ObjectRegistry::registerConverterFor< SireMol::Beads >();
     ObjectRegistry::registerConverterFor< SireMol::Mover<SireMol::Beads> >();
@@ -235,6 +243,11 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::CGsWithAtoms >();
     ObjectRegistry::registerConverterFor< SireMol::ChainsWithAtoms >();
     ObjectRegistry::registerConverterFor< SireMol::SegsWithAtoms >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomIdxMatcher >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomNameMatcher >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomIDMatcher >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomMultiMatcher >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomMCSMatcher >();
     ObjectRegistry::registerConverterFor< SireMol::MGIDsAndMaps >();
     ObjectRegistry::registerConverterFor< SireMol::MGNum >();
     ObjectRegistry::registerConverterFor< SireMol::AtomIdentifier >();
@@ -292,8 +305,8 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::Mover<SireMol::Residue> >();
     ObjectRegistry::registerConverterFor< SireMol::Selector<SireMol::Residue> >();
     ObjectRegistry::registerConverterFor< SireMol::Mover< SireMol::Selector<SireMol::Residue> > >();
-    ObjectRegistry::registerConverterFor< SireMol::AtomIdxMatcher >();
-    ObjectRegistry::registerConverterFor< SireMol::AtomNameMatcher >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomResultMatcher >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomMatchInverter >();
     ObjectRegistry::registerConverterFor< SireMol::AtomName >();
     ObjectRegistry::registerConverterFor< SireMol::ChargePerturbation >();
 

@@ -229,6 +229,9 @@ public:
 
     double meanOfSquares() const;
     
+    double standardError() const;
+    double standardError(int level) const;
+    
 private:
     /** The current average of the squares */
     double avgval2;

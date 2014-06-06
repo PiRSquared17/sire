@@ -17,6 +17,10 @@ namespace bp = boost::python;
 
 #include "multidouble.h"
 
+#include "multifloat.h"
+
+#include "multiint.h"
+
 SireMaths::MultiDouble __copy__(const SireMaths::MultiDouble &other){ return SireMaths::MultiDouble(other); }
 
 #include "Helpers/str.hpp"
@@ -35,6 +39,17 @@ void register_MultiDouble_class(){
         MultiDouble_exposer.def( bp::init< QVector< double > const & >(( bp::arg("array") )) );
         MultiDouble_exposer.def( bp::init< SireMaths::MultiFloat const & >(( bp::arg("other") )) );
         MultiDouble_exposer.def( bp::init< SireMaths::MultiDouble const & >(( bp::arg("other") )) );
+        { //::SireMaths::MultiDouble::at
+        
+            typedef double ( ::SireMaths::MultiDouble::*at_function_type )( int ) const;
+            at_function_type at_function_value( &::SireMaths::MultiDouble::at );
+            
+            MultiDouble_exposer.def( 
+                "at"
+                , at_function_value
+                , ( bp::arg("i") ) );
+        
+        }
         { //::SireMaths::MultiDouble::compareEqual
         
             typedef ::SireMaths::MultiDouble ( ::SireMaths::MultiDouble::*compareEqual_function_type )( ::SireMaths::MultiDouble const & ) const;
@@ -173,6 +188,17 @@ void register_MultiDouble_class(){
             MultiDouble_exposer.def( 
                 "get"
                 , get_function_value
+                , ( bp::arg("i") ) );
+        
+        }
+        { //::SireMaths::MultiDouble::getitem
+        
+            typedef double ( ::SireMaths::MultiDouble::*getitem_function_type )( int ) const;
+            getitem_function_type getitem_function_value( &::SireMaths::MultiDouble::getitem );
+            
+            MultiDouble_exposer.def( 
+                "getitem"
+                , getitem_function_value
                 , ( bp::arg("i") ) );
         
         }
@@ -481,6 +507,7 @@ void register_MultiDouble_class(){
         MultiDouble_exposer.def( "__str__", &__str__< ::SireMaths::MultiDouble > );
         MultiDouble_exposer.def( "__repr__", &__str__< ::SireMaths::MultiDouble > );
         MultiDouble_exposer.def( "__len__", &__len_size< ::SireMaths::MultiDouble > );
+        MultiDouble_exposer.def( "__getitem__", &::SireMaths::MultiDouble::getitem );
     }
 
 }

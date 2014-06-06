@@ -528,9 +528,10 @@ if __name__ == "__main__":
         from special_code import *
         
     sire_include_dirs = [ rootdir, "%s/%s" % (rootdir,sourcedir) ]
-    qtdir = os.getenv("QTDIR")
-    boostdir = os.getenv("BOOSTDIR")
-    gsldir = os.getenv("GSLDIR")
+    homedir = os.getenv("HOME")
+    qtdir = "%s/sire.app/bundled/include" % homedir
+    boostdir = qtdir
+    gsldir = qtdir
 
     need_input = False 
 

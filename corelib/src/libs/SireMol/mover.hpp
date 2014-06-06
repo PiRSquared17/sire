@@ -31,10 +31,12 @@
 
 #include "mover.h"
 #include "evaluator.h"
+#include "atommatcher.h"
 
 #include "SireBase/propertymap.h"
 
 #include "SireMaths/axisset.h"
+#include "SireMaths/align.h"
 
 SIRE_BEGIN_HEADER
 
@@ -94,7 +96,10 @@ public:
                      
     Mover<T>& rotate(const Matrix &rotmat, const Vector &point,
                      const PropertyMap &map = PropertyMap());
-                                 
+    
+    Mover<T>& transform(const Transform &transform,
+                        const PropertyMap &map = PropertyMap());
+    
     Mover<T>& change(const BondID &bond, SireUnits::Dimension::Length delta,
                      const PropertyMap &map = PropertyMap());
                      
@@ -144,6 +149,22 @@ public:
                       const AtomMatcher &matcher,
                       const PropertyMap &map0,
                       const PropertyMap &map1);
+
+    Mover<T>& align(const MoleculeView &other,
+                    const PropertyMap &map = PropertyMap());
+
+    Mover<T>& align(const MoleculeView &other,
+                    const PropertyMap &map0,
+                    const PropertyMap &map1);
+
+    Mover<T>& align(const MoleculeView &other,
+                    const AtomMatcher &matcher,
+                    const PropertyMap &map = PropertyMap());
+
+    Mover<T>& align(const MoleculeView &other,
+                    const AtomMatcher &matcher,
+                    const PropertyMap &map0,
+                    const PropertyMap &map1);
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -294,7 +315,18 @@ Mover<T>& Mover<T>::rotate(const Matrix &rotmat, const Vector &point,
     MoverBase::rotate(*(this->d), rotmat, point, map);
     return *this;
 }
-    
+
+/** Transform the movable atoms using the transformation 't',
+    using the supplied map to find the necessary
+    properties */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Mover<T>& Mover<T>::transform(const Transform &t, const PropertyMap &map)
+{
+    MoverBase::transform(*(this->d), t, map);
+    return *this;
+}
+
 /** Change the bond identified by 'bond' by the amount 'delta',
     by only moving the movable atoms in this view, using the 
     supplied map to find the necessary properties.
@@ -533,6 +565,70 @@ Mover<T>& Mover<T>::alignTo(const MoleculeView &other,
                             const PropertyMap &map)
 {
     return this->alignTo(other, aligning_atoms, matcher, map, map);
+}
+
+/** Align this molecule view against 'other' using the supplied AtomMatcher
+    to match atoms between the two views, and the supplied property maps to
+    find the required properties in each view (this, then other). */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Mover<T>& Mover<T>::align(const MoleculeView &other,
+                          const AtomMatcher &matcher,
+                          const PropertyMap &map0,
+                          const PropertyMap &map1)
+{
+    MoverBase::transform(*(this->d),
+                         SireMol::getAlignment(other, map1,
+                                               *this, map0, AtomMatchInverter(matcher)), map0);
+    
+    return *this;
+}
+
+/** Align this molecule view against 'other' using the optionally supplied property
+    map to find the required properties in both molecules. This matches atoms using their
+    AtomIdx, which may not be what you want. If you want more control on matching,
+    then supply an AtomMatcher */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Mover<T>& Mover<T>::align(const MoleculeView &other,
+                          const PropertyMap &map)
+{
+    MoverBase::transform(*(this->d),
+                         SireMol::getAlignment(other, *this, map), map);
+    
+    return *this;
+}
+
+/** Align this molecule view against 'other' using the supplied property
+    maps to find the required properties in each molecule respectively. 
+    This matches atoms using their
+    AtomIdx, which may not be what you want. If you want more control on matching,
+    then supply an AtomMatcher */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Mover<T>& Mover<T>::align(const MoleculeView &other,
+                          const PropertyMap &map0,
+                          const PropertyMap &map1)
+{
+    MoverBase::transform(*(this->d),
+                         SireMol::getAlignment(other, map1, *this, map0), map0);
+    
+    return *this;
+}
+
+/** Align this molecule view against 'other' using the supplied AtomMatcher
+    to match atoms between the two views, and the supplied property map to
+    find the required properties in both views. */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Mover<T>& Mover<T>::align(const MoleculeView &other,
+                          const AtomMatcher &matcher,
+                          const PropertyMap &map)
+{
+    MoverBase::transform(*(this->d),
+                         SireMol::getAlignment(other, *this, AtomMatchInverter(matcher), map), map);
+    
+    return *this;
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS

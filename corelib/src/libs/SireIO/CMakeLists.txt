@@ -11,6 +11,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 set ( SIREIO_HEADERS
       amber.h
       cube.h
+      dx.h
       errors.h
       flexibilitylibrary.h
       iobase.h
@@ -29,6 +30,7 @@ set ( SIREIO_SOURCES
 
       amber.cpp
       cube.cpp
+      dx.cpp
       errors.cpp
       flexibilitylibrary.cpp
       iobase.cpp

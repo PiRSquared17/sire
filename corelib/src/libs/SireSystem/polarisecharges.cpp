@@ -1201,13 +1201,13 @@ void PolariseChargesFF::_pvt_removed(const PartialMolecule&)
 }
 
 /** Called when a molecule is changed in this forcefield */
-void PolariseChargesFF::_pvt_changed(const Molecule &mol)
+void PolariseChargesFF::_pvt_changed(const Molecule &mol, bool auto_update)
 {
     molnrg.remove(mol.number());
 }
 
 /** Called when a molecule is changed in this forcefield */
-void PolariseChargesFF::_pvt_changed(const QList<Molecule> &mols)
+void PolariseChargesFF::_pvt_changed(const QList<Molecule> &mols, bool auto_update)
 {
     if (2*mols.count() > molnrg.count())
     {

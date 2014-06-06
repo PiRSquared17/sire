@@ -669,7 +669,7 @@ Matrix SQUIRE_EXPORT potential_integral(const QVector<PointCharge> &C,
     
     const double prefac = -2 * P.scale() * P.ss() * std::sqrt(P.zeta()*one_over_pi);
     
-    Matrix mat(0);
+    Matrix mat(double(0));
     double *m = mat.data();
     
     const double *pa = P.P_minus_A().constData();
@@ -748,7 +748,7 @@ Matrix SQUIRE_EXPORT potential_integral(const QVector<PointCharge> &C,
     
     const double prefac = -2 * P.scale() * P.ss() * std::sqrt(P.zeta()*one_over_pi);
     
-    Matrix mat(0);
+    Matrix mat(double(0));
     double *m = mat.data();
     
     const double *pa = P.P_minus_A().constData();

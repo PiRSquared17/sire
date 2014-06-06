@@ -42,6 +42,7 @@
 
 #include <QDebug>
 #include <QTime>
+#include <QElapsedTimer>
 
 #ifdef SIRE_USE_SSE
     #ifdef __SSE__
@@ -681,7 +682,7 @@ void GridFF::addToGrid(const QVector<GridFF::Vector4> &coords_and_charges)
 
     const double Rc = coul_cutoff;
     
-    QTime t;
+    QElapsedTimer t;
     t.start();
     
     if (shiftElectrostatics())
@@ -1349,10 +1350,10 @@ void GridFF::addToGrid(const QVector<GridFF::Vector4> &coords_and_charges)
         #endif
     }
     
-    int ms = t.elapsed();
+    qint64 ns = t.nsecsElapsed();
     
     qDebug() << "Added" << nats << "more atoms to" << npts << "grid points in"
-             << ms << "ms";
+             << (0.000001*ns) << "ms";
 }
 
 inline double getDist(double p, double minp, double maxp)
@@ -2402,7 +2403,7 @@ void GridFF::calculateEnergy(const CoordGroup &coords0,
             gridnrg += phi * p0.reduced_charge;
         }
     }
-    
+
     cnrg = icnrg + gridnrg;
     ljnrg = 4.0*iljnrg;  // 4 epsilon (....)
 }
@@ -2434,15 +2435,16 @@ void GridFF::_pvt_removed(quint32 groupid, const PartialMolecule &mol)
 }
 
 /** Any changes to group 1 mean that the forcefield must be recalculated from scratch */
-void GridFF::_pvt_changed(quint32 groupid, const SireMol::Molecule &molecule)
+void GridFF::_pvt_changed(quint32 groupid, const SireMol::Molecule &molecule, bool auto_commit)
 {
-    InterGroupCLJFF::_pvt_changed(groupid, molecule);
+    InterGroupCLJFF::_pvt_changed(groupid, molecule, auto_commit);
 }
 
 /** Any changes to group 1 mean that the forcefield must be recalculated from scratch */
-void GridFF::_pvt_changed(quint32 groupid, const QList<SireMol::Molecule> &molecules)
+void GridFF::_pvt_changed(quint32 groupid, const QList<SireMol::Molecule> &molecules,
+                          bool auto_commit)
 {
-    InterGroupCLJFF::_pvt_changed(groupid, molecules);
+    InterGroupCLJFF::_pvt_changed(groupid, molecules, auto_commit);
 }
 
 /** Any removals mean that the forcefield must be recalculated from scratch */
@@ -2523,8 +2525,15 @@ void GridFF::recalculateEnergy()
     
     if (must_recalculate)
     {
+        QElapsedTimer t;
+        t.start();
+    
         this->mustNowRecalculateFromScratch();
         this->rebuildGrid();
+
+        qint64 ns = t.nsecsElapsed();
+        qDebug() << "REBUILD GRID TOOK" << (0.000001*ns) << "ms";
+        t.restart();
 
         double total_cnrg(0);
         double total_ljnrg(0);
@@ -2582,6 +2591,9 @@ void GridFF::recalculateEnergy()
             total_cnrg += cnrg;
             total_ljnrg += ljnrg;
         }
+
+        ns = t.nsecsElapsed();
+        qDebug() << "CALCULATING ENERGY TOOK" << (0.000001*ns) << "ms";
 
         this->components().setEnergy(*this, CLJEnergy(total_cnrg,total_ljnrg));
     }

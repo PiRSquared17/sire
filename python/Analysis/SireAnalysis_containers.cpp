@@ -57,13 +57,8 @@ void register_SireAnalysis_containers()
     register_list< QVector<DataPoint> >();
     register_list< QList<DataPoint> >();
 
-    #if QT_VERSION >= 0x402000
     register_dict< QMap<double,FreeEnergyAverage> >();
     register_dict< QMap<double,BennettsFreeEnergyAverage> >();
-
-    #else
-    register_dict< QMap<double,FreeEnergyAverage>, double, FreeEnergyAverage >();
-    register_dict< QMap<double,BennettsFreeEnergyAverage>, double, BennettsFreeEnergyAverage >();
-
-    #endif    
+    register_dict< QMap<double,AverageAndStddev> >();
 }
+

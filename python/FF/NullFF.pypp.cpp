@@ -51,6 +51,16 @@ void register_NullFF_class(){
         NullFF_exposer_t NullFF_exposer = NullFF_exposer_t( "NullFF", bp::init< >() );
         bp::scope NullFF_scope( NullFF_exposer );
         NullFF_exposer.def( bp::init< SireFF::NullFF const & >(( bp::arg("other") )) );
+        { //::SireFF::NullFF::accept
+        
+            typedef void ( ::SireFF::NullFF::*accept_function_type )(  ) ;
+            accept_function_type accept_function_value( &::SireFF::NullFF::accept );
+            
+            NullFF_exposer.def( 
+                "accept"
+                , accept_function_value );
+        
+        }
         { //::SireFF::NullFF::at
         
             typedef ::SireMol::MoleculeGroup const & ( ::SireFF::NullFF::*at_function_type )( ::SireMol::MGNum ) const;
@@ -93,6 +103,16 @@ void register_NullFF_class(){
             NullFF_exposer.def( 
                 "mustNowRecalculateFromScratch"
                 , mustNowRecalculateFromScratch_function_value );
+        
+        }
+        { //::SireFF::NullFF::needsAccepting
+        
+            typedef bool ( ::SireFF::NullFF::*needsAccepting_function_type )(  ) const;
+            needsAccepting_function_type needsAccepting_function_value( &::SireFF::NullFF::needsAccepting );
+            
+            NullFF_exposer.def( 
+                "needsAccepting"
+                , needsAccepting_function_value );
         
         }
         NullFF_exposer.def( bp::self != bp::self );

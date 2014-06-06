@@ -49,12 +49,20 @@ def fix_Array2D(c):
    c.add_declaration_code( "#include \"SireBase/array2d.hpp\"" )
 
 def fix_Multi(c):
-   c.decls( "multiplyAdd" ).call_policies = call_policies.return_self()
+
+   try:
+       c.decls( "multiplyAdd" ).call_policies = call_policies.return_self()
+   except:
+       pass
+
+   c.add_declaration_code("#include \"multifloat.h\"")
+   c.add_declaration_code("#include \"multiint.h\"")
 
 special_code = { "SireBase::Array2D<SireBase::PropPtr<SireMaths::Accumulator> >" : fix_Array2D,
                  "SireMaths::MultiFloat" : fix_Multi,
                  "SireMaths::MultiFixed" : fix_Multi,
-                 "SireMaths::MultiDouble" : fix_Multi }
+                 "SireMaths::MultiDouble" : fix_Multi,
+                 "SireMaths::MultiUInt" : fix_Multi }
 
 def fixMB(mb):
    mb.add_declaration_code("#include \"_Maths_global_variables.pyman.hpp\"")

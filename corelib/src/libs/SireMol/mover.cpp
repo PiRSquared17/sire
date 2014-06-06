@@ -32,6 +32,7 @@
 #include "weightfunction.h"
 
 #include "atommatcher.h"
+#include "atommatchers.h"
 #include "bondid.h"
 #include "angleid.h"
 #include "dihedralid.h"
@@ -39,6 +40,7 @@
 
 #include "tostring.h"
 
+#include "SireMaths/align.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
 #include "SireMaths/axisset.h"
@@ -52,10 +54,98 @@
 
 #include "SireMol/errors.h"
 
+#include "tostring.h"
+
 using namespace SireMol;
 using namespace SireMaths;
 using namespace SireVol;
 using namespace SireUnits;
+
+namespace SireMol
+{
+    /** Return the AxisSet needed to move 'view1' so that it is aligned against
+        the atoms in 'view0' */
+    Transform SIREMOL_EXPORT getAlignment(const MoleculeView &view0, const PropertyMap &map0,
+                                          const MoleculeView &view1, const PropertyMap &map1,
+                                          const AtomMatcher &matcher, bool fit)
+    {
+        const AtomCoords &coords0 = view0.data().property( map0["coordinates"] )
+                                                .asA<AtomCoords>();
+        
+        const AtomCoords &coords1 = view1.data().property( map1["coordinates"] )
+                                                .asA<AtomCoords>();
+        
+        QHash<AtomIdx,AtomIdx> map = matcher.match(view0, map0, view1, map1);
+        
+        if (map.isEmpty())
+        {
+            //there are no matching atoms - we can't do anything
+            qDebug() << "No matching atoms!";
+            return Transform();
+        }
+        
+        QVector<Vector> p(map.count()), q(map.count());
+        
+        int n = 0;
+        
+        for (QHash<AtomIdx,AtomIdx>::const_iterator it = map.constBegin();
+             it != map.constEnd();
+             ++it)
+        {
+            p[n] = coords0.at( view0.data().info().cgAtomIdx(it.key()) );
+            q[n] = coords1.at( view1.data().info().cgAtomIdx(it.value()) );
+            n += 1;
+        }
+        
+        Transform t = SireMaths::getAlignment(p, q, fit);
+        
+        return t;
+    }
+
+    /** Return the AxisSet needed to move 'view1' so that it is aligned against
+        the atoms in 'view0' */
+    Transform SIREMOL_EXPORT getAlignment(const MoleculeView &view0,
+                                          const MoleculeView &view1, bool fit)
+    {
+        return getAlignment(view0, PropertyMap(), view1, PropertyMap(),
+                            AtomIdxMatcher(), fit);
+    }
+
+    /** Return the AxisSet needed to move 'view1' so that it is aligned against
+        the atoms in 'view0' */
+    Transform SIREMOL_EXPORT getAlignment(const MoleculeView &view0, const MoleculeView &view1,
+                                          const PropertyMap &map, bool fit)
+    {
+        return getAlignment(view0, map, view1, map, AtomIdxMatcher(), fit);
+    }
+
+    /** Return the AxisSet needed to move 'view1' so that it is aligned against
+        the atoms in 'view0' */
+    Transform SIREMOL_EXPORT getAlignment(const MoleculeView &view0, const PropertyMap &map0,
+                                          const MoleculeView &view1, const PropertyMap &map1,
+                                          bool fit)
+    {
+        return getAlignment(view0, map0, view1, map1, AtomIdxMatcher(), fit);
+    }
+
+    /** Return the AxisSet needed to move 'view1' so that it is aligned against
+        the atoms in 'view0' */
+    Transform SIREMOL_EXPORT getAlignment(const MoleculeView &view0, const MoleculeView &view1,
+                                          const AtomMatcher &matcher, bool fit)
+    {
+        return getAlignment(view0, PropertyMap(), view1, PropertyMap(), matcher, fit);
+    }
+
+    /** Return the AxisSet needed to move 'view1' so that it is aligned against
+        the atoms in 'view0' */
+    Transform SIREMOL_EXPORT getAlignment(const MoleculeView &view0, const MoleculeView &view1,
+                                          const AtomMatcher &matcher,
+                                          const PropertyMap &map, bool fit)
+    {
+        return getAlignment(view0, map, view1, map, matcher, fit);
+    }
+
+} // end of namespace SireMol
 
 /** Constructor */
 MoverBase::MoverBase()
@@ -233,6 +323,73 @@ void MoverBase::rotate(AtomCoords &coords,
                        const Quaternion &quat, const Vector &point)
 {
     MoverBase::rotate(coords, selected_atoms, quat.toMatrix(), point);
+}
+
+/** Transform the coordinates (in 'coords') of the specified selected
+    atoms using the transformation 't'.
+    This function assumes that coords and selected_atoms are compatible */
+void MoverBase::transform(AtomCoords &coords,
+                          const AtomSelection &selected_atoms,
+                          const Transform &t)
+{
+    if (selected_atoms.selectedNone() or t.isZero())
+        return;
+
+    int ncg = coords.count();
+
+    if (selected_atoms.selectedAll())
+    {
+        //we are rotating everything
+        coords.transform(t);
+    }
+    else if (selected_atoms.selectedAllCutGroups())
+    {
+        //we are rotating every CutGroup
+        for (CGIdx i(0); i<ncg; ++i)
+        {
+            if (selected_atoms.selectedAll(i))
+            {
+                coords.transform(i, t);
+            }
+            else
+            {
+                QSet<Index> atoms_to_move = selected_atoms.selectedAtoms(i);
+
+                CoordGroupEditor editor = coords.constData()[i].edit();
+
+                foreach (const Index &atom, atoms_to_move)
+                {
+                    editor.transform(atom, t);
+                }
+
+                coords.set(i, editor.commit());
+            }
+        }
+    }
+    else
+    {
+        QList<CGIdx> cg_to_move = selected_atoms.selectedCutGroups();
+
+        foreach (CGIdx i, cg_to_move)
+        {
+            if (selected_atoms.selectedAll(i))
+            {
+                coords.transform(i, t);
+            }
+            else
+            {
+                QSet<Index> atoms_to_move = selected_atoms.selectedAtoms(i);
+                CoordGroupEditor editor = coords.constData()[i].edit();
+
+                foreach (const Index &atom, atoms_to_move)
+                {
+                    editor.transform(atom, t);
+                }
+
+                coords.set(i, editor.commit());
+            }
+        }
+    }
 }
 
 /** Map the selected atoms from 'coords' into the axis set in 'axes'
@@ -459,6 +616,48 @@ void MoverBase::rotate(MoleculeData &moldata,
     }
 }
 
+/** Transform the selected atoms in the molecule whose data
+    is in 'moldata' using the transformation in 't', using 'coord_property'
+    to find the property containing the coordinates
+    to be rotated.
+
+    This function assumes that moldata and selected_atoms
+    are compatible.
+
+    \throw SireBase::missing_property
+*/
+void MoverBase::transform(MoleculeData &moldata,
+                          const AtomSelection &selected_atoms,
+                          const Transform &t, const PropertyMap &map)
+{
+    //get the name of the property that contains the coordinates
+    PropertyName coord_property = map["coordinates"];
+
+    //get the coordinates to be rotated
+    AtomCoords coords = moldata.property(coord_property).asA<AtomCoords>();
+
+    //transform the coordinates
+    MoverBase::transform(coords, selected_atoms, t);
+
+    //set the new property
+    if (coord_property.hasSource())
+        moldata.setProperty(coord_property.source(), coords);
+
+    //if we have rotated all atoms, then update the center point
+    //of the molecule, if one has been set
+    if (selected_atoms.selectedAll())
+    {
+        PropertyName center_property = map["center"];
+        if (center_property.hasSource() and moldata.hasProperty(center_property))
+        {
+            Vector center = moldata.property(center_property).asA<VectorProperty>();
+            
+            moldata.setProperty(center_property.source(),
+                                VectorProperty(t.apply(center)));
+        }
+    }
+}
+
 /** This function maps the selected atoms from their current
     (cartesian) coordinate frame into the coordinate frame
     described by 'axes'. This function assumes that
@@ -606,6 +805,19 @@ void MoverBase::rotate(MoleculeData &moldata,
 {
     MoverBase::rotate(moldata, movable_atoms, rotmat,
                       point, map);
+}
+
+/** Transform the atoms we are allowed to move from the molecule whose
+    data is in 'moldata' using the transformation 't',
+    finding the coordinates using 'coord_property'
+
+    \throw SireBase::missing_property
+*/
+void MoverBase::transform(MoleculeData &moldata,
+                          const Transform &t,
+                          const PropertyMap &map) const
+{
+    MoverBase::transform(moldata, movable_atoms, t, map);
 }
 
 /** Apply anchors to the groups - this clears a group if it

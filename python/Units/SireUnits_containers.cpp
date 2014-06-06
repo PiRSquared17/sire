@@ -50,6 +50,8 @@ using boost::python::register_tuple;
 
 void register_SireUnits_containers()
 {
+    register_list< QVector<Dimension::Charge> >();
+
     register_PackedArray< SireBase::PackedArray2D<Dimension::Charge> >();
     register_PackedArray< SireBase::PackedArray2D<Dimension::Mass> >();
 

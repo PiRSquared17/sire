@@ -73,6 +73,9 @@ public:
     
     void assertContains(MGNum mgnum) const;
     
+    void accept();
+    bool needsAccepting() const;
+    
 protected:
     G2FF(bool allow_overlap_of_atoms=false);
     G2FF(const G2FF &other);
@@ -91,10 +94,12 @@ protected:
                               const PartialMolecule &mol)=0;
 
     virtual void _pvt_changed(quint32 groupid,
-                              const Molecule &molecule)=0;
+                              const Molecule &molecule,
+                              bool auto_commit)=0;
                               
     virtual void _pvt_changed(quint32 groupid, 
-                              const QList<Molecule> &molecules)=0;
+                              const QList<Molecule> &molecules,
+                              bool auto_commit)=0;
     
     virtual void _pvt_removedAll(quint32 groupid)=0;
         
@@ -165,10 +170,10 @@ protected:
 
     void group_removeAll(quint32 i);
 
-    bool group_update(quint32 i, const MoleculeData &moldata);
+    bool group_update(quint32 i, const MoleculeData &moldata, bool auto_commit);
 
-    QList<Molecule> group_update(quint32 i, const Molecules &molecules);
-    QList<Molecule> group_update(quint32 i, const MoleculeGroup &molgroup);
+    QList<Molecule> group_update(quint32 i, const Molecules &molecules, bool auto_commit);
+    QList<Molecule> group_update(quint32 i, const MoleculeGroup &molgroup, bool auto_commit);
     
     bool group_setContents(quint32 i, const MoleculeView &molview, 
                            const PropertyMap &map);

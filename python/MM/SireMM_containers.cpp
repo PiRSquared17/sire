@@ -44,6 +44,9 @@
 #include "SireMM/twoatomfunctions.h"
 #include "SireMM/threeatomfunctions.h"
 #include "SireMM/fouratomfunctions.h"
+#include "SireMM/cljatoms.h"
+
+#include "SireMM/cljboxes.h"
 
 #include "SireBase/packedarray2d.hpp"
 
@@ -55,8 +58,15 @@ void register_SireMM_containers()
 {
     register_PackedArray< SireBase::PackedArray2D<LJParameter> >();
 
+    register_list< QVector<LJParameter> >();
+
     register_list< QVector<TwoAtomFunction> >();
     register_list< QVector<ThreeAtomFunction> >();
     register_list< QVector<FourAtomFunction> >();
+
+    register_list< QVector<CLJAtom> >();
+
+    register_list< QVector<CLJBox> >();
+    register_list< QVector<CLJBoxIndex> >();
 
 }

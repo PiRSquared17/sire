@@ -3,6 +3,7 @@ set ( PYPP_SOURCES
        BoxPatching.pypp.cpp
        Patching.pypp.cpp
        Cartesian.pypp.cpp
+       GridInfo.pypp.cpp
        CoordGroup.pypp.cpp
        NullPatching.pypp.cpp
        CoordGroupEditor.pypp.cpp
@@ -14,6 +15,7 @@ set ( PYPP_SOURCES
        NullGrid.pypp.cpp
        CoordGroupArray.pypp.cpp
        Space.pypp.cpp
+       GridIndex.pypp.cpp
        CoordGroupArrayArray.pypp.cpp
        RegularGrid.pypp.cpp
        CoordGroupBase.pypp.cpp

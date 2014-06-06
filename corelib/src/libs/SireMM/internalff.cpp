@@ -2487,7 +2487,7 @@ void InternalFF::_pvt_removed(const PartialMolecule &molecule)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void InternalFF::_pvt_changed(const SireMol::Molecule &molecule)
+void InternalFF::_pvt_changed(const SireMol::Molecule &molecule, bool auto_update)
 {
     if (this->recordingChanges())
     {
@@ -2506,7 +2506,7 @@ void InternalFF::_pvt_changed(const SireMol::Molecule &molecule)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void InternalFF::_pvt_changed(const QList<SireMol::Molecule> &molecules)
+void InternalFF::_pvt_changed(const QList<SireMol::Molecule> &molecules, bool auto_update)
 {
     InternalFF::Molecules old_mols = mols;
     QHash<MolNum,ChangedMolecule> old_changed_mols = changed_mols;

@@ -50,11 +50,12 @@ static const RegisterMetaType<Replicas> r_replicas;
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const Replicas &replicas)
 {
-    writeHeader(ds, r_replicas, 2);
+    writeHeader(ds, r_replicas, 3);
     
     SharedDataStream sds(ds);
     
     sds << replicas.replica_ids
+        << replicas.replica_history
         << static_cast<const SupraSystem&>(replicas);
     
     return ds;
@@ -65,11 +66,20 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Replicas &replicas)
 {
     VersionID v = readHeader(ds, r_replicas);
     
-    if (v == 2)
+    if (v == 3)
+    {
+        SharedDataStream sds(ds);
+        sds >> replicas.replica_ids
+            >> replicas.replica_history
+            >> static_cast<SupraSystem&>(replicas);
+    }
+    else if (v == 2)
     {
         SharedDataStream sds(ds);
         sds >> replicas.replica_ids
             >> static_cast<SupraSystem&>(replicas);
+        
+        replicas.replica_history.clear();
     }
     else if (v < 2)
     {
@@ -80,7 +90,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Replicas &replicas)
                 .arg(v), CODELOC );
     }
     else
-        throw version_error(v, "1", r_replicas, CODELOC);
+        throw version_error(v, "2,3", r_replicas, CODELOC);
         
     return ds;
 }
@@ -100,6 +110,8 @@ void Replicas::resetReplicaIDs()
     {
         replica_ids_array[i] = i;
     }
+    
+    replica_history.clear();
 }
 
 /** Construct a set of 'n' replicas */
@@ -197,7 +209,7 @@ Replicas::Replicas(const SupraSystem &suprasystem)
 /** Copy constructor */
 Replicas::Replicas(const Replicas &other) 
          : ConcreteProperty<Replicas,SupraSystem>(other),
-           replica_ids(other.replica_ids)
+           replica_ids(other.replica_ids), replica_history(other.replica_history)
 {}
 
 /** Destructor */
@@ -210,6 +222,7 @@ Replicas& Replicas::operator=(const Replicas &other)
     SupraSystem::operator=(other);
     
     replica_ids = other.replica_ids;
+    replica_history = other.replica_history;
     
     return *this;
 }
@@ -218,14 +231,14 @@ Replicas& Replicas::operator=(const Replicas &other)
 bool Replicas::operator==(const Replicas &other) const
 {
     return replica_ids == other.replica_ids and
+           replica_history == other.replica_history and
            SupraSystem::operator==(other);
 }
 
 /** Comparison operator */
 bool Replicas::operator!=(const Replicas &other) const
 {
-    return replica_ids != other.replica_ids or
-           SupraSystem::operator!=(other);
+    return not operator==(other);
 }
 
 /** Internal function used to get the ith replica - there is no
@@ -309,6 +322,18 @@ QVector<double> Replicas::lambdaTrajectory() const
     }
     
     return lamtraj;
+}
+
+/** Collect statistics - this records the current lambdaTrajectory and adds it to the history */
+void Replicas::collectSupraStats()
+{
+    replica_history.append( lambdaTrajectory() );
+}
+
+/** Return the history of lambda values sampled by each replica */
+QList< QVector<double> > Replicas::lambdaTrajectoryHistory() const
+{
+    return replica_history;
 }
 
 /** Set the replicas from a copy of passed replicas */

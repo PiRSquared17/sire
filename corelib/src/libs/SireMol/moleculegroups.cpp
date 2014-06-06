@@ -1826,9 +1826,9 @@ bool MolGroupsBase::removeAll()
 
 /** Update the copies in this set of the molecule viewed in 'molview' 
     to use the same version as 'molview' */
-void MolGroupsBase::update(const MoleculeView &molview)
+void MolGroupsBase::update(const MoleculeView &molview, bool auto_commit)
 {
-    this->update(molview.data());
+    this->update(molview.data(), auto_commit);
 }
 
 /** Return a reference to the molecule data for the molecule whose data
@@ -2226,10 +2226,21 @@ MoleculeGroups& MoleculeGroups::operator+=(const MoleculeGroup &molgroup)
     molecules in all of the groups so that they have the same
     version number as 'molgroup'. This does nothing if
     molgroup and none of its molecules are in this set */
-void MoleculeGroups::update(const MoleculeGroup &molgroup)
+void MoleculeGroups::update(const MoleculeGroup &molgroup, bool auto_commit)
 {
+    if (molgroup.needsAccepting())
+    {
+        MoleculeGroup copy(molgroup);
+        copy.accept();
+        this->update(copy);
+        return;
+    }
+
     //do this in a copy, as something weird may go wrong...
     MoleculeGroups orig_groups(*this);
+    
+    if (this->needsAccepting())
+        this->accept();
     
     try
     {
@@ -2891,8 +2902,13 @@ bool MoleculeGroups::remove(const QSet<MolNum> &molnums, const MGID &mgid)
 
 /** Update all of the groups to use the version of the molecule
     present in 'moldata' */
-void MoleculeGroups::update(const MoleculeData &moldata)
+void MoleculeGroups::update(const MoleculeData &moldata, bool auto_commit)
 {
+    if (auto_commit and this->needsAccepting())
+    {
+        this->accept();
+    }
+
     //get the current copy of the molecule...
     if (this->needToUpdate(moldata))
     {
@@ -2900,14 +2916,19 @@ void MoleculeGroups::update(const MoleculeData &moldata)
         
         foreach (MGNum mgnum, mgnums)
         {
-            mgroups.find(mgnum)->edit().update(moldata);
+            mgroups.find(mgnum)->edit().update(moldata, auto_commit);
         }
+    }
+    
+    if (auto_commit and this->needsAccepting())
+    {
+        this->accept();
     }
 }
 
 /** Update all of the groups to use the versions of the molecules
     held in 'molecules' */
-void MoleculeGroups::update(const Molecules &molecules)
+void MoleculeGroups::update(const Molecules &molecules, bool auto_commit)
 {
     //we need to do this in a copy, so that we can revert
     //if an error occurs...
@@ -2915,20 +2936,56 @@ void MoleculeGroups::update(const Molecules &molecules)
     
     try
     {
+        if (auto_commit and this->needsAccepting())
+            this->accept();
 
-    for (QHash<MGNum,MolGroupPtr>::iterator it = mgroups.begin();
-         it != mgroups.end();
-         ++it)
-    {
-        it->edit().update(molecules);
-    }
-    
+        for (QHash<MGNum,MolGroupPtr>::iterator it = mgroups.begin();
+             it != mgroups.end();
+             ++it)
+        {
+            it->edit().update(molecules, auto_commit);
+        }
+        
+        if (auto_commit and this->needsAccepting())
+            this->accept();
     }
     catch(...)
     {
         //something went wrong...
         this->operator=(*old_state);
         throw;
+    }
+}
+
+/** Return whether or not this set of molecule groups is using a temporary
+    workspace and needs accepting */
+bool MoleculeGroups::needsAccepting() const
+{
+    for (QHash<MGNum,MolGroupPtr>::const_iterator it = mgroups.constBegin();
+         it != mgroups.constEnd();
+         ++it)
+    {
+        if (it->read().needsAccepting())
+            return true;
+    }
+    
+    return false;
+}
+
+/** Tell the molecule group that the last move was accepted. This tells the 
+    group to make permanent any temporary changes that were used a workspace
+    to avoid memory allocation during a move */
+void MoleculeGroups::accept()
+{
+    if (needsAccepting())
+    {
+        for (QHash<MGNum,MolGroupPtr>::iterator it = mgroups.begin();
+             it != mgroups.end();
+             ++it)
+        {
+            if (it->read().needsAccepting())
+                it->edit().accept();
+        }
     }
 }
 

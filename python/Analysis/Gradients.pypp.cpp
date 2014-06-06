@@ -37,10 +37,21 @@ void register_Gradients_class(){
         typedef bp::class_< SireAnalysis::Gradients, bp::bases< SireBase::Property > > Gradients_exposer_t;
         Gradients_exposer_t Gradients_exposer = Gradients_exposer_t( "Gradients", bp::init< >() );
         bp::scope Gradients_scope( Gradients_exposer );
+        Gradients_exposer.def( bp::init< QMap< double, SireMaths::AverageAndStddev > const & >(( bp::arg("gradients") )) );
         Gradients_exposer.def( bp::init< QMap< double, SireMaths::FreeEnergyAverage > const & >(( bp::arg("gradients") )) );
         Gradients_exposer.def( bp::init< QMap< double, SireMaths::FreeEnergyAverage > const &, double >(( bp::arg("gradients"), bp::arg("delta_lambda") )) );
         Gradients_exposer.def( bp::init< QMap< double, SireMaths::FreeEnergyAverage > const &, QMap< double, SireMaths::FreeEnergyAverage > const &, double >(( bp::arg("forwards"), bp::arg("backwards"), bp::arg("delta_lambda") )) );
         Gradients_exposer.def( bp::init< SireAnalysis::Gradients const & >(( bp::arg("other") )) );
+        { //::SireAnalysis::Gradients::analyticData
+        
+            typedef ::QMap< double, SireMaths::AverageAndStddev > ( ::SireAnalysis::Gradients::*analyticData_function_type )(  ) const;
+            analyticData_function_type analyticData_function_value( &::SireAnalysis::Gradients::analyticData );
+            
+            Gradients_exposer.def( 
+                "analyticData"
+                , analyticData_function_value );
+        
+        }
         { //::SireAnalysis::Gradients::backwards
         
             typedef ::SireUnits::Dimension::MolarEnergy ( ::SireAnalysis::Gradients::*backwards_function_type )( double ) const;

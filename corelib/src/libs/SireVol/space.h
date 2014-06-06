@@ -279,6 +279,9 @@ public:
     /** Return the minimum distance between points within the group 'group'. */
     virtual double minimumDistance(const CoordGroup &group) const=0;
 
+    /** Return the minimum distance between the two AABoxes */
+    virtual double minimumDistance(const AABox &box0, const AABox &box1) const=0;
+
     /** Return whether or not this space is periodic */
     virtual bool isPeriodic() const=0;
     
@@ -330,6 +333,11 @@ public:
         For periodic spaces, this returns the point translated into the
         box that has its center at 'center' */
     virtual Vector getMinimumImage(const Vector &point, const Vector &center) const=0;
+
+    /** Return all periodic images of 'point' with respect to 'center' within
+        'dist' distance of 'center' */
+    virtual QVector<Vector> getImagesWithin(const Vector &point, const Vector &center,
+                                            double dist) const=0;
 
     /** Return a list of copies of CoordGroup 'group' that are within
         'distance' of the CoordGroup 'center', translating 'group' so that

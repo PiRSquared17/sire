@@ -63,12 +63,20 @@ void register_SireQt_containers()
     register_list< QVector<qint64> >();
     register_list< QList<qint64> >();
 
+    register_list< QVector<float> >();
+    register_list< QList<float> >();
+
     register_list< QVector<double> >();
     register_list< QList<double> >();
 
     register_list< QVector< QVector<double> > >();
     register_list< QVector< QVector< QVector<double> > > >();
     register_list< QVector< QVector< QVector< QVector<double> > > > >();
+
+    register_list< QList< QVector<double> > >();
+
+    register_list< QVector<bool> >();
+    register_list< QVector< QVector<bool> > >();
 
     register_list< QVector<QString> >();
     register_list< QList<QString> >();
@@ -79,17 +87,30 @@ void register_SireQt_containers()
 
     register_list< QList<QUuid> >();
 
+    register_tuple< boost::tuple<double,double> >();
     register_tuple< boost::tuple<double,double,double> >();
+    register_tuple< boost::tuple<int,int> >();
+
+    register_tuple< boost::tuple<QString,QString> >();
+
+    register_list< QList<boost::tuple<int,int> > >();
+    register_list< QList<boost::tuple<QString,QString> > >();
 
     #if QT_VERSION >= 0x402000
     register_set< QSet<QString> >();
     
     register_dict< QMap<QString,QVariant> >();
+
+    register_dict< QHash<QString,QString> >();
+    register_dict< QHash<int,int> >();
     
     #else
     register_set< QSet<QString>, QString >();
     
     register_dict< QMap<QString,QVariant>, QString, QVariant >();
     
+    register_dict< QHash<QString,QString>, QString, QString >();
+    register_dict< QHash<int,int>, int, int >();
+
     #endif
 }

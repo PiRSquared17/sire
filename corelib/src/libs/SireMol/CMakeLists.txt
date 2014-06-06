@@ -28,6 +28,7 @@ set ( SIREMOL_HEADERS
       atomidx.h
       atommasses.h
       atommatcher.h
+      atommatchers.h
       atomname.h
       atomnum.h
       atompolarisabilities.h
@@ -92,13 +93,16 @@ set ( SIREMOL_HEADERS
       molecules.h
       moleculeview.h
       moleditor.h
+      molgroupworkspace.h
       molid.h
       molidentifier.h
       molidx.h
       molinfo.h
       molname.h
       molnum.h
+      molresid.h
       molviewproperty.h
+      molwithresid.h
       mover.h
       mover.hpp
       mover_metaid.h
@@ -125,6 +129,7 @@ set ( SIREMOL_HEADERS
       specifymol.h
       structureeditor.h
       viewsofmol.h
+      volumemap.h
       weightfunction.h
       withatoms.h
       within.h
@@ -145,6 +150,7 @@ set ( SIREMOL_SOURCES
       atomidentifier.cpp
       atomcutting.cpp
       atommatcher.cpp
+      atommatchers.cpp
       atomproperty.cpp
       atomselection.cpp
       bead.cpp
@@ -175,6 +181,7 @@ set ( SIREMOL_SOURCES
       errors.cpp
       evaluator.cpp
       improperid.cpp
+      findmcs.cpp
       geometryperturbation.cpp
       groupatomids.cpp
       groupgroupids.cpp
@@ -182,6 +189,7 @@ set ( SIREMOL_SOURCES
       mgidentifier.cpp
       mgidsandmaps.cpp
       molatomid.cpp
+      molgroupworkspace.cpp
       molecule.cpp
       moleculecutting.cpp
       moleculedata.cpp
@@ -193,6 +201,8 @@ set ( SIREMOL_SOURCES
       moleditor.cpp
       molid.cpp
       molidentifier.cpp
+      molresid.cpp
+      molwithresid.cpp
       molviewproperty.cpp
       mover.cpp
       partialmolecule.cpp
@@ -211,6 +221,7 @@ set ( SIREMOL_SOURCES
       specifymol.cpp
       structureeditor.cpp
       viewsofmol.cpp
+      volumemap.cpp
       weightfunction.cpp
       withatoms.cpp
       within.cpp

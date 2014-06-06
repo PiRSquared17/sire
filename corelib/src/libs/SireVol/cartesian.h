@@ -132,6 +132,10 @@ public:
 
     double minimumDistance(const CoordGroup &group) const;
 
+    double minimumDistance(const AABox &box0, const AABox &box1) const;
+
+    double minimumDistance(const Vector &p, const AABox &box) const;
+
     Vector getRandomPoint(const Vector &center, const RanGenerator &generator) const;
 
 	Vector getBoxCenter(const Vector &p) const;
@@ -146,6 +150,8 @@ public:
     AABox getMinimumImage(const AABox &aabox, const Vector &center) const;
     
     Vector getMinimumImage(const Vector &point, const Vector &center) const;
+
+    QVector<Vector> getImagesWithin(const Vector &point, const Vector &center, double dist) const;
 
     QList< boost::tuple<double,CoordGroup> >
                getCopiesWithin(const CoordGroup &group,

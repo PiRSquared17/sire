@@ -121,6 +121,9 @@ public:
     void setContents(const Molecules &molecules, const PropertyMap &map);
     void setContents(const MoleculeGroup &molgroup, const PropertyMap &map);
 
+    bool needsAccepting() const;
+    void accept();
+
 protected:
     G1FF(bool allow_overlap_of_atoms=false);
     G1FF(const G1FF &other);
@@ -136,8 +139,8 @@ protected:
 
     virtual void _pvt_removed(const PartialMolecule &mol)=0;
 
-    virtual void _pvt_changed(const Molecule &molecule)=0;
-    virtual void _pvt_changed(const QList<Molecule> &molecules)=0;
+    virtual void _pvt_changed(const Molecule &molecule, bool auto_commit)=0;
+    virtual void _pvt_changed(const QList<Molecule> &molecules, bool auto_commit)=0;
     
     virtual void _pvt_removedAll()=0;
         
@@ -202,10 +205,10 @@ protected:
 
     void group_removeAll(quint32 i);
 
-    bool group_update(quint32 i, const MoleculeData &moldata);
+    bool group_update(quint32 i, const MoleculeData &moldata, bool auto_commit);
 
-    QList<Molecule> group_update(quint32 i, const Molecules &molecules);
-    QList<Molecule> group_update(quint32 i, const MoleculeGroup &molgroup);
+    QList<Molecule> group_update(quint32 i, const Molecules &molecules, bool auto_commit);
+    QList<Molecule> group_update(quint32 i, const MoleculeGroup &molgroup, bool auto_commit);
     
     bool group_setContents(quint32 i, const MoleculeView &molview, 
                            const PropertyMap &map);

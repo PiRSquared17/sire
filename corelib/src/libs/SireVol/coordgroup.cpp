@@ -32,6 +32,7 @@
 #include "SireMaths/quaternion.h"
 #include "SireMaths/axisset.h"
 #include "SireMaths/rotate.h"
+#include "SireMaths/align.h"
 
 #include "SireBase/quickcopy.hpp"
 
@@ -1905,7 +1906,7 @@ CoordGroupEditor::CoordGroupEditor()
 CoordGroupEditor::CoordGroupEditor(const CoordGroup &other)
                  : CoordGroupBase(other), needsupdate(false)
 {
-    if (not other.count() == 0)
+    if (other.count() != 0)
         d = other.d->extract()->cGroupData()[0].d;
 }
 
@@ -1997,6 +1998,8 @@ CoordGroupEditor& CoordGroupEditor::translate(quint32 i, const Vector &delta)
     if (not delta.isZero())
         this->operator[](i) += delta;
 
+    needsupdate = true;
+
     return *this;
 }
 
@@ -2017,6 +2020,19 @@ CoordGroupEditor& CoordGroupEditor::rotate(const Matrix &rotmat, const Vector &p
     return *this;
 }
 
+/** Transform this group by the transformation 't' */
+CoordGroupEditor& CoordGroupEditor::transform(const Transform &t)
+{
+    quint32 sz = this->count();
+    Vector *coords = d->coordsData();
+
+    coords = t.apply(coords, sz);
+
+    needsupdate = true;
+
+    return *this;
+}
+
 /** Rotate the 'ith' point in the group using the matrix 'rotmat' about the
     point 'point'
 
@@ -2027,6 +2043,21 @@ CoordGroupEditor& CoordGroupEditor::rotate(quint32 i, const Matrix &rotmat,
 {
     Vector &coord = this->operator[](i);
     coord = SireMaths::rotate(coord, rotmat, point);
+    needsupdate = true;
+
+    return *this;
+}
+
+/** Rotate the 'ith' point in the group using the matrix 'rotmat' about the
+    point 'point'
+
+    \throw SireError::index
+*/
+CoordGroupEditor& CoordGroupEditor::transform(quint32 i, const Transform &t)
+{
+    Vector &coord = this->operator[](i);
+    coord = t.apply(coord);
+    needsupdate = true;
 
     return *this;
 }
@@ -2961,6 +2992,25 @@ void CoordGroupArray::rotate(const Matrix &rotmat, const Vector &point)
     }
 }
 
+/** Transform all of coordinates in this array using the transformation 't' */
+void CoordGroupArray::transform(const Transform &t)
+{
+    Vector *coords = d->coordsData();
+    quint32 n = d.constData()->nCoords();
+    
+    coords = t.apply(coords, n);
+    
+    //now update all of the AABoxes
+    CoordGroup *cgroups = d->cGroupData();
+    n = d.constData()->nCGroups();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        *( const_cast<CGData*>(cgroups[i].d.constData())->aaBox() ) 
+               = AABox(cgroups[i]);
+    }
+}
+
 /** Rotate all of the coordinates in this array using the quaternion
     'quat' around the point 'point' */
 void CoordGroupArray::rotate(const Quaternion &quat, const Vector &point)
@@ -2987,6 +3037,26 @@ void CoordGroupArray::rotate(quint32 i, const Matrix &rotmat, const Vector &poin
     {
         coords[i] = SireMaths::rotate(coords[i], rotmat, point);
     }
+    
+    *(cgdata->aaBox()) = AABox(this_cgroup);
+}
+
+/** Transform all of the coordinates in the CoordGroup at index 'i' using
+    the transformation 't' 
+ 
+    \throw SireError::invalid_index
+*/
+void CoordGroupArray::transform(quint32 i, const Transform &t)
+{
+    this->assertValidCoordGroup(i);
+
+    CoordGroup &this_cgroup = d->cGroupData()[i];
+    CGData *cgdata = const_cast<CGData*>( this_cgroup.d.constData() );
+
+    quint32 n = cgdata->nCoords();
+    Vector *coords = cgdata->coordsData();
+    
+    coords = t.apply(coords, n);
     
     *(cgdata->aaBox()) = AABox(this_cgroup);
 }
@@ -3941,6 +4011,25 @@ void CoordGroupArrayArray::rotate(const Matrix &rotmat, const Vector &point)
     }
 }
 
+/** Rotate all of the points in this container using the matrix 'rotmat'
+    about the point 'point' */
+void CoordGroupArrayArray::transform(const Transform &t)
+{
+    Vector *coords = d->coordsData();
+    quint32 n = d.constData()->nCoords();
+    
+    coords = t.apply(coords, n);
+    
+    //update all of the AABoxes
+    AABox *aaboxes = d->aaBoxData();
+    n = d.constData()->nCGroups();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        aaboxes[i] = AABox(d.constData()->aaBoxData()[i]);
+    }
+}
+
 /** Rotate all of the points in this container using the quaternion 'quat'
     about the point 'point' */
 void CoordGroupArrayArray::rotate(const Quaternion &quat, const Vector &point)
@@ -3968,6 +4057,32 @@ void CoordGroupArrayArray::rotate(quint32 i, const Matrix &rotmat,
     {
         coords[i] = SireMaths::rotate(coords[i], rotmat, point);
     }
+    
+    n = cgarraydata->nCGroups();
+    AABox *aaboxes = cgarraydata->aaBoxData();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        aaboxes[i] = AABox( cgarraydata->cGroupData()[i] );
+    }
+}
+
+/** Transform all of the points in the ith array using the 
+    transformation 't'
+ 
+    \throw SireError::invalid_index
+*/
+void CoordGroupArrayArray::transform(quint32 i, const Transform &t)
+{
+    this->assertValidCoordGroupArray(i);
+    
+    CoordGroupArray &this_cgarray = d->cgArrayData()[i];
+    CGArrayData *cgarraydata = const_cast<CGArrayData*>( this_cgarray.d.constData() );
+
+    quint32 n = cgarraydata->nCoords();
+    Vector *coords = cgarraydata->coordsData();
+
+    coords = t.apply(coords, n);
     
     n = cgarraydata->nCGroups();
     AABox *aaboxes = cgarraydata->aaBoxData();
@@ -4012,6 +4127,29 @@ void CoordGroupArrayArray::rotate(quint32 i, quint32 j,
     {
         coords[i] = SireMaths::rotate(coords[i], rotmat, point);
     }
+    
+    *(cgdata->aaBox()) = AABox(cgroup);
+}
+
+/** Transform all of the points in the jth CoordGroup in the
+    ith array using the transformation 't'
+    
+    \throw SireError::invalid_index
+*/
+void CoordGroupArrayArray::transform(quint32 i, quint32 j, const Transform &t)
+{
+    this->assertValidCoordGroup(i,j);
+    
+    CoordGroupArray &this_cgarray = d->cgArrayData()[i];
+    CGArrayData *cgarraydata = const_cast<CGArrayData*>( this_cgarray.d.constData() );
+
+    CoordGroup &cgroup = cgarraydata->cGroupData()[j];
+    CGData *cgdata = const_cast<CGData*>(cgroup.d.constData());
+
+    quint32 n = cgdata->nCoords();
+    Vector *coords = cgdata->coordsData();
+
+    coords = t.apply(coords, n);
     
     *(cgdata->aaBox()) = AABox(cgroup);
 }

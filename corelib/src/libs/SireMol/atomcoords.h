@@ -50,6 +50,7 @@ class Vector;
 class Quaternion;
 class AxisSet;
 class Matrix;
+class Transform;
 }
 
 namespace SireVol
@@ -64,6 +65,7 @@ using SireMaths::Vector;
 using SireMaths::Quaternion;
 using SireMaths::AxisSet;
 using SireMaths::Matrix;
+using SireMaths::Transform;
 
 using SireVol::CoordGroup;
 using SireVol::CoordGroupArray;
@@ -136,6 +138,9 @@ public:
     
     void rotate(CGIdx cgidx, const Quaternion &quat, const Vector &point);
     void rotate(CGIdx cgidx, const Matrix &rotmat, const Vector &point);
+    
+    void transform(const Transform &t);
+    void transform(CGIdx cgidx, const Transform &t);
     
     void mapInto(const AxisSet &axes);
     void mapInto(CGIdx cgidx, const AxisSet &axes);

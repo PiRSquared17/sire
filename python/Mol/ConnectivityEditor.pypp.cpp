@@ -39,6 +39,8 @@ namespace bp = boost::python;
 
 #include <QDebug>
 
+#include <QElapsedTimer>
+
 #include <boost/assert.hpp>
 
 #include "connectivity.h"

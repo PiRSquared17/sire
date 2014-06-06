@@ -43,8 +43,8 @@ BASE_DIHEDRALH_FLEX = Parameter("h dihedral flex", 30*degrees, "Base dihedral ro
 BASE_DIHEDRAL_FLEX = Parameter("dihedral flex", 20*degrees, "Base dihedral rotation")
 BASE_ANGLE_FLEX = Parameter("angle flex", 0.25*degrees, "Base angle rotation")
 BASE_BOND_FLEX = Parameter("bond flex", 0.025*angstroms, "Base bond stretch amount")
-BASE_TRANSLATION = Parameter("translation", 0*angstroms, "Base translation delta amount")
-BASE_ROTATION = Parameter("rotation", 0*degrees, "Base rigid body rotation")
+BASE_TRANSLATION = Parameter("translation", 0.75*angstroms, "Base translation delta amount")
+BASE_ROTATION = Parameter("rotation", 30*degrees, "Base rigid body rotation")
 BASE_MAXVAR = Parameter("maxvar", 10, "Maximum number of degrees of freedom to move at once")
 BASE_MAXVAR_B = Parameter("maxvar bonds", 2, "Maximum number of bonds to move at once")
 BASE_MAXVAR_A = Parameter("maxvar angles", 4, "Maximum number of angles to move at once")
@@ -370,10 +370,15 @@ def centerSystem(system, molecule):
     center = molecule.evaluate().center()
     print("This requires translating everything by %s..." % (-center))    
     
+    molecules = Molecules()
+
     for molnum in system.molNums():
         molecule = system[molnum].molecule()
         molecule = molecule.move().translate(-center).commit()
-        system.update(molecule)
+        molecules.add(molecule)
+
+    system.update(molecules)
+    #system.accept()
 
     return system
 
@@ -464,6 +469,9 @@ def generateFlexibility(solute):
                 smallgroup = smallgroup.subtract(at2)
                 factor = smallgroup.nSelected()
 
+                if factor == 0:
+                    factor = 1
+
                 flexibility.add(dihedral, BASE_DIHEDRAL_FLEX.val/factor)
                 var_dihedrals.append(dihedral)
 
@@ -502,6 +510,10 @@ def generateFlexibility(solute):
                 smallgroup = gr1
 
             factor = smallgroup.nSelected()
+
+            if factor == 0:
+                factor = 1
+
             flexibility.add(angle, BASE_ANGLE_FLEX.val/factor)
 
             if at0 not in moved_atoms:
@@ -533,6 +545,10 @@ def generateFlexibility(solute):
                 smallgroup = gr1
 
             factor = smallgroup.nSelected()
+
+            if factor == 0:
+                factor = 1
+
             flexibility.add(bond, BASE_BOND_FLEX.val/factor)
 
     return flexibility
@@ -575,22 +591,25 @@ def addFlexibility(system, reflection_center=None, reflection_radius=None, \
     # create a group for the fixed residues that are bonded to the mobile residues
     boundary_group = MoleculeGroup( naming_scheme.boundaryMoleculesGroupName().value() )
 
-    if reflection_center and reflection_radius:
-        print(("Only moving molecules/residues that are within a distance %s A "
-               "of the point %s.") % (reflection_radius.value(), reflection_center))
-
-        system.setProperty("reflection center", AtomCoords(CoordGroup(1,reflection_center)))
-        system.setProperty("reflection sphere radius", VariantProperty(reflection_radius.to(angstroms)))
-    else:
+    if reflection_center is None or reflection_radius is None:
         print ("No reflection radius or reflection molecule specified, so moving all "
                "molecules and residues in the system.")
         reflection_radius = None
         reflection_center = None
 
+    else:
+        print(("Only moving molecules/residues that are within a distance %s A "
+               "of the point %s.") % (reflection_radius.value(), reflection_center))
+
+        system.setProperty("reflection center", AtomCoords(CoordGroup(1,reflection_center)))
+        system.setProperty("reflection sphere radius", VariantProperty(reflection_radius.to(angstroms)))
+
     # fit the protein z-matrix templates to all of the protein molecules and add the mobile
     # residues to the mobile_sc_group and mobile_bb_group for mobile sidechains and backbones
     if naming_scheme.proteinsGroupName() in system.mgNames():
         protein_group = system[naming_scheme.proteinsGroupName()]
+
+        print("needs accepting %s %s" % (system.needsAccepting(),protein_group.needsAccepting()))
 
         # create a zmatrix maker that will be used to build the z-matrices for each protein molecule
         zmat_maker = ZmatrixMaker()
@@ -613,7 +632,9 @@ def addFlexibility(system, reflection_center=None, reflection_radius=None, \
 
             protein_mol = zmat_maker.applyTemplates(protein_mol)
 
+            print("system.update(protein_mol)")
             system.update(protein_mol)
+            print("system.update(protein_mol) done")
 
             if reflection_radius:
                 space = Cartesian()
@@ -786,6 +807,8 @@ def addFlexibility(system, reflection_center=None, reflection_radius=None, \
 
     if boundary_group.nMolecules() > 0:
         system.add(boundary_group)    
+
+    #system.accept()
 
     print("\nNumber of fixed (or partially fixed) molecules equals %s" % fixed_group.nMolecules())
 

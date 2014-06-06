@@ -471,7 +471,7 @@ void RestraintFF::_pvt_removed(const PartialMolecule &mol)
 /** This internal function is called when the molecule 'mol' has
     changed - any restraints which depend on this molecule will
     need to be updated */
-void RestraintFF::_pvt_changed(const SireMol::Molecule &mol)
+void RestraintFF::_pvt_changed(const SireMol::Molecule &mol, bool auto_update)
 {
     this->updateRestraints( mol.data() );
 }
@@ -479,7 +479,7 @@ void RestraintFF::_pvt_changed(const SireMol::Molecule &mol)
 /** This internal function is called when the molecules in 'mols'
     have changed - any restraints depending on these molecules
     will need to be updated */
-void RestraintFF::_pvt_changed(const QList<SireMol::Molecule> &mols)
+void RestraintFF::_pvt_changed(const QList<SireMol::Molecule> &mols, bool auto_update)
 {
     this->updateRestraints( Molecules(mols) );
 }

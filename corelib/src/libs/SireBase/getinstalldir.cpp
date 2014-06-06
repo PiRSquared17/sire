@@ -197,4 +197,10 @@ namespace SireBase
     {
         return getSireDir(SIRE_SHARE_DIR);
     }
+    
+    /** This returns the release version of Sire */
+    QString SIREBASE_EXPORT getReleaseVersion()
+    {
+        return "2014.2";
+    }
 }

@@ -135,6 +135,7 @@ public:
     bool intersects(const AABox &other) const;
 
     bool contains(const AABox &other) const;
+    bool contains(const Vector &point) const;
 
     static AABox from(const Vector &point);
     static AABox from(const CoordGroupBase &coordgroup);

@@ -8,9 +8,10 @@
 #include "combinedspace.h"
 #include "patching.h"
 #include "cartesian.h"
-#include "grid.h"
+#include "gridinfo.h"
 #include "coordgroup.h"
 #include "aabox.h"
+#include "grid.h"
 
 #include "Helpers/objectregistry.hpp"
 
@@ -23,13 +24,15 @@ void register_SireVol_objects()
     ObjectRegistry::registerConverterFor< SireVol::NullPatching >();
     ObjectRegistry::registerConverterFor< SireVol::BoxPatching >();
     ObjectRegistry::registerConverterFor< SireVol::Cartesian >();
-    ObjectRegistry::registerConverterFor< SireVol::NullGrid >();
-    ObjectRegistry::registerConverterFor< SireVol::RegularGrid >();
+    ObjectRegistry::registerConverterFor< SireVol::GridIndex >();
+    ObjectRegistry::registerConverterFor< SireVol::GridInfo >();
     ObjectRegistry::registerConverterFor< SireVol::CoordGroup >();
     ObjectRegistry::registerConverterFor< SireVol::CoordGroupEditor >();
     ObjectRegistry::registerConverterFor< SireVol::CoordGroupArray >();
     ObjectRegistry::registerConverterFor< SireVol::CoordGroupArrayArray >();
     ObjectRegistry::registerConverterFor< SireVol::AABox >();
+    ObjectRegistry::registerConverterFor< SireVol::NullGrid >();
+    ObjectRegistry::registerConverterFor< SireVol::RegularGrid >();
 
 }
 

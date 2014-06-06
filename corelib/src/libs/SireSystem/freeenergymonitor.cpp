@@ -987,6 +987,20 @@ FreeEnergyMonitor FreeEnergyMonitor::merge(const QList<FreeEnergyMonitor> &monit
     return ret;
 }
 
+/** Return the number of samples used to form all of the free energy averages
+    in this monitor */
+int FreeEnergyMonitor::nSamples() const
+{
+    int nsamples = 0;
+    
+    for (int i=0; i<total_nrgs.count(); ++i)
+    {
+        nsamples += total_nrgs.at(i).nSamples();
+    }
+    
+    return nsamples;
+}
+
 /** Accumulate energies from the passed system */
 void FreeEnergyMonitor::monitor(System &system)
 {

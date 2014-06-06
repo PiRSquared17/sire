@@ -84,6 +84,16 @@ void register_MolGroupsBase_class(){
         typedef bp::class_< SireMol::MolGroupsBase, bp::bases< SireBase::Property >, boost::noncopyable > MolGroupsBase_exposer_t;
         MolGroupsBase_exposer_t MolGroupsBase_exposer = MolGroupsBase_exposer_t( "MolGroupsBase", bp::no_init );
         bp::scope MolGroupsBase_scope( MolGroupsBase_exposer );
+        { //::SireMol::MolGroupsBase::accept
+        
+            typedef void ( ::SireMol::MolGroupsBase::*accept_function_type )(  ) ;
+            accept_function_type accept_function_value( &::SireMol::MolGroupsBase::accept );
+            
+            MolGroupsBase_exposer.def( 
+                "accept"
+                , accept_function_value );
+        
+        }
         { //::SireMol::MolGroupsBase::add
         
             typedef void ( ::SireMol::MolGroupsBase::*add_function_type )( ::SireMol::MoleculeView const &,::SireMol::MGID const & ) ;
@@ -1004,6 +1014,16 @@ void register_MolGroupsBase_class(){
                 , ( bp::arg("molnum") ) );
         
         }
+        { //::SireMol::MolGroupsBase::needsAccepting
+        
+            typedef bool ( ::SireMol::MolGroupsBase::*needsAccepting_function_type )(  ) const;
+            needsAccepting_function_type needsAccepting_function_value( &::SireMol::MolGroupsBase::needsAccepting );
+            
+            MolGroupsBase_exposer.def( 
+                "needsAccepting"
+                , needsAccepting_function_value );
+        
+        }
         { //::SireMol::MolGroupsBase::null
         
             typedef ::SireMol::MoleculeGroups const & ( *null_function_type )(  );
@@ -1745,46 +1765,46 @@ void register_MolGroupsBase_class(){
         }
         { //::SireMol::MolGroupsBase::update
         
-            typedef void ( ::SireMol::MolGroupsBase::*update_function_type )( ::SireMol::MoleculeData const & ) ;
+            typedef void ( ::SireMol::MolGroupsBase::*update_function_type )( ::SireMol::MoleculeData const &,bool ) ;
             update_function_type update_function_value( &::SireMol::MolGroupsBase::update );
             
             MolGroupsBase_exposer.def( 
                 "update"
                 , update_function_value
-                , ( bp::arg("moldata") ) );
+                , ( bp::arg("moldata"), bp::arg("auto_commit")=(bool)(true) ) );
         
         }
         { //::SireMol::MolGroupsBase::update
         
-            typedef void ( ::SireMol::MolGroupsBase::*update_function_type )( ::SireMol::MoleculeView const & ) ;
+            typedef void ( ::SireMol::MolGroupsBase::*update_function_type )( ::SireMol::MoleculeView const &,bool ) ;
             update_function_type update_function_value( &::SireMol::MolGroupsBase::update );
             
             MolGroupsBase_exposer.def( 
                 "update"
                 , update_function_value
-                , ( bp::arg("molview") ) );
+                , ( bp::arg("molview"), bp::arg("auto_commit")=(bool)(true) ) );
         
         }
         { //::SireMol::MolGroupsBase::update
         
-            typedef void ( ::SireMol::MolGroupsBase::*update_function_type )( ::SireMol::Molecules const & ) ;
+            typedef void ( ::SireMol::MolGroupsBase::*update_function_type )( ::SireMol::Molecules const &,bool ) ;
             update_function_type update_function_value( &::SireMol::MolGroupsBase::update );
             
             MolGroupsBase_exposer.def( 
                 "update"
                 , update_function_value
-                , ( bp::arg("molecules") ) );
+                , ( bp::arg("molecules"), bp::arg("auto_commit")=(bool)(true) ) );
         
         }
         { //::SireMol::MolGroupsBase::update
         
-            typedef void ( ::SireMol::MolGroupsBase::*update_function_type )( ::SireMol::MoleculeGroup const & ) ;
+            typedef void ( ::SireMol::MolGroupsBase::*update_function_type )( ::SireMol::MoleculeGroup const &,bool ) ;
             update_function_type update_function_value( &::SireMol::MolGroupsBase::update );
             
             MolGroupsBase_exposer.def( 
                 "update"
                 , update_function_value
-                , ( bp::arg("molgroup") ) );
+                , ( bp::arg("molgroup"), bp::arg("auto_commit")=(bool)(true) ) );
         
         }
         MolGroupsBase_exposer.staticmethod( "null" );

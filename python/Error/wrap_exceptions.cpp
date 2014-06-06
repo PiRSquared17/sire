@@ -35,6 +35,8 @@
 
 using namespace boost::python;
 
+#include <QDebug>
+
 namespace SireError
 {
 

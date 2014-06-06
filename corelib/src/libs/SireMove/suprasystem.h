@@ -175,6 +175,8 @@ public:
     void setRecordAllStatistics(int i, bool record_stats);
     void setRecordAllStatistics(bool record_stats);
 
+    virtual void collectSupraStats();
+
     static const SupraSystem& null();
 
 protected:

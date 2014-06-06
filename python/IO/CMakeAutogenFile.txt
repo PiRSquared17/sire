@@ -3,6 +3,7 @@ set ( PYPP_SOURCES
        FlexibilityLibrary.pypp.cpp
        ProtoMSParameters.pypp.cpp
        NullIO.pypp.cpp
+       DX.pypp.cpp
        PerturbationsLibrary.pypp.cpp
        Tinker.pypp.cpp
        IOBase.pypp.cpp

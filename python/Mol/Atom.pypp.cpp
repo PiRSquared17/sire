@@ -50,6 +50,8 @@ namespace bp = boost::python;
 
 #include "atomproperty.hpp"
 
+#include "SireMaths/align.h"
+
 #include "SireMaths/vector.h"
 
 #include "atommasses.h"

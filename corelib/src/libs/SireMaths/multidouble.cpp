@@ -509,7 +509,7 @@ bool MultiDouble::operator>=(const MultiDouble &other) const
 }
 
 /** Return the ith value in the multifloat */
-double MultiDouble::operator[](int i) const
+double MultiDouble::at(int i) const
 {
     if (i < 0)
         i = MULTIFLOAT_SIZE + i;
@@ -522,6 +522,11 @@ double MultiDouble::operator[](int i) const
     }
     
     return v.a[i];
+}
+
+double MultiDouble::getitem(int i) const
+{
+    return at(i);
 }
 
 /** Negative operator */
@@ -556,7 +561,7 @@ void MultiDouble::set(int i, double value)
 /** Return the ith value in the multifloat */
 double MultiDouble::get(int i) const
 {
-    return this->operator[](i);
+    return at(i);
 }
 
 const char* MultiDouble::what() const

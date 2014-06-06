@@ -360,7 +360,7 @@ void QMMMFF::_pvt_removed(quint32 group_id,
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void QMMMFF::_pvt_changed(quint32 group_id, const SireMol::Molecule &molecule)
+void QMMMFF::_pvt_changed(quint32 group_id, const SireMol::Molecule &molecule, bool auto_update)
 {
     if (group_id == 0)
     {
@@ -382,7 +382,8 @@ void QMMMFF::_pvt_changed(quint32 group_id, const SireMol::Molecule &molecule)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void QMMMFF::_pvt_changed(quint32 group_id, const QList<SireMol::Molecule> &molecules)
+void QMMMFF::_pvt_changed(quint32 group_id, const QList<SireMol::Molecule> &molecules,
+                          bool auto_update)
 {
     if (group_id == 0)
     {

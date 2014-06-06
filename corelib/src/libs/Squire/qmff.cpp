@@ -315,7 +315,7 @@ void QMFF::_pvt_removed(const SireMol::PartialMolecule &molecule)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void QMFF::_pvt_changed(const SireMol::Molecule &molecule)
+void QMFF::_pvt_changed(const SireMol::Molecule &molecule, bool auto_update)
 {
     //change the molecule, again without recording the change
     qmmols.change(molecule, *this, false);
@@ -328,7 +328,7 @@ void QMFF::_pvt_changed(const SireMol::Molecule &molecule)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void QMFF::_pvt_changed(const QList<SireMol::Molecule> &mols)
+void QMFF::_pvt_changed(const QList<SireMol::Molecule> &mols, bool auto_update)
 {
     QMPotential::Molecules old_mols;
     

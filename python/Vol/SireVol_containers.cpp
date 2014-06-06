@@ -44,9 +44,12 @@
 #include "Base/convertproperty.hpp"
 
 #include "SireVol/space.h"
+#include "SireVol/aabox.h"
 
 using boost::python::register_tuple;
 
 void register_SireVol_containers()
-{}
+{
+    register_list< QVector<SireVol::AABox> >();
+}
 

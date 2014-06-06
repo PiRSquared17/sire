@@ -976,6 +976,10 @@ void RepExMove::performMove(Nodes &nodes, Replicas &replicas, bool record_stats)
     //now perform all of the replica exchange tests
     if (not disable_swaps)
         this->testAndSwap(replicas, submoves, even_pairs, record_stats);
+    
+    //now collect any necessary statistics
+    if (record_stats)
+        replicas.collectSupraStats();
 }
 
 /** Perform 'nmoves' replica exchange moves (block of sampling for all
