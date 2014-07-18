@@ -211,7 +211,7 @@ void Process::wait()
 {
     if (d.get() == 0)
         return;
-        
+    
     QMutexLocker lkr( &(d->datamutex) );
     
     if (not d->is_running)
@@ -241,6 +241,17 @@ void Process::wait()
         this->cleanUpJob(status, child_exit_status);
     }
 }
+
+#include <QThread>
+
+class Sleeper : protected QThread
+{
+public:
+    static void msleep(unsigned long msecs)
+    {
+        QThread::msleep(msecs);
+    }
+};
 
 /** Wait until the process has finished, or until 'ms' milliseconds have passed.
     This returns whether or not the process has finished */
@@ -275,7 +286,7 @@ bool Process::wait(int ms)
 
                 if (status == 0)
                 {
-                    sleep(1);
+                    Sleeper::msleep(25);
                     continue;
                 }
                 else if (status == -1)
@@ -292,9 +303,9 @@ bool Process::wait(int ms)
                 
                 if ( processRunning(child_exit_status) )
                 {
-                    //the job is still running - wait a 1s then
+                    //the job is still running - wait then
                     //try again
-                    sleep(1);
+                    Sleeper::msleep(25);
                 }
                 else
                 {

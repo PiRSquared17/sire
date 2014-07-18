@@ -25,8 +25,6 @@ def readParams( filename ):
 
     params = {}
 
-    print("Reading in parameters...")
-
     for line in lines:
         # format is "key = value", "#" is used for commenting
         s = line.find("=")
@@ -48,7 +46,6 @@ def readParams( filename ):
             except:
                 pass
 
-            print("%s = %s" % (key, value))
             params[key] = value
 
     print("\n", end=' ')
@@ -129,6 +126,15 @@ def resolveParameters(func):
        variables onto the Parameter stack before the wrapped function
        is called, and pops them off after"""
     def inner(params = {}):
+
+        print("Using parameters:")
+        keys = list(params.keys())
+        keys.sort()
+        print("===============")
+        for key in keys:
+            print("%s == %s" % (key,params[key]))
+        print("===============\n")
+
         Parameter.push(params)
         try:
             retval = func()

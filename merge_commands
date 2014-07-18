@@ -3,6 +3,9 @@
 # update from the devel branch. Every time you merge,
 # make sure that you update the revision numbers in these commands
 
+svn merge -r 2587:2611 ../corelib/branches/devel/ corelib
+svn merge -r 2587:2611 ../python/branches/devel/ python
+
 svn merge -r 2199:2587 ../corelib/branches/devel/ corelib
 svn merge -r 2199:2587 ../python/branches/devel/ python
 

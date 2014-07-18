@@ -97,11 +97,13 @@ public:
     bool setSwitchingFunction(const SwitchingFunction &switchfunc);
     bool setQuantumProgram(const QMProgram &program);
     bool setZeroEnergy(SireUnits::Dimension::MolarEnergy zero_energy);
+    bool setChargeScalingFactor(double scale_factor);
     
     const Space& space() const;
     const SwitchingFunction& switchingFunction() const;
     const QMProgram& quantumProgram() const;
     SireUnits::Dimension::MolarEnergy zeroEnergy() const;
+    double chargeScalingFactor() const;
 
     void calculateForce(const QMMolecules &qmmols, 
                         const MMMolecules &mmmols,
@@ -173,6 +175,9 @@ private:
 
     /** The properties that define this potential */
     Properties props;
+    
+    /** The MM charge scaling factor */
+    double chg_sclfac;
 };
 
 }

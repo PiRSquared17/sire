@@ -31,6 +31,8 @@
 #include <QTextStream>
 #include <QHash>
 
+#include <sys/resource.h>
+
 #include "amber.h"
 
 #include "SireMol/element.h"
@@ -1159,8 +1161,36 @@ bool Amber::operator!=(const Amber &other) const
     return not operator==(other);
 }
 
-/** Reads the contents of a topfile and associated crdfile and returns a molecule group */
 tuple<MoleculeGroup,SpacePtr> Amber::readCrdTop(const QString &crdfile,
+        const QString &topfile, QString flag_cutting) const
+{
+    //check the files exist
+    {
+        QFile top_f(topfile);
+
+        if ( not (top_f.exists() and top_f.open(QIODevice::ReadOnly) ) )
+        {
+            throw SireError::file_error(top_f, CODELOC);
+        }
+
+        top_f.close();
+    }
+    {
+        QFile crd_f(crdfile);
+
+        if ( not (crd_f.exists() and crd_f.open(QIODevice::ReadOnly) ) )
+        {
+            throw SireError::file_error(crd_f, CODELOC);
+        }
+
+        crd_f.close();
+    }
+
+    return _pvt_readCrdTop(crdfile, topfile, flag_cutting);
+}
+
+/** Reads the contents of a topfile and associated crdfile and returns a molecule group */
+tuple<MoleculeGroup,SpacePtr> Amber::_pvt_readCrdTop(const QString &crdfile,
         const QString &topfile, QString flag_cutting) const
 {
     /**
@@ -1471,6 +1501,8 @@ tuple<MoleculeGroup,SpacePtr> Amber::readCrdTop(const QString &crdfile,
 
     if ( not (top_f.exists() and top_f.open(QIODevice::ReadOnly) ) )
     {
+        qDebug() << "Topology file doesn't exist!" << topfile;
+        throw SireError::incompatible_error("test", CODELOC);
         throw SireError::file_error(top_f, CODELOC);
     }
 

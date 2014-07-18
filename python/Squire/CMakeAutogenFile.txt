@@ -16,6 +16,7 @@ set ( PYPP_SOURCES
        PP_GTOs.pypp.cpp
        QMMMFF.pypp.cpp
        Mopac.pypp.cpp
+       SQM.pypp.cpp
        ChargeElementParameterNames3D.pypp.cpp
        _Squire_free_functions.pypp.cpp
        Orbital.pypp.cpp

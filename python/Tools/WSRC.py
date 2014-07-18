@@ -65,18 +65,18 @@ use_fixed_points = Parameter("fixed points", False,
 use_fixed_ligand = Parameter("fixed ligand", False,
                              """Whether or not to completely fix the ligand during the simulation.""")
 
-use_rot_trans_ligand = Parameter("ligand rot-trans", False,
+use_rot_trans_ligand = Parameter("ligand rot-trans", True,
                                  """Whether or not the ligand is free to translate and rotate.""")
 
 use_reflect_volume = Parameter("reflect volume", False,
                                """Use the reflection volume instead of the identity constraint to hold
                                   the swap water cluster in place.""")
 
-reflect_volume_radius = Parameter("reflect volume radius", 1.5*angstrom,
+reflect_volume_radius = Parameter("reflect volume radius", 1.75*angstrom,
                                   """The radius of the reflection volume, used only if the reflection volume
                                      is used to hold the swap water cluster in place.""")
 
-reflect_volume_buffer = Parameter("reflect volume buffer", 1*angstrom,
+reflect_volume_buffer = Parameter("reflect volume buffer", 0*angstrom,
                                   """The buffer beyond the reflection volume radius that is used when selecting
                                      the water molecules that will be swapped. Swapped water molecules will be those
                                      that are within 'reflect volume radius + reflect volume buffer' of any of 
@@ -107,7 +107,9 @@ nrgmon_frequency = Parameter("energy monitor frequency", 1000,
                              """The number of steps between each evaluation of the energy monitors.""")
 
 lambda_values = Parameter("lambda values", [ 0.005, 0.071, 0.137, 0.203, 0.269, 0.335, 0.401, 0.467, 0.533, 0.599, 0.665, 0.731, 0.797, 0.863, 0.929, 0.995 ],
-                          """The values of lambda to use in the RETI free energy simulation.""")
+                          """The values of lambda to use in the RETI free energy simulation. Note that it is not a good idea
+                             to use lambda values 0 or 1 as this will introduce discontinuities into the PMF.""")
+
 nsubmoves = Parameter("nsubmoves", 50000,
                       """The number of moves to perform between each RETI move.""")
 
@@ -119,7 +121,7 @@ ligand_name = Parameter("ligand name", None,
 reflection_radius = Parameter("reflection radius", 15*angstrom,
                               """The radius of the reflection sphere""")
 
-ligand_reflection_radius = Parameter("ligand reflection radius", 2*angstrom,
+ligand_reflection_radius = Parameter("ligand reflection radius", 1*angstrom,
                                      """The reflection radius of the ligand. This is used to constrain the ligand
                                         to remain in the active site. This is needed to define the accessible volume
                                         of the bound state.""")
@@ -170,9 +172,21 @@ soften_water = Parameter("soften water", 1.1,
                             the swap-water cluster between lambda=0 and lambda=1. This helps keep the cluster
                             together as it is swapped between the two boxes.""")
 
+lj_buffer = Parameter("LJ buffer", 0.005,
+                      """To prevent end-point effects, the scale factor for the LJ interactions cannot fully
+                         move between 0 and 1, as configurations sampled at 0 or 1 will be invalid for other states.
+                         To overcome this problem, the LJ lambda scale is moved from "LJ buffer" to "1 - LJ buffer",
+                         e.g. for the default buffer of 0.001, the LJ lambda scale is from 0.001 to 0.999.""")
+
 uncharge_ligand = Parameter("uncharge ligand", False,
                             """Whether or not to uncharge the ligand (and swap water cluster) before 
                                swapping them. They are then recharged at the end of the swap.""")
+
+uncharge_ligand_max = Parameter("uncharge ligand max", 0.5,
+                                """The maximum amount to uncharge the ligand (and swap water cluster) before
+                                   swapping them. A value of 1.0 will not uncharge them at all, while a value of
+                                   0.0 will uncharge them completely. The default value is 0.5, which will 50%
+                                   uncharge the ligand and swap water cluster before swapping.""")
 
 uncharge_lambda_values = Parameter("uncharge lambda values", [0.0, 0.1, 0.25, 0.45, 0.55, 0.75, 0.9, 1.0],
                                    """Lambda values to use when uncharging (and then recharging) the ligand. These will be 
@@ -363,6 +377,23 @@ def setSoftCoreProperties(forcefield):
     return forcefield
 
 
+def getAtomNearCOG( molecule ):
+    """Find the atom that is closest to the center of geometry of the passed molecule"""
+
+    mol_centre = molecule.evaluate().center()
+    mindist = 99999.0
+
+    for x in range(0, molecule.nAtoms()):
+        atom = molecule.atoms()[x]
+        at_coords = atom.property('coordinates')
+        dist = Vector().distance2(at_coords, mol_centre)
+        if dist < mindist:
+            mindist = dist
+            nearest_atom = atom
+
+    return nearest_atom
+
+
 def createWSRCMoves(system):
     # pull out all of the molecule groups for the mobile parts of the system
     mobile_solvent = system[MGName("mobile_solvent")]
@@ -404,6 +435,14 @@ def createWSRCMoves(system):
                     rb_moves = RigidBodyMC(mobile_ligand)
                     rb_moves.setMaximumTranslation(flex.translation())
                     rb_moves.setMaximumRotation(flex.rotation())
+
+                    # must rotate about the middle atom of the ligand so that intramolecular
+                    # moves don't change the center of rotation - this is also important if
+                    # we use the reflection sphere (as otherwise an intramolecular move could
+                    # move the ligand center out of the sphere)
+                    nearestcog_atom = getAtomNearCOG( mobile_ligand.moleculeAt(0).molecule() )
+                    print("Rotation moves of the ligand will use atom %s as the center of rotation" % nearestcog_atom)
+                    rb_moves.setCenterOfRotation( GetCOGPoint( nearestcog_atom.name() ) )
 
                     # the ligand is not allowed to move away from its original position,
                     # as we don't want to sample "unbound" states
@@ -1148,7 +1187,7 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     bound_ligand_fixed_coul_nrg = bound_ligand_fixed.components().coulomb()
     bound_ligand_fixed_lj_nrg = bound_ligand_fixed.components().lj()
 
-    free_ligand_fixed_coul_nrg = free_ligand_fixed.components().total()
+    free_ligand_fixed_coul_nrg = free_ligand_fixed.components().coulomb()
     free_ligand_fixed_lj_nrg = free_ligand_fixed.components().lj()
 
     bound_swap_fixed_coul_nrg = bound_swap_fixed.components().coulomb()
@@ -1568,7 +1607,7 @@ def mergeSystems(protein_system, water_system, ligand_mol):
                      (lam_lj_on_next * ligand_bound_lj_nrg_next_sym) + (lam_lj_off_next * swap_bound_lj_nrg_next_sym)
 
     bound_nrg_prev_sym = Symbol("E_{bound_{prev}}")
-    bound_nrg_prev = (lam_coul_on_prev * ligand_bound_coul_nrg_prev_sym) + (lam_coul_off_next * swap_bound_coul_nrg_prev_sym) + \
+    bound_nrg_prev = (lam_coul_on_prev * ligand_bound_coul_nrg_prev_sym) + (lam_coul_off_prev * swap_bound_coul_nrg_prev_sym) + \
                      (lam_lj_on_prev * ligand_bound_lj_nrg_prev_sym) + (lam_lj_off_prev * swap_bound_lj_nrg_prev_sym)
     
     free_nrg_sym = Symbol("E_{free}")
@@ -1678,6 +1717,8 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     # windows lambda values
     lamvals = getLambdaValues()
 
+    print("Using lambda values: %s" % lamvals)
+
     if lamvals[-1] != 1:
         lamvals.append(1)
 
@@ -1688,61 +1729,70 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     system.add( WindowedComponent( lam_prev, lam, lamvals, -1 ) )
     system.setConstant( lam, lambda_values.val[0] )
 
+    # work out the maximum and minimum permissable values of lam_lj
+    lam_lj_min = lj_buffer.val
+    lam_lj_max = 1.0 - lj_buffer.val
+
     # now constrain lam_coul_on, lam_coul_off, lam_lj_on and lam_lj_off to follow lambda
     if uncharge_ligand.val:
-        system.add( ComponentConstraint( lam_coul_on, Max( 1 - 4*lam, 0 ) ) )      # scale from 1 to 0 from lam=0 to 0.25
-        system.add( ComponentConstraint( lam_coul_off, Max( 1 - 4*(1-lam), 0 ) ) ) # scale from 0 to 1 from lam=0.75 to 1
-        system.add( ComponentConstraint( lam_coul_on_f, Max( 1 - 4*lam_f, 0 ) ) )      # scale from 1 to 0 from lam=0 to 0.25
-        system.add( ComponentConstraint( lam_coul_off_f, Max( 1 - 4*(1-lam_f), 0 ) ) ) # scale from 0 to 1 from lam=0.75 to 1
-        system.add( ComponentConstraint( lam_coul_on_b, Max( 1 - 4*lam_b, 0 ) ) )      # scale from 1 to 0 from lam=0 to 0.25
-        system.add( ComponentConstraint( lam_coul_off_b, Max( 1 - 4*(1-lam_b), 0 ) ) ) # scale from 0 to 1 from lam=0.75 to 1
-        system.add( ComponentConstraint( lam_coul_on_next, Max( 1 - 4*lam_next, 0 ) ) )      # scale from 1 to 0 from lam=0 to 0.25
-        system.add( ComponentConstraint( lam_coul_off_next, Max( 1 - 4*(1-lam_next), 0 ) ) ) # scale from 0 to 1 from lam=0.75 to 1
-        system.add( ComponentConstraint( lam_coul_on_prev, Max( 1 - 4*lam_prev, 0 ) ) )      # scale from 1 to 0 from lam=0 to 0.25
-        system.add( ComponentConstraint( lam_coul_off_prev, Max( 1 - 4*(1-lam_prev), 0 ) ) ) # scale from 0 to 1 from lam=0.75 to 1
+        v = uncharge_ligand_max.val
 
-        system.add( ComponentConstraint( lam_lj_on, Max( Min( 2 * ((1-lam)-0.25), 1 ), 0 ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
-        system.add( ComponentConstraint( lam_lj_off, Max( Min( 2 * (lam-0.25), 1 ), 0 ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
-        system.add( ComponentConstraint( lam_lj_on_f, Max( Min( 2 * ((1-lam_f)-0.25), 1 ), 0 ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
-        system.add( ComponentConstraint( lam_lj_off_f, Max( Min( 2 * (lam_f-0.25), 1 ), 0 ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
-        system.add( ComponentConstraint( lam_lj_on_b, Max( Min( 2 * ((1-lam_b)-0.25), 1 ), 0 ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
-        system.add( ComponentConstraint( lam_lj_off_b, Max( Min( 2 * (lam_b-0.25), 1 ), 0 ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
-        system.add( ComponentConstraint( lam_lj_on_next, Max( Min( 2 * ((1-lam_next)-0.25), 1 ), 0 ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
-        system.add( ComponentConstraint( lam_lj_off_next, Max( Min( 2 * (lam_next-0.25), 1 ), 0 ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
-        system.add( ComponentConstraint( lam_lj_on_prev, Max( Min( 2 * ((1-lam_prev)-0.25), 1 ), 0 ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
-        system.add( ComponentConstraint( lam_lj_off_prev, Max( Min( 2 * (lam_prev-0.25), 1 ), 0 ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
+        vfunc = Max
+        if v > 0.75:
+            vfunc = Min
 
-        system.add( ComponentConstraint( lam_coul_swap, Max( Max( 1 - 4*lam, 0 ), Max( 1 - 4*(1-lam), 0 ) ) ) ) # scale from 1 to 0 from lam=0 to 0.25,
-                                                                                                                # then 0 to 1 from lam=0.75 to 1
-        system.add( ComponentConstraint( lam_coul_swap_f, Max( Max( 1 - 4*lam_f, 0 ), Max( 1 - 4*(1-lam_f), 0 ) ) ) )
-        system.add( ComponentConstraint( lam_coul_swap_b, Max( Max( 1 - 4*lam_b, 0 ), Max( 1 - 4*(1-lam_b), 0 ) ) ) )
-        system.add( ComponentConstraint( lam_coul_swap_next, Max( Max( 1 - 4*lam_next, 0 ), Max( 1 - 4*(1-lam_next), 0 ) ) ) )
-        system.add( ComponentConstraint( lam_coul_swap_prev, Max( Max( 1 - 4*lam_prev, 0 ), Max( 1 - 4*(1-lam_prev), 0 ) ) ) )
+        system.add( ComponentConstraint( lam_coul_on, vfunc( 1 + (4*lam*(v-1.0)), (v/0.75)*(1.0-lam) ) ) )
+        system.add( ComponentConstraint( lam_coul_off, vfunc( 1 + (4*(1-lam)*(v-1.0)), (v/0.75)*(1.0-(1-lam)) ) ) )
+        system.add( ComponentConstraint( lam_coul_on_f, vfunc( 1 + (4*lam_f*(v-1.0)), (v/0.75)*(1.0-lam_f) ) ) )
+        system.add( ComponentConstraint( lam_coul_off_f, vfunc( 1 + (4*(1-lam_f)*(v-1.0)), (v/0.75)*(1.0-(1-lam_f)) ) ) )
+        system.add( ComponentConstraint( lam_coul_on_b, vfunc( 1 + (4*lam_b*(v-1.0)), (v/0.75)*(1.0-lam_b) ) ) )
+        system.add( ComponentConstraint( lam_coul_off_b, vfunc( 1 + (4*(1-lam_b)*(v-1.0)), (v/0.75)*(1.0-(1-lam_b)) ) ) )
+        system.add( ComponentConstraint( lam_coul_on_next, vfunc( 1 + (4*lam_next*(v-1.0)), (v/0.75)*(1.0-lam_next) ) ) )
+        system.add( ComponentConstraint( lam_coul_off_next, vfunc( 1 + (4*(1-lam_next)*(v-1.0)), (v/0.75)*(1.0-(1-lam_next)) ) ) )
+        system.add( ComponentConstraint( lam_coul_on_prev, vfunc( 1 + (4*lam_prev*(v-1.0)), (v/0.75)*(1.0-lam_prev) ) ) )
+        system.add( ComponentConstraint( lam_coul_off_prev, vfunc( 1 + (4*(1-lam_prev)*(v-1.0)), (v/0.75)*(1.0-(1-lam_prev)) ) ) )
+
+        system.add( ComponentConstraint( lam_lj_on, Max( Min( 2 * ((1-lam)-0.25), lam_lj_max ), lam_lj_min ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_off, Max( Min( 2 * (lam-0.25), lam_lj_max ), lam_lj_min ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_on_f, Max( Min( 2 * ((1-lam_f)-0.25), lam_lj_max ), lam_lj_min ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_off_f, Max( Min( 2 * (lam_f-0.25), lam_lj_max ), lam_lj_min ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_on_b, Max( Min( 2 * ((1-lam_b)-0.25), lam_lj_max ), lam_lj_min ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_off_b, Max( Min( 2 * (lam_b-0.25), lam_lj_max ), lam_lj_min ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_on_next, Max( Min( 2 * ((1-lam_next)-0.25), lam_lj_max ), lam_lj_min ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_off_next, Max( Min( 2 * (lam_next-0.25), lam_lj_max ), lam_lj_min ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_on_prev, Max( Min( 2 * ((1-lam_prev)-0.25), lam_lj_max ), lam_lj_min ) ) ) # scale from 1 to 0 from lam=0.25 to 0.75
+        system.add( ComponentConstraint( lam_lj_off_prev, Max( Min( 2 * (lam_prev-0.25), lam_lj_max ), lam_lj_min ) ) )    # scale from 0 to 1 from lam=0.25 to 0.75
+
+        system.add( ComponentConstraint( lam_coul_swap, Max( v, Max(4.0*(v-1.0)*lam + 1, 4.0*(v-1.0)*(1-lam) + 1 ) ) ) )
+        system.add( ComponentConstraint( lam_coul_swap_f, Max( v, Max(4.0*(v-1.0)*lam_f + 1, 4.0*(v-1.0)*(1-lam_f) + 1 ) ) ) )
+        system.add( ComponentConstraint( lam_coul_swap_b, Max( v, Max(4.0*(v-1.0)*lam_b + 1, 4.0*(v-1.0)*(1-lam_b) + 1 ) ) ) )
+        system.add( ComponentConstraint( lam_coul_swap_next, Max( v, Max(4.0*(v-1.0)*lam_next + 1, 4.0*(v-1.0)*(1-lam_next) + 1 ) ) ) )
+        system.add( ComponentConstraint( lam_coul_swap_prev, Max( v, Max(4.0*(v-1.0)*lam_prev + 1, 4.0*(v-1.0)*(1-lam_prev) + 1 ) ) ) )
     else:
         system.add( ComponentConstraint( lam_coul_on, 1-lam ) )
         system.add( ComponentConstraint( lam_coul_off, lam ) )
-        system.add( ComponentConstraint( lam_lj_on, 1-lam ) )
-        system.add( ComponentConstraint( lam_lj_off, lam ) )
+        system.add( ComponentConstraint( lam_lj_on, Max( Min( 1-lam, lam_lj_max ), lam_lj_min ) ) )
+        system.add( ComponentConstraint( lam_lj_off, Max( Min( lam, lam_lj_max ), lam_lj_min ) ) )
 
         system.add( ComponentConstraint( lam_coul_on_f, 1-lam_f ) )
         system.add( ComponentConstraint( lam_coul_off_f, lam_f ) )
-        system.add( ComponentConstraint( lam_lj_on_f, 1-lam_f ) )
-        system.add( ComponentConstraint( lam_lj_off_f, lam_f ) )
+        system.add( ComponentConstraint( lam_lj_on_f, Max( Min( 1-lam_f, lam_lj_max ), lam_lj_min ) ) )
+        system.add( ComponentConstraint( lam_lj_off_f, Max( Min( lam_f, lam_lj_max ), lam_lj_min ) ) )
 
         system.add( ComponentConstraint( lam_coul_on_b, 1-lam_b ) )
         system.add( ComponentConstraint( lam_coul_off_b, lam_b ) )
-        system.add( ComponentConstraint( lam_lj_on_b, 1-lam_b ) )
-        system.add( ComponentConstraint( lam_lj_off_b, lam_b ) )
+        system.add( ComponentConstraint( lam_lj_on_b, Max( Min( 1-lam_b, lam_lj_max ), lam_lj_min ) ) )
+        system.add( ComponentConstraint( lam_lj_off_b, Max( Min( lam_b, lam_lj_max ), lam_lj_min ) ) )
 
         system.add( ComponentConstraint( lam_coul_on_next, 1-lam_next ) )
         system.add( ComponentConstraint( lam_coul_off_next, lam_next ) )
-        system.add( ComponentConstraint( lam_lj_on_next, 1-lam_next ) )
-        system.add( ComponentConstraint( lam_lj_off_next, lam_next ) )
+        system.add( ComponentConstraint( lam_lj_on_next, Max( Min( 1-lam_next, lam_lj_max ), lam_lj_min ) ) )
+        system.add( ComponentConstraint( lam_lj_off_next, Max( Min( lam_next, lam_lj_max ), lam_lj_min ) ) )
 
         system.add( ComponentConstraint( lam_coul_on_prev, 1-lam_prev ) )
         system.add( ComponentConstraint( lam_coul_off_prev, lam_prev ) )
-        system.add( ComponentConstraint( lam_lj_on_prev, 1-lam_prev ) )
-        system.add( ComponentConstraint( lam_lj_off_prev, lam_prev ) )
+        system.add( ComponentConstraint( lam_lj_on_prev, Max( Min( 1-lam_prev, lam_lj_max ), lam_lj_min ) ) )
+        system.add( ComponentConstraint( lam_lj_off_prev, Max( Min( lam_prev, lam_lj_max ), lam_lj_min ) ) )
 
     # now add alpha variables that can be used by the EnergyMonitors
     alpha_on = Symbol("alpha_on")

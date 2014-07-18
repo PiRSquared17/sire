@@ -29,7 +29,7 @@ set ( SQUIRE_HEADERS
 
       molpro.h
       mopac.h
-      orca.h
+      sqm.h
 
       pgto.h
       sgto.h
@@ -55,7 +55,7 @@ set ( SQUIRE_SOURCES
       
       molpro.cpp
       mopac.cpp
-      orca.cpp
+      sqm.cpp
 
       orbital.cpp
       pointcharge.cpp

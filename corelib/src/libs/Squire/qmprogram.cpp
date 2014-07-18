@@ -87,6 +87,21 @@ QMProgram::QMProgram(const QMProgram &other) : Property(other)
 QMProgram::~QMProgram()
 {}
 
+/** Return the maximum number of MM atoms supported by this QM program. This
+    returns -1 if there is no limit */
+int QMProgram::numberOfMMAtomsLimit() const
+{
+    return -1;
+}
+
+/** Return the maximum number of QM atoms supported by this QM program, 
+    given the supplied number of MM atoms. This returns -1 if there is
+    no limit */
+int QMProgram::numberOfMMAtomsLimit(int num_qm_atoms) const
+{
+    return -1;
+}
+
 /** Calculate the charges on the molecule 'molecule' using the properties
     specified in the passed property map */
 AtomCharges QMProgram::calculateCharges(const Molecule &molecule,

@@ -35,6 +35,11 @@
 
 SIRE_BEGIN_HEADER
 
+namespace SireMol
+{
+class Element;
+}
+
 namespace Squire
 {
 
@@ -47,7 +52,11 @@ class LatticeCharge
 public:
     LatticeCharge();
     LatticeCharge(const Vector &v, double charge);
+    LatticeCharge(const Vector &v, double charge, const SireMol::Element &element);
+    
     LatticeCharge(double x, double y, double z, double charge);
+    LatticeCharge(double x, double y, double z, double charge,
+                  const SireMol::Element &element);
 
     LatticeCharge(const LatticeCharge &other);
     
@@ -78,9 +87,19 @@ public:
         return d[3];
     }
     
+    SireMol::Element element() const;
+    
+    quint32 nProtons() const
+    {
+        return nprotons;
+    }
+    
 private:
     /** The lattice point charge data */
     double d[4];
+    
+    /** The proton number */
+    quint32 nprotons;
 };
 
 /** This is a small internal class that is used to pass information about
@@ -105,6 +124,12 @@ public:
 
     int nCharges() const;
     int count() const;
+    
+    void set(int i, const LatticeCharge &charge);
+    
+    void setElement(int i, const SireMol::Element &element);
+    void setCoordinates(int i, const Vector &coords);
+    void setCharge(int i, double charge);
     
     const LatticeCharge& operator[](int i) const;
 

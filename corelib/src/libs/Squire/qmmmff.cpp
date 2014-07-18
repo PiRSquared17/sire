@@ -35,6 +35,8 @@
 #include "SireFF/fieldtable.h"
 #include "SireFF/potentialtable.h"
 
+#include "SireBase/booleanproperty.h"
+
 #include "SireFF/errors.h"
 #include "SireError/errors.h"
 
@@ -55,14 +57,15 @@ static const RegisterMetaType<QMMMFF> r_qmmmff;
 /** Serialise to a binary datastream */
 QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const QMMMFF &qmmmff)
 {
-    writeHeader(ds, r_qmmmff, 1);
+    writeHeader(ds, r_qmmmff, 2);
     
     SharedDataStream sds(ds);
     
     sds << static_cast<const G2FF&>(qmmmff)
         << static_cast<const QMMMElecEmbedPotential&>(qmmmff)
         << qmmmff.qmmols
-        << qmmmff.mmmols;
+        << qmmmff.mmmols
+        << qmmmff.intermolecular_only;
         
     return ds;
 }
@@ -72,7 +75,7 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, QMMMFF &qmmmff)
 {
     VersionID v = readHeader(ds, r_qmmmff);
     
-    if (v == 1)
+    if (v <= 2)
     {
         SharedDataStream sds(ds);
         
@@ -80,25 +83,30 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, QMMMFF &qmmmff)
             >> static_cast<QMMMElecEmbedPotential&>(qmmmff)
             >> qmmmff.qmmols
             >> qmmmff.mmmols;
-            
+        
+        if (v == 2)
+            sds >> qmmmff.intermolecular_only;
+        else
+            qmmmff.intermolecular_only = false;
+        
         qmmmff._pvt_updateName();
     }
     else
-        throw version_error(v, "1", r_qmmmff, CODELOC);
+        throw version_error(v, "1,2", r_qmmmff, CODELOC);
         
     return ds;
 }
 
 /** Construct an empty, unnamed QM/MM forcefield */
 QMMMFF::QMMMFF() : ConcreteProperty<QMMMFF,G2FF>(), FF3D(), 
-                   QMMMElecEmbedPotential()
+                   QMMMElecEmbedPotential(), intermolecular_only(false)
 {
     this->_pvt_updateName();
 }
 
 /** Construct an empty, named QM/MM forcefield */
 QMMMFF::QMMMFF(const QString &name) : ConcreteProperty<QMMMFF,G2FF>(), FF3D(), 
-                                      QMMMElecEmbedPotential()
+                                      QMMMElecEmbedPotential(), intermolecular_only(false)
 {
     G2FF::setName(name);
 }
@@ -108,7 +116,8 @@ QMMMFF::QMMMFF(const QMMMFF &other)
        : ConcreteProperty<QMMMFF,G2FF>(other), FF3D(),
          QMMMElecEmbedPotential(other),
          ffcomponents(other.ffcomponents),
-         qmmols(other.qmmols), mmmols(other.mmmols)
+         qmmols(other.qmmols), mmmols(other.mmmols),
+         intermolecular_only(other.intermolecular_only)
 {}
 
 /** Destructor */
@@ -125,6 +134,8 @@ QMMMFF& QMMMFF::operator=(const QMMMFF &other)
         
         qmmols = other.qmmols;
         mmmols = other.mmmols;
+        
+        intermolecular_only = other.intermolecular_only;
     }
     
     return *this;
@@ -133,13 +144,13 @@ QMMMFF& QMMMFF::operator=(const QMMMFF &other)
 /** Comparison operator */
 bool QMMMFF::operator==(const QMMMFF &other) const
 {
-    return FF::operator==(other);
+    return FF::operator==(other) and intermolecular_only == other.intermolecular_only;
 }
 
 /** Comparison operator */
 bool QMMMFF::operator!=(const QMMMFF &other) const
 {
-    return FF::operator!=(other);
+    return FF::operator!=(other) or intermolecular_only != other.intermolecular_only;
 }
 
 void QMMMFF::throwInvalidGroup(int group_id) const
@@ -184,6 +195,12 @@ MolarEnergy QMMMFF::zeroEnergy() const
     return QMMMElecEmbedPotential::zeroEnergy();
 }
 
+/** Return the amount by which the MM charges are scaled in the QM/MM interaction */
+double QMMMFF::chargeScalingFactor() const
+{
+    return QMMMElecEmbedPotential::chargeScalingFactor();
+}
+
 /** Set the space within which the QM molecules exist */
 bool QMMMFF::setSpace(const Space &space)
 {
@@ -210,7 +227,42 @@ bool QMMMFF::setQuantumProgram(const QMProgram &qmprog)
     so that it is comparable to an MM energy */
 bool QMMMFF::setZeroEnergy(MolarEnergy zero_energy)
 {
+    if (intermolecular_only.value())
+        //do not set zero energy if we are only calculating intermolecular energies
+        return false;
+    
     return QMMMElecEmbedPotential::setZeroEnergy(zero_energy);
+}
+
+/** Set the scaling factor for the MM charges in the QM/MM interaction */
+bool QMMMFF::setChargeScalingFactor(double scale_factor)
+{
+    return QMMMElecEmbedPotential::setChargeScalingFactor(scale_factor);
+}
+
+/** Set whether or not we only calculate the intermolecular energy
+    (energy between the QM and MM atoms) */
+bool QMMMFF::setIntermolecularOnly(bool on)
+{
+    if (intermolecular_only.value() != on)
+    {
+        if (on)
+            //there is no zero energy if we are only calculating intermolecular energies
+            setZeroEnergy( MolarEnergy(0) );
+
+        intermolecular_only = on;
+        mustNowRecalculateFromScratch();
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Return whether or not we only calculate the intermolecular energy
+    (energy between the QM and MM atoms) */
+bool QMMMFF::isIntermolecularOnly() const
+{
+    return intermolecular_only;
 }
 
 /** Set the property 'name' to the value 'value'
@@ -221,7 +273,10 @@ bool QMMMFF::setZeroEnergy(MolarEnergy zero_energy)
 */
 bool QMMMFF::setProperty(const QString &name, const Property &value)
 {
-    return QMMMElecEmbedPotential::setProperty(name, value);
+    if (name == "intermolecularOnly")
+        return this->setIntermolecularOnly(value.asA<BooleanProperty>().value());
+    else
+        return QMMMElecEmbedPotential::setProperty(name, value);
 }
 
 /** Return the value of the property with name 'name'
@@ -230,20 +285,28 @@ bool QMMMFF::setProperty(const QString &name, const Property &value)
 */
 const Property& QMMMFF::property(const QString &name) const
 {
-    return QMMMElecEmbedPotential::property(name);
+    if (name == "intermolecularOnly")
+        return intermolecular_only;
+    else
+        return QMMMElecEmbedPotential::property(name);
 }
 
 /** Return whether or not this forcefield contains a property
     called 'name' */
 bool QMMMFF::containsProperty(const QString &name) const
 {
-    return QMMMElecEmbedPotential::containsProperty(name);
+    return name == "intermolecularOnly" or QMMMElecEmbedPotential::containsProperty(name);
 }
+
+static Properties global_props;
 
 /** Return the properties available in this forcefield (and their values) */
 const Properties& QMMMFF::properties() const
 {
-    return QMMMElecEmbedPotential::properties();
+    //dangerous, but will be fixed by me getting rid of const Properties& from the API!
+    global_props = QMMMElecEmbedPotential::properties();
+    global_props.setProperty("intermolecularOnly", intermolecular_only);
+    return global_props;
 }
 
 /** Signal that this forcefield must recalculate the energy from scratch */
@@ -258,7 +321,11 @@ void QMMMFF::mustNowRecalculateFromScratch()
     the optional 'scale_force' */
 void QMMMFF::force(ForceTable &forcetable, double scale_force)
 {
-    QMMMElecEmbedPotential::calculateForce(qmmols, mmmols, forcetable, scale_force);
+    if (intermolecular_only.value())
+        throw SireError::unsupported( QObject::tr("Support for QM/MM intermolecular "
+                 "only forces is not yet available."), CODELOC );
+    else
+        QMMMElecEmbedPotential::calculateForce(qmmols, mmmols, forcetable, scale_force);
 }
 
 /** Calculate the QM/MM forces on the molecules in this forcefield
@@ -268,10 +335,14 @@ void QMMMFF::force(ForceTable &forcetable, double scale_force)
 void QMMMFF::force(ForceTable &forcetable, const Symbol &symbol,
                    double scale_force)
 {
-    QMMMElecEmbedPotential::calculateForce(qmmols, mmmols,
-                                           forcetable, symbol,
-                                           this->components(),
-                                           scale_force);
+    if (intermolecular_only.value())
+        throw SireError::unsupported( QObject::tr("Support for QM/MM intermolecular "
+                 "only forces is not yet available."), CODELOC );
+    else
+        QMMMElecEmbedPotential::calculateForce(qmmols, mmmols,
+                                               forcetable, symbol,
+                                               this->components(),
+                                               scale_force);
 }
 
 /** This function is called whenever the underlying potential is changed */
@@ -292,6 +363,15 @@ void QMMMFF::recalculateEnergy()
     QMEnergy nrg(0);
 
     QMMMElecEmbedPotential::calculateEnergy(qmmols, mmmols, nrg);
+    
+    if (intermolecular_only)
+    {
+        //also calculate only the QM energy, and subtract this from the QM/MM energy
+        QMEnergy qmnrg(0);
+        QMMMElecEmbedPotential::calculateEnergy(qmmols, MMMolecules(), qmnrg);
+        
+        nrg -= qmnrg;
+    }
     
     this->components().setEnergy(*this, nrg);
     this->setClean();

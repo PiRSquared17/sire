@@ -33,6 +33,10 @@
 
 #include "SireUnits/units.h"
 
+#include "SireMol/atomelements.h"
+
+#include "SireBase/numberproperty.h"
+
 #include "SireFF/errors.h"
 #include "SireBase/errors.h"
 
@@ -64,9 +68,10 @@ static const RegisterMetaType<QMMMElecEmbedPotential> r_qmmm( MAGIC_ONLY, NO_ROO
 QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds,
                                       const QMMMElecEmbedPotential &qmmm)
 {
-    writeHeader(ds, r_qmmm, 1);
+    writeHeader(ds, r_qmmm, 2);
     
-    ds << static_cast<const QMMMPotential<QMPotential,InterCoulombPotential>&>(qmmm);
+    ds << static_cast<const QMMMPotential<QMPotential,InterCoulombPotential>&>(qmmm)
+       << qmmm.chg_sclfac;
     
     return ds;
 }
@@ -77,11 +82,16 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds,
 {
     VersionID v = readHeader(ds, r_qmmm);
     
-    if (v == 1)
+    if (v <= 2)
     {
         SharedDataStream sds(ds);
     
         ds >> static_cast<QMMMPotential<QMPotential,InterCoulombPotential>&>(qmmm);
+
+        if (v == 2)
+            ds >> qmmm.chg_sclfac;
+        else
+            qmmm.chg_sclfac = 1;
 
         qmmm.mergeProperties();
     }
@@ -102,11 +112,13 @@ void QMMMElecEmbedPotential::mergeProperties()
     props.setProperty("switchingFunction", this->switchingFunction());
     props.setProperty("quantum program", this->quantumProgram());
     props.setProperty("zero energy", QMPotential::properties().property("zero energy"));
+    props.setProperty("chargeScalingFactor", NumberProperty(chg_sclfac));
 }
 
 /** Constructor */
 QMMMElecEmbedPotential::QMMMElecEmbedPotential()
-                       : QMMMPotential<QMPotential,InterCoulombPotential>()
+                       : QMMMPotential<QMPotential,InterCoulombPotential>(),
+                         chg_sclfac(1.0)
 {
     this->mergeProperties();
 }
@@ -114,7 +126,7 @@ QMMMElecEmbedPotential::QMMMElecEmbedPotential()
 /** Copy constructor */
 QMMMElecEmbedPotential::QMMMElecEmbedPotential(const QMMMElecEmbedPotential &other)
                        : QMMMPotential<QMPotential,InterCoulombPotential>(other),
-                         props(other.props)
+                         props(other.props), chg_sclfac(other.chg_sclfac)
 {}
 
 /** Destructor */
@@ -127,6 +139,7 @@ QMMMElecEmbedPotential::operator=(const QMMMElecEmbedPotential &other)
 {
     QMMMPotential<QMPotential,InterCoulombPotential>::operator=(other);
     props = other.props;
+    chg_sclfac = other.chg_sclfac;
     
     return *this;
 }
@@ -158,6 +171,12 @@ const QMProgram& QMMMElecEmbedPotential::quantumProgram() const
 MolarEnergy QMMMElecEmbedPotential::zeroEnergy() const
 {
     return QMPotential::zeroEnergy();
+}
+
+/** Return the amount by which the MM charges are scaled in the QM/MM interaction */
+double QMMMElecEmbedPotential::chargeScalingFactor() const
+{
+    return chg_sclfac;
 }
 
 /** Set the space within which all of the molecules in this potential
@@ -216,6 +235,19 @@ bool QMMMElecEmbedPotential::setZeroEnergy(MolarEnergy zero_energy)
         return false;
 }
 
+/** Set the scaling factor for the MM charges in the QM/MM intermolecular interaction */
+bool QMMMElecEmbedPotential::setChargeScalingFactor(double scale_factor)
+{
+    if (scale_factor != chg_sclfac)
+    {
+        chg_sclfac = scale_factor;
+        this->mergeProperties();
+        return true;
+    }
+    else
+        return false;
+}
+
 /** Set the property called 'name' to the value 'value'
 
     \throw SireBase::missing_property
@@ -232,7 +264,11 @@ bool QMMMElecEmbedPotential::setProperty(const QString &name, const Property &va
                 .arg(Sire::toString(props.propertyKeys())),
                     CODELOC );
 
-    if (QMPotential::containsProperty(name))
+    if (name == "chargeScalingFactor")
+    {
+        return this->setChargeScalingFactor( value.asA<NumberProperty>().value() );
+    }
+    else if (QMPotential::containsProperty(name))
     {
         if (QMPotential::setProperty(name, value))
         {
@@ -347,6 +383,12 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
         const CoordGroup *cgroup_array = mmmol.coordinates().constData();
         const MMParameters::Array *charge_array = mmmol.parameters()
                                                        .atomicParameters().constData();
+
+        // nasty code - I need the atom elements and am going to have to assume they
+        // are correct. I need to update the QMMM potential to properly get the
+        // charge and element property from each atom so that this nasty hack is not needed.
+        const AtomElements &elems = mmmol.molecule().molecule().property("element")
+                                         .asA<AtomElements>();
         
         BOOST_ASSERT( ngroups == mmmol.parameters().atomicParameters().nArrays() );
         
@@ -368,18 +410,19 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
 
             double mindist = std::numeric_limits<double>::max();
 
+            const CGIdx cgidx = mmmol.cgIdx(j);
+
             for (QList< tuple<double,CoordGroup> >::const_iterator
                                                         it = mapped_groups.constBegin();
                  it != mapped_groups.constEnd();
                  ++it)
             {
                 const double sqrt_4pieps0 = std::sqrt(SireUnits::four_pi_eps0);
-                const double bohr_factor = 1.0 / bohr_radii;
 
                 //get any scaling feather factor for this group (and to convert
                 //the charge from reduced units to mod_electrons)
                 double scl = switchfunc.electrostaticScaleFactor( Length(it->get<0>()) )
-                                   * sqrt_4pieps0;
+                                   * sqrt_4pieps0 * chg_sclfac;
                                    
                 if (scl == 0)
                     continue;
@@ -404,15 +447,16 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
                     
                     if (chg != 0)
                     {
+                        const CGAtomIdx cgatomidx(cgidx, Index(k));
+                    
                         if (index_this_group and (lattice_indicies != 0))
-                            lattice_idxs.set( CGAtomIdx(mmmol.cgIdx(j),Index(k)), 
-                                              lattice_charges.count() );
+                            lattice_idxs.set( cgatomidx, lattice_charges.count() );
                         
                         //lattice charges are electron charges, with coordinates
-                        //in bohr
+                        //in angstroms
                         lattice_charges.add( 
-                                LatticeCharge(bohr_factor * mapped_group_array[k], 
-                                              chg) );
+                                LatticeCharge(mapped_group_array[k],
+                                              chg, elems[cgatomidx]) );
                     }
                 }
             }
@@ -420,6 +464,47 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
         
         if (lattice_indicies != 0)
             lattice_indicies->insert(mmmol.molecule().number(), lattice_idxs);
+    }
+    
+    //get the limit of the number of MM atoms for the used number of QM atoms
+    const int num_mm_limit = quantumProgram().numberOfMMAtomsLimit(qmgroup.count());
+
+    if (num_mm_limit > 0 and num_mm_limit < lattice_charges.count())
+    {
+        //create a QMap indexed by distance, as this will sort by distance
+        QMultiMap<float,int> distances;
+        
+        Cartesian space;
+        
+        for (int i=0; i<lattice_charges.count(); ++i)
+        {
+            const Vector coords( lattice_charges[i].x(), lattice_charges[i].y(),
+                                 lattice_charges[i].z() );
+        
+            float dist = space.minimumDistance( qmgroup.aaBox(), coords );
+
+            distances.insert( dist, i );
+        }
+        
+        int n_to_remove = lattice_charges.count() - num_mm_limit;
+        
+        QMultiMap<float,int>::const_iterator it = distances.constEnd();
+        
+        float max_distance = 0;
+        
+        for (int i=0; i<n_to_remove; ++i)
+        {
+            --it;
+            lattice_charges.setCharge(it.value(), 0.0);
+            max_distance = it.key();
+        }
+
+        //there are too many MM atoms. We have to remove MM atoms, starting
+        //from the furthest ones out, until we are under the limit
+        qDebug() << "WARNING: Number of MM atoms is too high." << lattice_charges.count()
+                 << num_mm_limit;
+        qDebug() << "All MM atoms beyond a distance of" << max_distance
+                 << "A have had their charges set to 0.";
     }
     
     return lattice_charges;

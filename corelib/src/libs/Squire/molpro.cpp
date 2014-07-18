@@ -72,7 +72,7 @@ static const RegisterMetaType<Molpro> r_molpro;
 /** Serialise to a binary datastream */
 QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const Molpro &molpro)
 {
-    writeHeader(ds, r_molpro, 2);
+    writeHeader(ds, r_molpro, 3);
     
     SharedDataStream sds(ds);
     
@@ -80,7 +80,8 @@ QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const Molpro &molpro)
         << molpro.molpro_exe << molpro.basis_set << molpro.qm_method
         << molpro.energy_template << molpro.force_template
         << molpro.total_charge << molpro.memory_requirement
-        << molpro.max_molpro_runtime;
+        << molpro.max_molpro_runtime
+        << molpro.lattice_in_bohr_radii;
         
     return ds;
 }
@@ -90,7 +91,7 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, Molpro &molpro)
 {
     VersionID v = readHeader(ds, r_molpro);
     
-    if (v <= 2)
+    if (v <= 3)
     {
         SharedDataStream sds(ds);
         
@@ -98,18 +99,24 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, Molpro &molpro)
             >> molpro.molpro_exe >> molpro.basis_set >> molpro.qm_method
             >> molpro.energy_template >> molpro.force_template
             >> molpro.total_charge >> molpro.memory_requirement;
-            
+        
+        if (v == 3)
+        {
+            sds >> molpro.max_molpro_runtime >> molpro.lattice_in_bohr_radii;
+        }
         if (v == 2)
         {
             sds >> molpro.max_molpro_runtime;
+            molpro.lattice_in_bohr_radii = true;
         }
         else 
         {
             molpro.max_molpro_runtime = 15 * 60 * 1000;
+            molpro.lattice_in_bohr_radii = true;
         }
     }
     else
-        throw version_error(v, "1,2", r_molpro, CODELOC);
+        throw version_error(v, "1,2,3", r_molpro, CODELOC);
         
     return ds;
 }
@@ -139,7 +146,8 @@ Molpro::Molpro()
          energy_template(default_energy_template),
          force_template(default_force_template),
          total_charge(0), memory_requirement( 8 * 1024 * 1024 * 4 ),
-         max_molpro_runtime( 15 * 60 * 1000 )
+         max_molpro_runtime( 15 * 60 * 1000 ),
+         lattice_in_bohr_radii(true)
 {}
 
 /** Construct, passing in the location of the Molpro executable */
@@ -149,7 +157,8 @@ Molpro::Molpro(const QString &molpro)
          energy_template(default_energy_template),
          force_template(default_force_template),
          total_charge(0), memory_requirement( 8 * 1024 * 1024 * 4 ),
-         max_molpro_runtime( 15 * 60 * 1000 )
+         max_molpro_runtime( 15 * 60 * 1000 ),
+         lattice_in_bohr_radii(true)
 {
     this->setExecutable(molpro);
 }
@@ -163,7 +172,8 @@ Molpro::Molpro(const Molpro &other)
          force_template(other.force_template),
          total_charge(other.total_charge),
          memory_requirement(other.memory_requirement),
-         max_molpro_runtime(other.max_molpro_runtime)
+         max_molpro_runtime(other.max_molpro_runtime),
+         lattice_in_bohr_radii(other.lattice_in_bohr_radii)
 {}
 
 /** Destructor */
@@ -184,6 +194,7 @@ Molpro& Molpro::operator=(const Molpro &other)
         total_charge = other.total_charge;
         memory_requirement = other.memory_requirement;
         max_molpro_runtime = other.max_molpro_runtime;
+        lattice_in_bohr_radii = other.lattice_in_bohr_radii;
     }
     
     return *this;
@@ -201,7 +212,8 @@ bool Molpro::operator==(const Molpro &other) const
             force_template == other.force_template and
             total_charge == other.total_charge and
             memory_requirement == other.memory_requirement and
-            max_molpro_runtime == other.max_molpro_runtime);
+            max_molpro_runtime == other.max_molpro_runtime and
+            lattice_in_bohr_radii == other.lattice_in_bohr_radii);
 }
 
 /** Comparison operator */
@@ -237,6 +249,20 @@ void Molpro::setEnvironment(const QString &variable, const QString &value)
 const QHash<QString,QString>& Molpro::environment() const
 {
     return env_variables;
+}
+
+/** Tell Sire that Molpro requires lattice charges to be in units of bohr radii
+    in the command file (otherwise they are in angstroms) */
+void Molpro::setLatticeInBohrRadii(bool on)
+{
+    lattice_in_bohr_radii = on;
+}
+
+/** Return whether or not Sire will write the lattice charge coordinates in units
+    of bohr radii (otherwise they will be in angstroms) */
+bool Molpro::latticeInBohrRadii() const
+{
+    return lattice_in_bohr_radii;
 }
 
 /** Return the value of the explicitly set environmental variable 'variable'.
@@ -290,6 +316,12 @@ void Molpro::setTotalCharge(int charge)
 int Molpro::totalCharge() const
 {
     return total_charge;
+}
+
+QString Molpro::toString() const
+{
+    return QObject::tr("Molpro( method = %1, basis set = %2 )")
+             .arg(method()).arg(basisSet());
 }
 
 /** Set the memory requirement (in bytes) that will be reserved for use
@@ -477,12 +509,30 @@ QString Molpro::createCommandFile(QString cmd_template,
         {
             const LatticeCharge &charge = charges_array[i];
         
+            //note that lattice charges in molpro must be given coordinates
+            //in bohr!
+        
             if (charge.charge() != 0)
-                charges.append( QString("%1,%2,%3,%4")
+            {
+                if (lattice_in_bohr_radii)
+                {
+                    const double bohr_factor = 1.0 / bohr_radii;
+                
+                    charges.append( QString("%1,%2,%3,%4")
+                                    .arg(QString::number(bohr_factor*charge.x(), 'f', 8),
+                                         QString::number(bohr_factor*charge.y(), 'f', 8),
+                                         QString::number(bohr_factor*charge.z(), 'f', 8),
+                                         QString::number(charge.charge(), 'f', 8) ) );
+                }
+                else
+                {
+                    charges.append( QString("%1,%2,%3,%4")
                                     .arg(QString::number(charge.x(), 'f', 8),
                                          QString::number(charge.y(), 'f', 8),
                                          QString::number(charge.z(), 'f', 8),
                                          QString::number(charge.charge(), 'f', 8) ) );
+                }
+            }
         }
         
         cmd_template.replace( QLatin1String("@NUM_LATTICE_POINTS@"),

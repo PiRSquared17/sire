@@ -109,6 +109,11 @@ public:
                                              QString flag_cutting="perresidue") const;
 
 private:
+    tuple<MoleculeGroup,SpacePtr> _pvt_readCrdTop(const QString &crdfile,
+                        const QString &topfile,
+                        QString flag_cutting="perresidue") const;
+  
+
     double coul_14scl;
     double lj_14scl;
 };
