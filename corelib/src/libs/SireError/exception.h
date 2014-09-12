@@ -52,6 +52,37 @@ QDataStream& operator>>(QDataStream&, SireError::exception&);
 namespace SireError
 {
 
+/** This is a small class that is used to ensure
+    that fast exceptions are switched off when no longer
+    needed */
+class SIREERROR_EXPORT FastExceptionFlag
+{
+public:
+    FastExceptionFlag();
+    FastExceptionFlag(const FastExceptionFlag &other);
+    ~FastExceptionFlag();
+    
+    FastExceptionFlag& operator=(const FastExceptionFlag &other);
+    
+    void disable();
+
+private:
+    friend class exception;
+    static FastExceptionFlag construct();
+
+    class FastExceptionFlagData
+    {
+    public:
+        FastExceptionFlagData();
+        ~FastExceptionFlagData();
+    };
+    
+    boost::shared_ptr<FastExceptionFlagData> d;
+
+    /** Whether or not fast exceptions are enabled */
+    static bool enable_fast_exceptions;
+};
+
 /** This is the base class of all Sire specific exceptions. The python wrapping
     allows for automatic conversion of any exception derived from this base.
     The exception system in Sire is very basic, namely there are a collection
@@ -89,6 +120,8 @@ public:
     static boost::shared_ptr<SireError::exception> unpack(const QByteArray &data);
     
     static void unpackAndThrow(const QByteArray &errordata);
+
+    static FastExceptionFlag enableFastExceptions();
 
     QString error() const throw();
     QString from() const throw();

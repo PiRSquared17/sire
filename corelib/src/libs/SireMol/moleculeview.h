@@ -114,6 +114,8 @@ public:
     /** Return the atoms that are selected as part of this view */
     virtual AtomSelection selection() const=0;
 
+    bool isNull() const;
+
     Atom atom(const AtomID &atomid, const PropertyMap &map = PropertyMap()) const;
     
     Selector<Atom> atoms(const AtomID &atomid,

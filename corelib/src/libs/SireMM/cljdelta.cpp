@@ -48,6 +48,8 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJDelta &delta)
     
     SharedDataStream sds(ds);
     
+    sds << delta.old_atoms << delta.new_atoms << delta.idnum;
+    
     return ds;
 }
 
@@ -59,6 +61,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJDelta &delta)
     {
         SharedDataStream sds(ds);
         
+        sds >> delta.old_atoms >> delta.new_atoms >> delta.idnum;
     }
     else
         throw version_error(v, "1", r_delta, CODELOC);
@@ -66,179 +69,25 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJDelta &delta)
     return ds;
 }
 
-/** Construct from the passed data, but re-using the memory already allocated
-    for this delta */
-void CLJDelta::buildFrom(const CLJBoxes &boxes, const QVector<CLJBoxIndex> &indicies,
-                         const MoleculeView &new_molecule, CLJAtoms::ID_SOURCE source,
-                         const PropertyMap &map)
-{
-    CLJBoxIndex min_box;
-    CLJBoxIndex max_box;
-
-    //how many changed atoms are there?
-    const int nold = CLJBoxIndex::countNonDummies(indicies);
-    
-    //construct the new molecule
-    new_atoms.reconstruct(new_molecule, source, map);
-
-    const int nnew = new_atoms.nAtoms();
-
-    if (nnew > 0)
-    {
-        //box up each of the new atoms
-        const MultiFloat *x = new_atoms.x().constData();
-        const MultiFloat *y = new_atoms.y().constData();
-        const MultiFloat *z = new_atoms.z().constData();
-        const MultiInt *id = new_atoms.ID().constData();
-        
-        const qint32 id_of_dummy = CLJAtoms::idOfDummy()[0];
-        
-        const float inv_length = 1.0f / boxes.length().value();
-        
-        for (int i=0; i<new_atoms.x().count(); ++i)
-        {
-            for (int j=0; j<MultiFloat::count(); ++j)
-            {
-                if (id[i][j] != id_of_dummy)
-                {
-                    CLJBoxIndex idx = CLJBoxIndex::createWithInverseBoxLength(
-                                                x[i][j], y[i][j], z[i][j], inv_length);
-                    
-                    if (min_box.isNull())
-                    {
-                        min_box = idx;
-                        max_box = idx;
-                    }
-                    else
-                    {
-                        min_box = min_box.min(idx);
-                        max_box = max_box.max(idx);
-                    }
-                }
-            }
-        }
-    }
-
-    changed_atoms.resize(nold + nnew);
-    changed_atoms.copyIn(new_atoms);
-
-    //now grab a copy of all of the old atoms, putting the negative
-    //into changed_atoms and working out the range of boxes covered by
-    //these atoms
-    if (not indicies.isEmpty())
-    {
-        int old_idx = nnew;
-    
-        //find the range of boxes occupied by the atoms and copy out the data
-        const CLJBoxIndex *indicies_array = indicies.constData();
-
-        for (int i=0; i<indicies.count(); ++i)
-        {
-            const CLJBoxIndex &index = indicies_array[i];
-            
-            if (not index.isNull())
-            {
-            
-                if (min_box.isNull())
-                {
-                    min_box = index;
-                    max_box = min_box;
-                }
-                else
-                {
-                    min_box = min_box.min(index);
-                    max_box = max_box.max(index);
-                }
-                
-                //copy in the data from the ith old atom
-                CLJAtom old_atom = boxes[index];
-                
-                if (not old_atom.isDummy())
-                {
-                    changed_atoms.set(old_idx, old_atom.negate());
-                    old_idx += 1;
-                }
-            }
-        }
-    }
-
-    old_indicies = indicies;
-    
-    //now work out the range of boxes covered by these atoms
-    box_index = min_box.boxOnly();
-    nbox_x = max_box.i() - min_box.i() + 1;
-    nbox_y = max_box.j() - min_box.j() + 1;
-    nbox_z = max_box.k() - min_box.k() + 1;
-    is_single_box = (max_box.i() == min_box.i()) and
-                    (max_box.j() == min_box.j()) and
-                    (max_box.k() == min_box.k());
-    
-    //save the box length
-    box_length = boxes.length().value();
-}
-
 /** Null constructor */
-CLJDelta::CLJDelta() : nbox_x(0), nbox_y(0), nbox_z(0), is_single_box(0), idnum(0), box_length(0)
+CLJDelta::CLJDelta() : idnum(-1)
 {}
 
-/** Construct the delta that changes from the atoms at indicies 'old_atoms' in the 
-    CLJBoxes 'boxes' to the atoms in view 'new_atoms', using the optionally supplied
-    property map to extract the necessary properties */
-CLJDelta::CLJDelta(quint32 id, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
-                   const MoleculeView &new_atoms, const PropertyMap &map)
-         : nbox_x(0), nbox_y(0), nbox_z(0), is_single_box(0), idnum(id), box_length(0)
+/** Construct the delta that changes from 'oldatoms' to 'newatoms' */
+CLJDelta::CLJDelta(qint32 num, const CLJAtoms &oldatoms, const CLJAtoms &newatoms)
+         : old_atoms(oldatoms), new_atoms(newatoms), idnum(num)
 {
-    this->buildFrom(boxes, old_atoms, new_atoms, CLJAtoms::USE_MOLNUM, map);
-}
-
-/** Construct the delta that changes from the atoms at indicies 'old_atoms' in the 
-    CLJBoxes 'boxes' to the atoms in view 'new_atoms', using the optionally supplied
-    property map to extract the necessary properties */
-void CLJDelta::reconstruct(quint32 id, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
-                           const MoleculeView &new_atoms, const PropertyMap &map)
-{
-    nbox_x = 0;
-    nbox_y = 0;
-    nbox_z = 0;
-    is_single_box = 0;
-    idnum = id;
-    box_length = 0;
-    this->buildFrom(boxes, old_atoms, new_atoms, CLJAtoms::USE_MOLNUM, map);
-}
-
-/** Construct the delta that changes from the atoms at indicies 'old_atoms' in the 
-    CLJBoxes 'boxes' to the atoms in view 'new_atoms', using the optionally supplied
-    property map to extract the necessary properties */
-CLJDelta::CLJDelta(quint32 id, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
-                   const MoleculeView &new_atoms, CLJAtoms::ID_SOURCE source,
-                   const PropertyMap &map)
-         : nbox_x(0), nbox_y(0), nbox_z(0), is_single_box(0), idnum(id), box_length(0)
-{
-    this->buildFrom(boxes, old_atoms, new_atoms, source, map);
-}
-
-/** Construct the delta that changes from the atoms at indicies 'old_atoms' in the 
-    CLJBoxes 'boxes' to the atoms in view 'new_atoms', using the optionally supplied
-    property map to extract the necessary properties */
-void CLJDelta::reconstruct(quint32 id, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
-                           const MoleculeView &new_atoms, CLJAtoms::ID_SOURCE source,
-                           const PropertyMap &map)
-{
-    nbox_x = 0;
-    nbox_y = 0;
-    nbox_z = 0;
-    is_single_box = 0;
-    idnum = id;
-    box_length = 0;
-    this->buildFrom(boxes, old_atoms, new_atoms, source, map);
+    if (idnum < 0)
+    {
+        idnum = -1;
+        old_atoms = CLJAtoms();
+        new_atoms = CLJAtoms();
+    }
 }
 
 /** Copy constructor */
 CLJDelta::CLJDelta(const CLJDelta &other)
-         : new_atoms(other.new_atoms), changed_atoms(other.changed_atoms),
-           box_index(other.box_index), old_indicies(other.old_indicies),
-           nbox_x(other.nbox_x), nbox_y(other.nbox_y), nbox_z(other.nbox_z),
-           is_single_box(other.is_single_box), idnum(other.idnum), box_length(other.box_length)
+         : old_atoms(other.old_atoms), new_atoms(other.new_atoms), idnum(other.idnum)
 {}
 
 /** Destructor */
@@ -250,16 +99,9 @@ CLJDelta& CLJDelta::operator=(const CLJDelta &other)
 {
     if (this != &other)
     {
+        old_atoms = other.old_atoms;
         new_atoms = other.new_atoms;
-        changed_atoms = other.changed_atoms;
-        box_index = other.box_index;
-        old_indicies = other.old_indicies;
-        nbox_x = other.nbox_x;
-        nbox_y = other.nbox_y;
-        nbox_z = other.nbox_z;
-        is_single_box = other.is_single_box;
         idnum = other.idnum;
-        box_length = other.box_length;
     }
     
     return *this;
@@ -269,11 +111,9 @@ CLJDelta& CLJDelta::operator=(const CLJDelta &other)
 bool CLJDelta::operator==(const CLJDelta &other) const
 {
     return this == &other or
-           (new_atoms == other.new_atoms and changed_atoms == other.changed_atoms and
-            box_index == other.box_index and old_indicies == other.old_indicies and
-            nbox_x == other.nbox_x and nbox_y == other.nbox_y and nbox_z == other.nbox_z and
-            is_single_box == other.is_single_box and idnum == other.idnum and
-            box_length == other.box_length);
+           (new_atoms == other.new_atoms and
+            old_atoms == other.old_atoms and
+            idnum == other.idnum);
 }
 
 /** Comparison operator */
@@ -292,147 +132,383 @@ const char* CLJDelta::what() const
     return CLJDelta::typeName();
 }
 
+bool CLJDelta::isNull() const
+{
+    return idnum < 0;
+}
+
+/** Assert that this CLJDelta is equal to 'other' */
+void CLJDelta::assertIdenticalTo(const CLJDelta &other) const
+{
+    if (this->operator!=(other))
+    {
+        QStringList differences;
+        
+        for (int i=0; i<qMin(old_atoms.count(),other.old_atoms.count()); ++i)
+        {
+            if (old_atoms.at(i) != other.old_atoms.at(i))
+            {
+                differences.append( QObject::tr(
+                        "OLD %1: %2 vs. %3")
+                            .arg(i).arg(old_atoms.at(i).toString())
+                            .arg(other.old_atoms.at(i).toString()) );
+            }
+        }
+
+        if (old_atoms.count() != other.old_atoms.count())
+            differences.append( QObject::tr(
+                    "OLD: number of atoms - %1 vs. %2")
+                        .arg(old_atoms.count()).arg(other.old_atoms.count()) );
+        
+        for (int i=0; i<qMin(new_atoms.count(),other.new_atoms.count()); ++i)
+        {
+            if (new_atoms.at(i) != other.new_atoms.at(i))
+            {
+                differences.append( QObject::tr(
+                        "NEW %1: %2 vs. %3")
+                            .arg(i).arg(new_atoms.at(i).toString())
+                            .arg(other.new_atoms.at(i).toString()) );
+            }
+        }
+
+        if (new_atoms.count() != other.new_atoms.count())
+            differences.append( QObject::tr(
+                    "NEW: number of atoms - %1 vs. %2")
+                        .arg(new_atoms.count()).arg(other.new_atoms.count()) );
+    
+        if (not differences.isEmpty())
+            throw SireError::assertation_failed( QObject::tr(
+                    "This CLJDelta is not equal to the other. Difference are:\n%1\n")
+                        .arg(differences.join("\n")), CODELOC );
+    }
+}
+
+/** Return whether or not this change is empty (has no atoms or no change) */
+bool CLJDelta::isEmpty() const
+{
+    return old_atoms == new_atoms;
+}
+
 QString CLJDelta::toString() const
 {
-    return QObject::tr("CLJDelta( nChanged() = %1, nBoxes() = %2 )")
-                .arg(changedAtoms().count()).arg(nBoxes());
+    if (isNull())
+        return QObject::tr("CLJDelta::null");
+    else
+        return QObject::tr("CLJDelta( nChanged() = %1 )")
+                    .arg(changedAtoms().count());
 }
 
-/** Return the total number of boxes covered by these atoms */
-int CLJDelta::nBoxes() const
+/** Return difference between the old and new atoms. This returns the change
+    as only the atoms that have changed, with the parameters of the old atoms
+    negated so that a delta energy can be calculated easily */
+CLJAtoms CLJDelta::changedAtoms() const
 {
-    return int(nbox_x) * int(nbox_y) * int(nbox_z);
-}
-
-/** Return the index of the minimum box occupied by atoms of this delta */
-CLJBoxIndex CLJDelta::minBox() const
-{
-    return box_index.boxOnly();
-}
-
-/** Return the index of the maximum box occupied by atoms of this delta */
-CLJBoxIndex CLJDelta::maxBox() const
-{
-    return CLJBoxIndex( box_index.i() + nbox_x - 1,
-                        box_index.j() + nbox_y - 1,
-                        box_index.k() + nbox_z - 1 );
-}
-
-/** Return the old version of the changed atoms */
-CLJAtoms CLJDelta::oldAtoms() const
-{
-    //the old atoms are the ones after the new atoms in 'changed_atoms'
-    if (changed_atoms.isEmpty())
-        return QVector<CLJAtom>();
+    //work out which atoms have changed and which ones haven't...
+    QVarLengthArray<CLJAtom> changed_atoms;
     
-    const int nold = CLJBoxIndex::countNonDummies(old_indicies);
-    
-    if (nold == 0)
-        return QVector<CLJAtom>();
-    
-    const int nnew = new_atoms.nAtoms();
-    
-    if (changed_atoms.nAtoms() - nnew != nold)
-        throw SireError::program_bug( QObject::tr(
-                "Something wrong? %1 - %2 != %3")
-                    .arg(changed_atoms.nAtoms())
-                    .arg(nnew)
-                    .arg(nold), CODELOC );
-    
-    CLJAtoms old_atoms;
-    old_atoms.resize(nold);
-    
-    for (int i=0; i<nold; ++i)
+    for (int i=0; i<qMin(old_atoms.count(),new_atoms.count()); ++i)
     {
-        old_atoms.set(i, changed_atoms[nnew + i].negate());
+        CLJAtom old_atom = old_atoms.at(i);
+        CLJAtom new_atom = new_atoms.at(i);
+        
+        if (old_atom != new_atom)
+        {
+            if (not old_atom.isDummy())
+                changed_atoms.append( old_atom.negate() );
+            
+            if (not new_atom.isDummy())
+                changed_atoms.append( new_atom );
+        }
+    }
+    
+    if (old_atoms.count() > new_atoms.count())
+    {
+        for (int i=new_atoms.count(); i<old_atoms.count(); ++i)
+        {
+            CLJAtom old_atom = old_atoms.at(i);
+            
+            if (not old_atom.isDummy())
+                changed_atoms.append( old_atom.negate() );
+        }
+    }
+    else if (new_atoms.count() > old_atoms.count())
+    {
+        for (int i=old_atoms.count(); i<new_atoms.count(); ++i)
+        {
+            CLJAtom new_atom = new_atoms.at(i);
+            
+            if (not new_atom.isDummy())
+                changed_atoms.append( new_atom );
+        }
     }
 
-    return old_atoms;
+    return CLJAtoms(changed_atoms.constData(), changed_atoms.count());
 }
 
-/** Merge together 'n' deltas from the passed array into a single delta.
-    If 'changes_only' is true, then this will only merge together the changed
-    atoms with box and will ignore the bookkeeping data. The resulting delta
-    would thus only be useful for delta energy calculations */
-CLJDelta CLJDelta::merge(const CLJDelta *deltas, int n, bool changes_only)
+/** Merge together the changed atoms from the 'n' deltas from the passed array 
+    into a single changed atoms object. The resulting set of changed atoms will
+    thus be able to be used to calculate energy changes from a lot of changed
+    atoms */
+CLJAtoms CLJDelta::mergeChanged(const CLJDelta *deltas, int n)
 {
     if (n == 0)
-        return CLJDelta();
+        return CLJAtoms();
     
     else if (n == 1)
-        return deltas[0];
+        return deltas[0].changedAtoms();
 
-    else if (changes_only)
-    {
-        CLJDelta ret = deltas[0];
-        ret.new_atoms = CLJAtoms();
-        ret.old_indicies = QVector<CLJBoxIndex>();
-        ret.idnum = 0;
-        
-        CLJBoxIndex min_box = ret.minBox();
-        CLJBoxIndex max_box = ret.maxBox();
-        
-        for (int i=1; i<n; ++i)
-        {
-            const CLJDelta &delta = deltas[i];
-            
-            if (delta.box_length != ret.box_length)
-                throw SireError::incompatible_error( QObject::tr(
-                        "You cannot merge together deltas that have different box lengths! "
-                        "%1 A vs. %2 A").arg(ret.box_length).arg(delta.box_length), CODELOC );
-            
-            ret.changed_atoms += delta.changed_atoms;
-            min_box = min_box.min( delta.minBox() );
-            max_box = max_box.max( delta.maxBox() );
-        }
-        
-        ret.box_index = min_box.boxOnly();
-        ret.nbox_x = max_box.i() - min_box.i() + 1;
-        ret.nbox_y = max_box.j() - min_box.j() + 1;
-        ret.nbox_z = max_box.k() - min_box.k() + 1;
-        ret.is_single_box = (max_box.i() == min_box.i()) and
-                            (max_box.j() == min_box.j()) and
-                            (max_box.k() == min_box.k());
-        
-        return ret;
-    }
     else
     {
-        CLJDelta ret = deltas[0];
-        
-        CLJBoxIndex min_box = ret.minBox();
-        CLJBoxIndex max_box = ret.maxBox();
-        
-        for (int i=1; i<n; ++i)
-        {
-            const CLJDelta &delta = deltas[i];
-            
-            if (delta.box_length != ret.box_length)
-                throw SireError::incompatible_error( QObject::tr(
-                        "You cannot merge together deltas that have different box lengths! "
-                        "%1 A vs. %2 A").arg(ret.box_length).arg(delta.box_length), CODELOC );
+        //work out which atoms have changed and which ones haven't...
+        QVarLengthArray<CLJAtom> changed_atoms;
 
-            if (delta.ID() != ret.idnum)
-                throw SireError::incompatible_error( QObject::tr(
-                        "You cannot merge together deltas that have different ID numbers! "
-                        "%1 vs. %2.").arg(ret.ID()).arg(delta.ID()), CODELOC );
+        for (int l=0; l<n; ++l)
+        {
+            CLJAtoms old_atoms = deltas[l].oldAtoms();
+            CLJAtoms new_atoms = deltas[l].newAtoms();
+        
+            for (int i=0; i<qMin(old_atoms.count(),new_atoms.count()); ++i)
+            {
+                CLJAtom old_atom = old_atoms.at(i);
+                CLJAtom new_atom = new_atoms.at(i);
+                
+                if (old_atom != new_atom)
+                {
+                    if (not old_atom.isDummy())
+                        changed_atoms.append( old_atom.negate() );
+                    
+                    if (not new_atom.isDummy())
+                        changed_atoms.append( new_atom );
+                }
+            }
             
-            ret.new_atoms += delta.new_atoms;
-            ret.changed_atoms += delta.changed_atoms;
-            ret.old_indicies += delta.old_indicies;
-            
-            min_box = min_box.min( delta.minBox() );
-            max_box = max_box.max( delta.maxBox() );
+            if (old_atoms.count() > new_atoms.count())
+            {
+                for (int i=new_atoms.count(); i<old_atoms.count(); ++i)
+                {
+                    CLJAtom old_atom = old_atoms.at(i);
+                    
+                    if (not old_atom.isDummy())
+                        changed_atoms.append( old_atom.negate() );
+                }
+            }
+            else if (new_atoms.count() > old_atoms.count())
+            {
+                for (int i=old_atoms.count(); i<new_atoms.count(); ++i)
+                {
+                    CLJAtom new_atom = new_atoms.at(i);
+                    
+                    if (not new_atom.isDummy())
+                        changed_atoms.append( new_atom );
+                }
+            }
         }
         
-        ret.box_index = min_box.boxOnly();
-        ret.nbox_x = max_box.i() - min_box.i() + 1;
-        ret.nbox_y = max_box.j() - min_box.j() + 1;
-        ret.nbox_z = max_box.k() - min_box.k() + 1;
-        ret.is_single_box = (max_box.i() == min_box.i()) and
-                            (max_box.j() == min_box.j()) and
-                            (max_box.k() == min_box.k());
-        
-        return ret;
+        return CLJAtoms(changed_atoms.constData(), changed_atoms.count());
     }
+}
+
+/** Merge together the changed atoms from the passed deltas
+    into a single changed atoms object. The resulting set of changed atoms will
+    thus be able to be used to calculate energy changes from a lot of changed
+    atoms */
+CLJAtoms CLJDelta::mergeChanged(const QVector<CLJDelta> &deltas)
+{
+    return mergeChanged(deltas.constData(), deltas.count());
+}
+
+/** Merge together the new atoms from the 'n' deltas from the passed array
+    into a single new atoms object. The resulting set of new atoms will
+    thus be able to be used to calculate energy changes from a lot of changed
+    atoms */
+CLJAtoms CLJDelta::mergeNew(const CLJDelta *deltas, int n)
+{
+    if (n == 0)
+        return CLJAtoms();
+    else
+    {
+        //work out which atoms have changed and which ones haven't...
+        QVarLengthArray<CLJAtom> changed_atoms;
+
+        for (int l=0; l<n; ++l)
+        {
+            CLJAtoms old_atoms = deltas[l].oldAtoms();
+            CLJAtoms new_atoms = deltas[l].newAtoms();
+        
+            for (int i=0; i<qMin(old_atoms.count(),new_atoms.count()); ++i)
+            {
+                CLJAtom old_atom = old_atoms.at(i);
+                CLJAtom new_atom = new_atoms.at(i);
+                
+                if (old_atom != new_atom)
+                {
+                    if (not new_atom.isDummy())
+                        changed_atoms.append( new_atom );
+                }
+            }
+            
+            if (new_atoms.count() > old_atoms.count())
+            {
+                for (int i=old_atoms.count(); i<new_atoms.count(); ++i)
+                {
+                    CLJAtom new_atom = new_atoms.at(i);
+                    
+                    if (not new_atom.isDummy())
+                        changed_atoms.append( new_atom );
+                }
+            }
+        }
+        
+        return CLJAtoms(changed_atoms.constData(), changed_atoms.count());
+    }
+}
+
+/** Merge together the new atoms from deltas
+    into a single new atoms object. The resulting set of new atoms will
+    thus be able to be used to calculate energy changes from a lot of changed
+    atoms */
+CLJAtoms CLJDelta::mergeNew(const QVector<CLJDelta> &deltas)
+{
+    return mergeNew(deltas.constData(), deltas.count());
+}
+
+/** Merge together the old atoms from the 'n' deltas from the passed array
+    into a single old atoms object. The resulting set of old atoms will
+    thus be able to be used to calculate energy changes from a lot of changed
+    atoms */
+CLJAtoms CLJDelta::mergeOld(const CLJDelta *deltas, int n)
+{
+    if (n == 0)
+        return CLJAtoms();
+    
+    else
+    {
+        //work out which atoms have changed and which ones haven't...
+        QVarLengthArray<CLJAtom> changed_atoms;
+
+        for (int l=0; l<n; ++l)
+        {
+            CLJAtoms old_atoms = deltas[l].oldAtoms();
+            CLJAtoms new_atoms = deltas[l].newAtoms();
+        
+            for (int i=0; i<qMin(old_atoms.count(),new_atoms.count()); ++i)
+            {
+                CLJAtom old_atom = old_atoms.at(i);
+                CLJAtom new_atom = new_atoms.at(i);
+                
+                if (old_atom != new_atom)
+                {
+                    if (not old_atom.isDummy())
+                        changed_atoms.append( old_atom );
+                }
+            }
+            
+            if (old_atoms.count() > new_atoms.count())
+            {
+                for (int i=new_atoms.count(); i<old_atoms.count(); ++i)
+                {
+                    CLJAtom old_atom = old_atoms.at(i);
+                    
+                    if (not old_atom.isDummy())
+                        changed_atoms.append( old_atom );
+                }
+            }
+        }
+        
+        return CLJAtoms(changed_atoms.constData(), changed_atoms.count());
+    }
+}
+
+/** Merge together the old atoms from deltas
+    into a single old atoms object. The resulting set of old atoms will
+    thus be able to be used to calculate energy changes from a lot of changed
+    atoms */
+CLJAtoms CLJDelta::mergeOld(const QVector<CLJDelta> &deltas)
+{
+    return mergeOld(deltas.constData(), deltas.count());
+}
+
+/** Merge together the changed atoms from the 'n' deltas from the passed array 
+    into a tuple of the changed, old and new atoms. The resulting set of changed atoms will
+    thus be able to be used to calculate energy changes from a lot of changed
+    atoms */
+tuple<CLJAtoms,CLJAtoms,CLJAtoms> CLJDelta::merge(const CLJDelta *deltas, int n)
+{
+    if (n == 0)
+        return CLJAtoms();
+    else
+    {
+        //work out which atoms have changed and which ones haven't...
+        QVarLengthArray<CLJAtom> changed_atoms;
+        QVarLengthArray<CLJAtom> all_old_atoms;
+        QVarLengthArray<CLJAtom> all_new_atoms;
+
+        for (int l=0; l<n; ++l)
+        {
+            CLJAtoms old_atoms = deltas[l].oldAtoms();
+            CLJAtoms new_atoms = deltas[l].newAtoms();
+        
+            for (int i=0; i<qMin(old_atoms.count(),new_atoms.count()); ++i)
+            {
+                CLJAtom old_atom = old_atoms.at(i);
+                CLJAtom new_atom = new_atoms.at(i);
+                
+                if (old_atom != new_atom)
+                {
+                    if (not old_atom.isDummy())
+                    {
+                        changed_atoms.append( old_atom.negate() );
+                        all_old_atoms.append( old_atom );
+                    }
+                    
+                    if (not new_atom.isDummy())
+                    {
+                        changed_atoms.append( new_atom );
+                        all_new_atoms.append( new_atom );
+                    }
+                }
+            }
+            
+            if (old_atoms.count() > new_atoms.count())
+            {
+                for (int i=new_atoms.count(); i<old_atoms.count(); ++i)
+                {
+                    CLJAtom old_atom = old_atoms.at(i);
+                    
+                    if (not old_atom.isDummy())
+                    {
+                        changed_atoms.append( old_atom.negate() );
+                        all_old_atoms.append( old_atom );
+                    }
+                }
+            }
+            else if (new_atoms.count() > old_atoms.count())
+            {
+                for (int i=old_atoms.count(); i<new_atoms.count(); ++i)
+                {
+                    CLJAtom new_atom = new_atoms.at(i);
+                    
+                    if (not new_atom.isDummy())
+                    {
+                        changed_atoms.append( new_atom );
+                        all_new_atoms.append( new_atom );
+                    }
+                }
+            }
+        }
+        
+        return tuple<CLJAtoms,CLJAtoms,CLJAtoms>(
+                        CLJAtoms(changed_atoms.constData(), changed_atoms.count()),
+                        CLJAtoms(all_old_atoms.constData(), all_old_atoms.count()),
+                        CLJAtoms(all_new_atoms.constData(), all_new_atoms.count()) );
+    }
+}
+
+/** Merge together the changed atoms from the passed deltas
+    into a tuple of changed, old and new atoms. The resulting set of changed atoms will
+    thus be able to be used to calculate energy changes from a lot of changed
+    atoms */
+tuple<CLJAtoms,CLJAtoms,CLJAtoms> CLJDelta::merge(const QVector<CLJDelta> &deltas)
+{
+    return merge(deltas.constData(), deltas.count());
 }

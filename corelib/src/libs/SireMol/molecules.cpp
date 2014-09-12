@@ -769,15 +769,20 @@ bool Molecules::contains(const MoleculeView &molview) const
     
     if (it != mols.end())
     {
+        bool found = false;
+
         AtomSelection selected_atoms = molview.selection();
         
         foreach (const AtomSelection &selection, it->selections())
         {
             if (selected_atoms == selection)
-                return true;
+            {
+                found = true;
+                break;
+            }
         }
         
-        return false;
+        return found;
     }
     else
         return false;

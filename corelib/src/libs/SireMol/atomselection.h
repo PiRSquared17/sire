@@ -117,6 +117,7 @@ public:
     bool operator!=(const AtomSelection &other) const;
 
     bool isEmpty() const;
+    bool isNull() const;
 
     const MoleculeInfoData& info() const;
 

@@ -12,6 +12,8 @@ namespace bp = boost::python;
 
 #include "SireBase/property.h"
 
+#include "SireBase/stringproperty.h"
+
 #include "SireError/errors.h"
 
 #include "SireFF/detail/atomiccoords3d.h"
@@ -60,6 +62,16 @@ void register_InternalFF_class(){
         bp::scope InternalFF_scope( InternalFF_exposer );
         InternalFF_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         InternalFF_exposer.def( bp::init< SireMM::InternalFF const & >(( bp::arg("other") )) );
+        { //::SireMM::InternalFF::combiningRules
+        
+            typedef ::SireMM::CLJFunction::COMBINING_RULES ( ::SireMM::InternalFF::*combiningRules_function_type )(  ) const;
+            combiningRules_function_type combiningRules_function_value( &::SireMM::InternalFF::combiningRules );
+            
+            InternalFF_exposer.def( 
+                "combiningRules"
+                , combiningRules_function_value );
+        
+        }
         { //::SireMM::InternalFF::components
         
             typedef ::SireMM::InternalComponent const & ( ::SireMM::InternalFF::*components_function_type )(  ) const;
@@ -80,6 +92,26 @@ void register_InternalFF_class(){
                 "containsProperty"
                 , containsProperty_function_value
                 , ( bp::arg("name") ) );
+        
+        }
+        { //::SireMM::InternalFF::disable14Calculation
+        
+            typedef void ( ::SireMM::InternalFF::*disable14Calculation_function_type )(  ) ;
+            disable14Calculation_function_type disable14Calculation_function_value( &::SireMM::InternalFF::disable14Calculation );
+            
+            InternalFF_exposer.def( 
+                "disable14Calculation"
+                , disable14Calculation_function_value );
+        
+        }
+        { //::SireMM::InternalFF::enable14Calculation
+        
+            typedef void ( ::SireMM::InternalFF::*enable14Calculation_function_type )(  ) ;
+            enable14Calculation_function_type enable14Calculation_function_value( &::SireMM::InternalFF::enable14Calculation );
+            
+            InternalFF_exposer.def( 
+                "enable14Calculation"
+                , enable14Calculation_function_value );
         
         }
         { //::SireMM::InternalFF::field
@@ -260,6 +292,39 @@ void register_InternalFF_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        { //::SireMM::InternalFF::setArithmeticCombiningRules
+        
+            typedef void ( ::SireMM::InternalFF::*setArithmeticCombiningRules_function_type )( bool ) ;
+            setArithmeticCombiningRules_function_type setArithmeticCombiningRules_function_value( &::SireMM::InternalFF::setArithmeticCombiningRules );
+            
+            InternalFF_exposer.def( 
+                "setArithmeticCombiningRules"
+                , setArithmeticCombiningRules_function_value
+                , ( bp::arg("on") ) );
+        
+        }
+        { //::SireMM::InternalFF::setCombiningRules
+        
+            typedef bool ( ::SireMM::InternalFF::*setCombiningRules_function_type )( ::SireMM::CLJFunction::COMBINING_RULES ) ;
+            setCombiningRules_function_type setCombiningRules_function_value( &::SireMM::InternalFF::setCombiningRules );
+            
+            InternalFF_exposer.def( 
+                "setCombiningRules"
+                , setCombiningRules_function_value
+                , ( bp::arg("rules") ) );
+        
+        }
+        { //::SireMM::InternalFF::setGeometricCombiningRules
+        
+            typedef void ( ::SireMM::InternalFF::*setGeometricCombiningRules_function_type )( bool ) ;
+            setGeometricCombiningRules_function_type setGeometricCombiningRules_function_value( &::SireMM::InternalFF::setGeometricCombiningRules );
+            
+            InternalFF_exposer.def( 
+                "setGeometricCombiningRules"
+                , setGeometricCombiningRules_function_value
+                , ( bp::arg("on") ) );
+        
+        }
         { //::SireMM::InternalFF::setProperty
         
             typedef bool ( ::SireMM::InternalFF::*setProperty_function_type )( ::QString const &,::SireBase::Property const & ) ;
@@ -282,6 +347,17 @@ void register_InternalFF_class(){
                 , ( bp::arg("isstrict") ) );
         
         }
+        { //::SireMM::InternalFF::setUse14Calculation
+        
+            typedef bool ( ::SireMM::InternalFF::*setUse14Calculation_function_type )( bool ) ;
+            setUse14Calculation_function_type setUse14Calculation_function_value( &::SireMM::InternalFF::setUse14Calculation );
+            
+            InternalFF_exposer.def( 
+                "setUse14Calculation"
+                , setUse14Calculation_function_value
+                , ( bp::arg("on") ) );
+        
+        }
         { //::SireMM::InternalFF::symbols
         
             typedef ::SireMM::InternalSymbols const & ( ::SireMM::InternalFF::*symbols_function_type )(  ) const;
@@ -301,6 +377,36 @@ void register_InternalFF_class(){
             InternalFF_exposer.def( 
                 "typeName"
                 , typeName_function_value );
+        
+        }
+        { //::SireMM::InternalFF::uses14Calculation
+        
+            typedef bool ( ::SireMM::InternalFF::*uses14Calculation_function_type )(  ) const;
+            uses14Calculation_function_type uses14Calculation_function_value( &::SireMM::InternalFF::uses14Calculation );
+            
+            InternalFF_exposer.def( 
+                "uses14Calculation"
+                , uses14Calculation_function_value );
+        
+        }
+        { //::SireMM::InternalFF::usingArithmeticCombiningRules
+        
+            typedef bool ( ::SireMM::InternalFF::*usingArithmeticCombiningRules_function_type )(  ) const;
+            usingArithmeticCombiningRules_function_type usingArithmeticCombiningRules_function_value( &::SireMM::InternalFF::usingArithmeticCombiningRules );
+            
+            InternalFF_exposer.def( 
+                "usingArithmeticCombiningRules"
+                , usingArithmeticCombiningRules_function_value );
+        
+        }
+        { //::SireMM::InternalFF::usingGeometricCombiningRules
+        
+            typedef bool ( ::SireMM::InternalFF::*usingGeometricCombiningRules_function_type )(  ) const;
+            usingGeometricCombiningRules_function_type usingGeometricCombiningRules_function_value( &::SireMM::InternalFF::usingGeometricCombiningRules );
+            
+            InternalFF_exposer.def( 
+                "usingGeometricCombiningRules"
+                , usingGeometricCombiningRules_function_value );
         
         }
         InternalFF_exposer.staticmethod( "typeName" );

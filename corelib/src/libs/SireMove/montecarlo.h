@@ -84,6 +84,11 @@ public:
     quint32 nAttempted() const;
     quint32 nAccepted() const;
     quint32 nRejected() const;
+    
+    void enableOptimisedMoves();
+    void disableOptimisedMoves();
+    void setUseOptimisedMoves(bool on);
+    bool usingOptimisedMoves() const;
 
     double acceptanceRatio() const;
 
@@ -131,6 +136,11 @@ private:
 
     /** The number of times this move has been rejected */
     quint32 nreject;
+    
+    /** Whether or not to use optimised moves. This turns on
+        newer, less tested code that is likely to be faster, but
+        potentially less correct for more complex moves */
+    bool optimise_moves;
 };
 
 }

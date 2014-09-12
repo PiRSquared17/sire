@@ -32,6 +32,8 @@
 #include "cljatoms.h"
 #include "cljboxes.h"
 
+#include <boost/tuple/tuple.hpp>
+
 SIRE_BEGIN_HEADER
 
 namespace SireMM
@@ -47,6 +49,8 @@ namespace SireMM
 
 class CLJBoxes;
 
+using boost::tuple;
+
 /** This class is used to hold the change in coordinates etc. of a set of atoms caused
     by e.g. a Monte Carlo move
     
@@ -60,11 +64,7 @@ friend QDataStream& ::operator>>(QDataStream&, CLJDelta&);
 
 public:
     CLJDelta();
-    CLJDelta(quint32 idnum, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
-             const MoleculeView &new_atoms, const PropertyMap &map = PropertyMap());
-    CLJDelta(quint32 idnum, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
-             const MoleculeView &new_atoms, CLJAtoms::ID_SOURCE source,
-             const PropertyMap &map = PropertyMap());
+    CLJDelta(qint32 idnum, const CLJAtoms &oldatoms, const CLJAtoms &newatoms);
     
     CLJDelta(const CLJDelta &other);
     
@@ -78,150 +78,66 @@ public:
     static const char* typeName();
     
     const char* what() const;
-    
-    void reconstruct(quint32 idnum, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
-                     const MoleculeView &new_atoms, const PropertyMap &map = PropertyMap());
-    
-    void reconstruct(quint32 idnum, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
-                     const MoleculeView &new_atoms, CLJAtoms::ID_SOURCE source,
-                     const PropertyMap &map = PropertyMap());
 
     QString toString() const;
-    
-    bool isSingleBox() const;
-    
-    const CLJBoxIndex& boxIndex() const;
-    
-    CLJBoxIndex minBox() const;
-    CLJBoxIndex maxBox() const;
-    
+
+    bool isEmpty() const;
     bool isNull() const;
     
-    quint32 ID() const;
+    qint32 ID() const;
     
-    quint8 nBoxX() const;
-    quint8 nBoxY() const;
-    quint8 nBoxZ() const;
-    
-    int nBoxes() const;
-    
-    const QVector<CLJBoxIndex>& oldIndicies() const;
-    
+    CLJAtoms newAtoms() const;
     CLJAtoms oldAtoms() const;
+
+    CLJAtoms changedAtoms() const;
     
-    const CLJAtoms& changedAtoms() const;
+    void assertIdenticalTo(const CLJDelta &other) const;
     
-    const CLJAtoms& newAtoms() const;
+    static CLJAtoms mergeChanged(const CLJDelta *deltas, int count);
+    static CLJAtoms mergeChanged(const QVector<CLJDelta> &deltas);
+
+    static CLJAtoms mergeNew(const CLJDelta *deltas, int count);
+    static CLJAtoms mergeNew(const QVector<CLJDelta> &deltas);
+
+    static CLJAtoms mergeOld(const CLJDelta *deltas, int count);
+    static CLJAtoms mergeOld(const QVector<CLJDelta> &deltas);
     
-    float boxLength() const;
-    
-    static CLJDelta merge(const CLJDelta *deltas, int count, bool changes_only=false);
+    static tuple<CLJAtoms,CLJAtoms,CLJAtoms> merge(const CLJDelta *deltas, int count);
+    static tuple<CLJAtoms,CLJAtoms,CLJAtoms> merge(const QVector<CLJDelta> &deltas);
     
 private:
-    friend class CLJBoxes;
-    void buildFrom(const CLJBoxes &boxes, const QVector<CLJBoxIndex> &indicies,
-                   const MoleculeView &new_molecule, CLJAtoms::ID_SOURCE source,
-                   const PropertyMap &map);
+    /** The old atoms */
+    CLJAtoms old_atoms;
 
     /** The new atoms */
     CLJAtoms new_atoms;
-
-    /** The combined old and new atoms */
-    CLJAtoms changed_atoms;
     
-    /** The CLJBoxIndex of the lowest box of the changed atoms */
-    CLJBoxIndex box_index;
-    
-    /** The indicies of the old atoms in the CLJBoxes object */
-    QVector<CLJBoxIndex> old_indicies;
-    
-    /** The number of boxes in the x, y, and z dimensions
-        that these changed atoms encompass */
-    quint8 nbox_x, nbox_y, nbox_z;
-    
-    /** Whether or not the changed atoms fit into a single box */
-    quint8 is_single_box;
-    
-    /** The ID number of the molecule or part of molecule that this
-        delta represents. This is used for book-keeping */
-    quint32 idnum;
-    
-    /** The box length used by this delta */
-    float box_length;
+    /** The ID number of this delta in the CLJWorkspace that created
+        and manages it */
+    qint32 idnum;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
-/** Return whether or not the CLJAtoms are all contained in a single box */
-inline bool CLJDelta::isSingleBox() const
-{
-    return is_single_box;
-}
-
-/** Return the index of the box that holds the lowest index of the atoms */
-inline const CLJBoxIndex& CLJDelta::boxIndex() const
-{
-    return box_index;
-}
-
-/** Return whether or not this delta is null */
-inline bool CLJDelta::isNull() const
-{
-    return nbox_x == 0;
-}
-
 /** Return the ID number of this delta. This can be used for book-keeping
     by the object that created this delta */
-inline quint32 CLJDelta::ID() const
+inline qint32 CLJDelta::ID() const
 {
     return idnum;
 }
 
-/** Return the number of boxes along the X dimension that the changed
-    atoms cover */
-inline quint8 CLJDelta::nBoxX() const
+/** Return the old version of the atoms in a format that should make
+    them easy to rebox */
+inline CLJAtoms CLJDelta::oldAtoms() const
 {
-    return nbox_x;
-}
-
-/** Return the number of boxes along the X dimension that the changed
-    atoms cover */
-inline quint8 CLJDelta::nBoxY() const
-{
-    return nbox_y;
-}
-
-/** Return the number of boxes along the X dimension that the changed
-    atoms cover */
-inline quint8 CLJDelta::nBoxZ() const
-{
-    return nbox_z;
-}
-
-/** Return the of the old atoms in the CLJBoxes used to construct this object */
-inline const QVector<CLJBoxIndex>& CLJDelta::oldIndicies() const
-{
-    return old_indicies;
-}
-
-/** Return the set of changed atoms (has a negated version of the old
-    atoms so that we can calculate energy deltas directly) */
-inline const CLJAtoms& CLJDelta::changedAtoms() const
-{
-    return changed_atoms;
+    return old_atoms;
 }
 
 /** Return the new version of the atoms in a format that should make
-    them each to rebox */
-inline const CLJAtoms& CLJDelta::newAtoms() const
+    them easy to rebox */
+inline CLJAtoms CLJDelta::newAtoms() const
 {
     return new_atoms;
-}
-
-/** Return the length of the box (in angstroms) */
-inline float CLJDelta::boxLength() const
-{
-    return box_length;
 }
 
 #endif // SIRE_SKIP_INLINE_FUNCTIONS

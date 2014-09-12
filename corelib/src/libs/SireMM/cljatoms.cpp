@@ -385,11 +385,48 @@ MultiInt CLJAtoms::idOfDummy()
 CLJAtoms::CLJAtoms()
 {}
 
+/** Constructor allowing implicit conversion from a single CLJAtom */
+CLJAtoms::CLJAtoms(const CLJAtom &cljatom)
+{
+    if (cljatom.isNull())
+        return;
+
+    QElapsedTimer t;
+    t.start();
+    
+/*
+            xa[idx] = atm.x;
+            ya[idx] = atm.y;
+            za[idx] = atm.z;
+            ca[idx] = atm.chg;
+            sa[idx] = atm.sig;
+            ea[idx] = atm.eps;
+            ida[idx] = atm.idnum;
+*/
+    _x = MultiFloat::fromArray( &(cljatom.x), 1 );
+    _y = MultiFloat::fromArray( &(cljatom.y), 1 );
+    _z = MultiFloat::fromArray( &(cljatom.z), 1 );
+    _q = MultiFloat::fromArray( &(cljatom.chg), 1 );
+    _sig = MultiFloat::fromArray( &(cljatom.sig), 1 );
+    _eps = MultiFloat::fromArray( &(cljatom.eps), 1 );
+    _id = MultiInt::fromArray( &(cljatom.idnum), 1 );
+
+    quint64 ns = t.nsecsElapsed();
+
+    qDebug() << "Converting a single atom took " << (0.000001*ns) << "ms";
+}
+
 /** Construct from the passed array of CLJAtom atoms */
 CLJAtoms::CLJAtoms(const QVector<CLJAtom> &atoms)
 {
     if (atoms.isEmpty())
         return;
+    
+    else if (atoms.count() == 1)
+    {
+        this->operator=( CLJAtoms(atoms.at(0)) );
+        return;
+    }
     
     /*QElapsedTimer t;
     t.start();*/
@@ -422,6 +459,81 @@ CLJAtoms::CLJAtoms(const QVector<CLJAtom> &atoms)
     for (int i=0; i<atoms.count(); ++i)
     {
         const CLJAtom &atm = atms[i];
+    
+        if (atm.chg != 0 or atm.eps != 0)
+        {
+            xa[idx] = atm.x;
+            ya[idx] = atm.y;
+            za[idx] = atm.z;
+            ca[idx] = atm.chg;
+            sa[idx] = atm.sig;
+            ea[idx] = atm.eps;
+            ida[idx] = atm.idnum;
+            
+            idx += 1;
+        }
+    }
+    
+    if (idx > 0)
+    {
+        _x = MultiFloat::fromArray(xf.constData(), idx);
+        _y = MultiFloat::fromArray(yf.constData(), idx);
+        _z = MultiFloat::fromArray(zf.constData(), idx);
+        
+        _q = MultiFloat::fromArray(cf.constData(), idx);
+        _sig = MultiFloat::fromArray(sf.constData(), idx);
+        _eps = MultiFloat::fromArray(ef.constData(), idx);
+        
+        _id = MultiInt::fromArray(idf.constData(), idx);
+    }
+    
+    /*quint64 ns = t.nsecsElapsed();
+
+    qDebug() << "Converting" << (_q.count() * MultiFloat::count()) << "atoms took"
+             << (0.000001*ns) << "ms";*/
+}
+
+/** Construct from the passed array of CLJAtom atoms */
+CLJAtoms::CLJAtoms(const CLJAtom *atoms, int natoms)
+{
+    if (atoms == 0 or natoms <= 0)
+        return;
+    
+    else if (natoms == 1)
+    {
+        this->operator=( CLJAtoms(atoms[0]) );
+        return;
+    }
+    
+    /*QElapsedTimer t;
+    t.start();*/
+    
+    //vectorise all of the parameters
+    QVector<float> xf(natoms);
+    QVector<float> yf(natoms);
+    QVector<float> zf(natoms);
+    
+    QVector<float> cf(natoms);
+    QVector<float> sf(natoms);
+    QVector<float> ef(natoms);
+    
+    QVector<qint32> idf(natoms);
+    
+    float *xa = xf.data();
+    float *ya = yf.data();
+    float *za = zf.data();
+    
+    float *ca = cf.data();
+    float *sa = sf.data();
+    float *ea = ef.data();
+    
+    qint32 *ida = idf.data();
+    
+    int idx = 0;
+    
+    for (int i=0; i<natoms; ++i)
+    {
+        const CLJAtom &atm = atoms[i];
     
         if (atm.chg != 0 or atm.eps != 0)
         {
@@ -731,6 +843,9 @@ CLJAtoms::CLJAtoms(const QVector<Vector> &coordinates,
 void CLJAtoms::constructFrom(const MoleculeView &molecule,
                              const ID_SOURCE id_source, const PropertyMap &map)
 {
+    if (molecule.isEmpty())
+        return;
+
     //QElapsedTimer t;
     //t.start();
     
@@ -2005,9 +2120,99 @@ QVector<qint32> CLJAtoms::IDs() const
     return ids;
 }
 
-/** Return the number of atoms in this set. This is equal to 
-    count() - nPadded() */
+/** Return whether or not there are any dummy (or padded) atoms in this set */
+bool CLJAtoms::hasDummies() const
+{
+    if (this->isEmpty())
+        return false;
+    
+    for (int i=0; i<_id.count(); ++i)
+    {
+        const MultiInt &idf = _id[i];
+        
+        for (int j=0; j<MultiInt::count(); ++j)
+        {
+            if (idf[j] == id_of_dummy)
+                return true;
+        }
+    }
+    
+    return false;
+}
+
+/** Return the number of dummy (or padded) atoms in this set */
+int CLJAtoms::nDummies() const
+{
+    if (this->isEmpty())
+        return 0;
+    
+    int ndummies = 0;
+    
+    for (int i=0; i<_id.count(); ++i)
+    {
+        const MultiInt &idf = _id[i];
+        
+        for (int j=0; j<MultiInt::count(); ++j)
+        {
+            if (idf[j] == id_of_dummy)
+                ndummies += 1;
+        }
+    }
+    
+    return ndummies;
+}
+
+/** Return the number of non-dummy atoms in this set. This is equal to
+    count() - nDummies() */
 int CLJAtoms::nAtoms() const
 {
-    return count() - nPadded();
+    return count() - nDummies();
+}
+
+/** Return the minimum coordinates of these atoms (ignoring dummies) */
+Vector CLJAtoms::minCoords() const
+{
+    Vector mincoords( std::numeric_limits<double>::max() );
+    
+    for (int i=0; i<_id.count(); ++i)
+    {
+        const MultiFloat &xf = _x[i];
+        const MultiFloat &yf = _y[i];
+        const MultiFloat &zf = _z[i];
+        const MultiInt &idf = _id[i];
+        
+        for (int j=0; j<MultiInt::count(); ++j)
+        {
+            if (idf[j] != id_of_dummy)
+            {
+                mincoords.setMin( Vector(xf[j],yf[j],zf[j]) );
+            }
+        }
+    }
+    
+    return mincoords;
+}
+
+/** Return the maximum coordinates of these atoms (ignoring dummies) */
+Vector CLJAtoms::maxCoords() const
+{
+    Vector maxcoords( -std::numeric_limits<double>::max() );
+    
+    for (int i=0; i<_id.count(); ++i)
+    {
+        const MultiFloat &xf = _x[i];
+        const MultiFloat &yf = _y[i];
+        const MultiFloat &zf = _z[i];
+        const MultiInt &idf = _id[i];
+        
+        for (int j=0; j<MultiInt::count(); ++j)
+        {
+            if (idf[j] != id_of_dummy)
+            {
+                maxcoords.setMax( Vector(xf[j],yf[j],zf[j]) );
+            }
+        }
+    }
+    
+    return maxcoords;
 }

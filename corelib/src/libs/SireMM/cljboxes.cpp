@@ -190,25 +190,6 @@ CLJAtom CLJBox::take(int atom)
         return CLJAtom();
 }
 
-/** Remove the atom at index 'atom', returning the negative of the atom removed */
-CLJAtom CLJBox::takeNegative(int atom)
-{
-    if (atom < 0 or atom >= atms.count())
-    {
-        return CLJAtom();
-    }
-    
-    if (not atms.isDummy(atom))
-    {
-        CLJAtom atm = atms[atom];
-        atms.makeDummy(atom);
-        gaps.push(atom);
-        return atm.negate();
-    }
-    else
-        return CLJAtom();
-}
-
 /** Add a single passed atom into this box. This returns the index
     of the added atom */
 CLJBoxIndex CLJBox::add(const CLJAtom &atom)
@@ -315,88 +296,6 @@ QVector<CLJBoxIndex> CLJBox::add(const CLJAtoms &atoms)
     return indicies;
 }
 
-/** Apply the delta that contains a change of atoms that are located entirely within
-    this box */
-QVector<CLJBoxIndex> CLJBox::apply(const CLJDelta &delta)
-{
-    if (not (delta.isSingleBox() and box_index.sameBox(delta.boxIndex())))
-    {
-        throw SireError::program_bug( QObject::tr(
-                "You can only apply a CLJDelta to a CLJBox if the change is contained "
-                "entirely within the box!"), CODELOC );
-    }
-    
-    const QVector<CLJBoxIndex> &old_idxs = delta.oldIndicies();
-    QVector<CLJBoxIndex> new_idxs = old_idxs;
-    
-    if (delta.newAtoms().count() != new_idxs.count())
-    {
-        new_idxs.resize(delta.newAtoms().count());
-    }
-    
-    QVarLengthArray<CLJBoxIndex> delta_gaps;
-    
-    for (int i=0; i<delta.newAtoms().count(); ++i)
-    {
-        const CLJAtom new_atom = delta.newAtoms()[i];
-        
-        if (new_atom.isDummy())
-        {
-            if (not old_idxs.constData()[i].isNull())
-            {
-                new_idxs[i] = CLJBoxIndex();
-                delta_gaps.push_back(old_idxs.constData()[i]);
-            }
-        }
-        else if (i >= old_idxs.count())
-        {
-            if (delta_gaps.isEmpty())
-            {
-                new_idxs[i] = this->add(new_atom);
-            }
-            else
-            {
-                CLJBoxIndex idx = delta_gaps.last();
-                delta_gaps.pop_back();
-                
-                atms.set(idx.index(), new_atom);
-                new_idxs[i] = idx;
-            }
-        }
-        else
-        {
-            if (not old_idxs.constData()[i].isNull())
-            {
-                atms.set(old_idxs.constData()[i].index(), new_atom);
-            }
-            else
-            {
-                if (delta_gaps.isEmpty())
-                {
-                    new_idxs[i] = this->add(new_atom);
-                }
-                else
-                {
-                    CLJBoxIndex idx = delta_gaps.last();
-                    delta_gaps.pop_back();
-                    
-                    atms.set(idx.index(), new_atom);
-                    new_idxs[i] = idx;
-                }
-            }
-        }
-    }
-
-    //remove any extra old atoms
-    while (not delta_gaps.isEmpty())
-    {
-        atms.makeDummy( delta_gaps.last().index() );
-        delta_gaps.pop_back();
-    }
-
-    return new_idxs;
-}
-
 /** Combine the atoms of the two passed boxes */
 CLJBox CLJBox::operator+(const CLJBox &other) const
 {
@@ -446,7 +345,7 @@ bool CLJBox::operator!=(const CLJBox &other) const
     number of actual atoms (i.e. not including padding or dummy atoms) */
 int CLJBox::nAtoms() const
 {
-    return atms.count() - gaps.count();
+    return atms.nAtoms();
 }
 
 /** Return the count of the box - this includes dummy atoms and padding */
@@ -772,9 +671,9 @@ QString CLJBoxIndex::toString() const
     of length 1 / inv_box_length */
 CLJBoxIndex CLJBoxIndex::createWithInverseBoxLength(float x, float y, float z, float inv_length)
 {
-    int i = std::floor(x * inv_length + 0.5);
-    int j = std::floor(y * inv_length + 0.5);
-    int k = std::floor(z * inv_length + 0.5);
+    int i = int( std::floor(x * inv_length + 0.5) );  //std::floor will round the floating point
+    int j = int( std::floor(y * inv_length + 0.5) );  //down to the nearest integer. Adding 0.5
+    int k = int( std::floor(z * inv_length + 0.5) );  //ensures we instead round to nearest int
     
     const int min16 = std::numeric_limits<qint16>::min();
     const int max16 = std::numeric_limits<qint16>::max();
@@ -1116,10 +1015,10 @@ void CLJBoxes::constructFrom(const CLJAtoms &atoms0, const CLJAtoms &atoms1)
     }
     
     /*quint64 ns = t.nsecsElapsed();
-    qDebug() << "Boxing up" << atoms.count() << "atoms took"
+    qDebug() << "Boxing up" << this->nAtoms() << "atoms took"
              << (0.000001*ns) << "ms";
     
-    qDebug() << "number of boxes ==" << boxed_atoms.count();*/
+    qDebug() << "number of boxes ==" << this->nOccupiedBoxes();*/
 }
 
 /** Add together two boxes - both boxes must have the same box length */
@@ -1405,6 +1304,13 @@ CLJAtoms CLJBoxes::atoms(const QVector<CLJBoxIndex> &idxs) const
     return ret;
 }
 
+/** Return all of the atoms whose indicies are in 'idxs'. The atoms are returned
+    in the same order as they appear in 'idxs' */
+CLJAtoms CLJBoxes::get(const QVector<CLJBoxIndex> &idxs) const
+{
+    return this->atoms(idxs);
+}
+
 /** Add a set of CLJAtoms to the box, returning the indicies of each added atom */
 QVector<CLJBoxIndex> CLJBoxes::add(const CLJAtoms &atoms)
 {
@@ -1514,82 +1420,6 @@ CLJAtoms CLJBoxes::take(const QVector<CLJBoxIndex> &atoms)
     return CLJAtoms(atms);
 }
 
-/** Remove the atoms at the specified indicies, returning the negative of the atoms that are
-    removed. This is equivalent to CLJBoxes::take(atoms).negate().
-    This does a rapid remove, i.e. it just turns the specified atoms into
-    dummies (which may be overwritten by subsequent "add" operations). If you want
-    to completely remove the atoms, use "take" followed by "squeeze" */
-CLJAtoms CLJBoxes::takeNegative(const QVector<CLJBoxIndex> &atoms)
-{
-    QList<CLJAtom> atms;
-    
-    foreach (const CLJBoxIndex &atom, atoms)
-    {
-        if (atom.hasAtomIndex())
-        {
-            int idx = box_to_idx.value(atom.boxOnly(), -1);
-            
-            if (idx >= 0)
-            {
-                CLJAtom cljatom = bxs[idx].write().takeNegative(atom.index());
-                
-                if (not cljatom.isDummy())
-                    atms.append(cljatom);
-            }
-        }
-    }
-    
-    return CLJAtoms(atms);
-}
-
-/** Apply the passed delta - this will replace all of the old atoms with the 
-    new atoms in the passed delta, returning the indicies of the newly added atoms */
-QVector<CLJBoxIndex> CLJBoxes::apply(const CLJDelta &delta)
-{
-    if (delta.boxLength() != box_length)
-        throw SireError::incompatible_error( QObject::tr(
-                "You cannot apply a delta to a CLJBoxes object that was not used to create "
-                "that CLJDelta object! %1 vs. %2")
-                    .arg(delta.boxLength()).arg(box_length), CODELOC );
-    
-    else if (delta.isNull())
-        return QVector<CLJBoxIndex>();
-    
-    if (delta.isSingleBox())
-    {
-        //find the single box and replace the old atoms with new
-        int idx = box_to_idx.value(delta.boxIndex(), -1);
-        
-        if (idx == -1)
-        {
-            if (CLJBoxIndex::countNonDummies(delta.oldIndicies()) != 0)
-                throw SireError::program_bug( QObject::tr(
-                        "How can the CLJBoxes not have the box when the delta believes "
-                        "that there are still old atoms to remove? %1, %2, %3")
-                            .arg(delta.boxIndex().toString())
-                            .arg(Sire::toString(delta.oldIndicies()))
-                            .arg(Sire::toString(box_to_idx.keys())), CODELOC );
-
-            //we are adding new atoms to a completely new CLJBox. Nothing is being removed
-            bxs.append( new CLJBox(delta.boxIndex(), Length(box_length)) );
-            box_to_idx.insert( delta.boxIndex(), bxs.count() - 1 );
-            
-            return bxs.last().write().add(delta.newAtoms());
-        }
-        else
-        {
-            return bxs[idx].write().apply(delta);
-        }
-    }
-    else
-    {
-        //the delta runs over more than one box. It is quicker to remove the old
-        //atoms and then add the new ones
-        this->remove( delta.oldIndicies() );
-        return this->add( delta.newAtoms() );
-    }
-}
-
 /** Return a copy of the boxes where all of the CLJAtoms objects have been squeezed,
     and all empty boxes have been removed */
 CLJBoxes CLJBoxes::squeeze() const
@@ -1682,11 +1512,36 @@ inline int getDelta( const qint16 i0, const qint16 i1 )
     return (i0 == i1) ? 0 : (i0 < i1) ? (i1-i0-1) : (i0-i1-1);
 }
 
+/** Get the number of box lengths separating box 1 from the set of boxes
+    from minbox0 to maxbox0 */
+inline int getDelta( const qint16 min0, const qint16 max0, const qint16 i1 )
+{
+    // the below single-line expression is doing
+    // if (i1 >= min0 and i1 <= max0)
+    // {
+    //     //i1 is contained within the box
+    //     return 0;
+    // }
+    // else
+    //     return qMin( getDelta(min0,i1), getDelta(max0,i1) );
+
+    return (i1 >= min0 and i1 <= max0) ? 0 : qMin( getDelta(min0,i1), getDelta(max0,i1) );
+}
+
 inline int getDelta2(const CLJBoxIndex &box0, const CLJBoxIndex &box1)
 {
     const int dx = getDelta(box0.i(), box1.i());
     const int dy = getDelta(box0.j(), box1.j());
     const int dz = getDelta(box0.k(), box1.k());
+    return dx*dx + dy*dy + dz*dz;
+}
+
+inline int getDelta2(const CLJBoxIndex &minbox0, const CLJBoxIndex &maxbox0,
+                     const CLJBoxIndex &box1)
+{
+    const int dx = getDelta(minbox0.i(), maxbox0.i(), box1.i());
+    const int dy = getDelta(minbox0.j(), maxbox0.j(), box1.j());
+    const int dz = getDelta(minbox0.k(), maxbox0.k(), box1.k());
     return dx*dx + dy*dy + dz*dz;
 }
 
@@ -1712,6 +1567,22 @@ inline int getBoxDelta( const qint16 i0, const qint16 i1 )
     // than the above if statements.
 
     return (i0 == i1) ? 0 : (i0 < i1) ? (i1-i0) : (i0-i1);
+}
+
+/** Get the number of box lengths separating box 1 from the set of boxes
+    from minbox0 to maxbox0 */
+inline int getBoxDelta( const qint16 min0, const qint16 max0, const qint16 i1 )
+{
+    // the below single-line expression is doing
+    // if (i1 >= min0 and i1 <= max0)
+    // {
+    //     //i1 is contained within the box
+    //     return 0;
+    // }
+    // else
+    //     return qMin( getBoxDelta(min0,i1), getBoxDelta(max0,i1) );
+
+    return (i1 >= min0 and i1 <= max0) ? 0 : qMin( getBoxDelta(min0,i1), getBoxDelta(max0,i1) );
 }
 
 /** Return the distance between the two boxes, assuming they are in an infinite cartesian space */
@@ -1825,7 +1696,10 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
             const float half_box_z = 0.5 * box_z;
 
             const float box_cutoff = cutoff.value() / boxes.box_length;
-            const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
+            
+            //std::ceil rounds up to the neares integer, so we round up the cutoff to
+            //the nearest integer to allow us to use integer distance math
+            const int int_box_cutoff2 = int( std::ceil( box_cutoff*box_cutoff ) );
             
             for (quint32 i=0; i<nboxes; ++i)
             {
@@ -1890,7 +1764,10 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
         else
         {
             const float box_cutoff = cutoff.value() / boxes.box_length;
-            const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
+
+            //std::ceil rounds up to the neares integer, so we round up the cutoff to
+            //the nearest integer to allow us to use integer distance math
+            const int int_box_cutoff2 = int( std::ceil( box_cutoff*box_cutoff ) );
             
             for (quint32 i=0; i<nboxes; ++i)
             {
@@ -2008,6 +1885,9 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
         if (space.isPeriodic())
         {
             const float box_cutoff = cutoff.value() / boxes0.box_length;
+
+            //std::ceil rounds up to the neares integer, so we round up the cutoff to
+            //the nearest integer to allow us to use integer distance math
             const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
             
             Vector dimensions = space.asA<PeriodicBox>().dimensions();
@@ -2083,6 +1963,9 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
         else
         {
             const float box_cutoff = cutoff.value() / boxes0.box_length;
+
+            //std::ceil rounds up to the neares integer, so we round up the cutoff to
+            //the nearest integer to allow us to use integer distance math
             const int int_box_cutoff2 = std::ceil( box_cutoff*box_cutoff );
             
             for (quint32 i=0; i<n0; ++i)
@@ -2126,6 +2009,82 @@ QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJBoxe
     }
     
     //quint64 ns = t.nsecsElapsed();
+    //qDebug() << "Getting box distances took" << (0.000001*ns) << "ms";
+    
+    return dists;
+}
+
+/** Return the distances between all the passed atoms and all of the occupied
+    boxes in 'boxes1', returning a set of CLJBoxDistance objects where box0() is 0 */
+QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJAtoms &atoms0,
+                                               const CLJBoxes &boxes1, Length cutoff)
+{
+    //QElapsedTimer t;
+    //t.start();
+
+    //get the minimum and maximum coordinates of the atoms
+    Vector mincoords0 = atoms0.minCoords();
+    Vector maxcoords0 = atoms0.maxCoords();
+
+    QVector<CLJBoxDistance> dists;
+    
+    const quint32 n1 = boxes1.bxs.count();
+    const CLJBoxPtr *b1 = boxes1.bxs.constData();
+
+    dists.reserve(n1);
+    
+    //having timed this, it is just as quick to just convert to AABox and use
+    //that to calculate the minimum distance
+    const AABox box0 = AABox::from(mincoords0, maxcoords0);
+        
+    for (quint32 j=0; j<n1; ++j)
+    {
+        const AABox box1 = b1[j].read().dimensions();
+            
+        const float dist = space.minimumDistance(box0, box1);
+        
+        if (dist < cutoff.value())
+            dists.append( CLJBoxDistance(0, j, dist) );
+    }
+
+    //qint64 ns = t.nsecsElapsed();
+    //qDebug() << "Getting box distances took" << (0.000001*ns) << "ms";
+    
+    return dists;
+}
+
+/** Return the distances between all the passed atoms and all of the occupied
+    boxes in 'boxes1', returning a set of CLJBoxDistance objects where box0() is 0 */
+QVector<CLJBoxDistance> CLJBoxes::getDistances(const Space &space, const CLJAtoms &atoms0,
+                                               const CLJBoxes &boxes1)
+{
+    //QElapsedTimer t;
+    //t.start();
+
+    //get the minimum and maximum coordinates of the atoms
+    Vector mincoords0 = atoms0.minCoords();
+    Vector maxcoords0 = atoms0.maxCoords();
+
+    QVector<CLJBoxDistance> dists;
+    
+    const quint32 n1 = boxes1.bxs.count();
+    const CLJBoxPtr *b1 = boxes1.bxs.constData();
+
+    dists.reserve(n1);
+    
+    //having timed this, it is just as quick to just convert to AABox and use
+    //that to calculate the minimum distance
+    const AABox box0 = AABox::from(mincoords0, maxcoords0);
+        
+    for (quint32 j=0; j<n1; ++j)
+    {
+        const AABox box1 = b1[j].read().dimensions();
+            
+        const float dist = space.minimumDistance(box0, box1);
+        dists.append( CLJBoxDistance(0, j, dist) );
+    }
+
+    //qint64 ns = t.nsecsElapsed();
     //qDebug() << "Getting box distances took" << (0.000001*ns) << "ms";
     
     return dists;

@@ -113,6 +113,9 @@ public:
 
     Molecule& operator=(const Molecule &other);
 
+    bool operator==(const Molecule &other) const;
+    bool operator!=(const Molecule &other) const;
+
     static const char* typeName();
     
     Molecule* clone() const;

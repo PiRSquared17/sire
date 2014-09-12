@@ -163,6 +163,8 @@ QList<MolNum> MolWithResID::map(const Molecules &molecules) const
     }
     else
     {
+        SireError::FastExceptionFlag f = SireError::exception::enableFastExceptions();
+    
         for (Molecules::const_iterator it = molecules.constBegin();
              it != molecules.constEnd();
              ++it)

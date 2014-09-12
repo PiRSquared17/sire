@@ -30,7 +30,6 @@
 
 #include "cljfunction.h"
 #include "cljboxes.h"
-#include "cljdelta.h"
 #include "switchingfunction.h"
 
 #include "SireMaths/multidouble.h"
@@ -505,9 +504,6 @@ namespace SireMM
     grid calculations */
 QVector<float> CLJFunction::calculate(const CLJAtoms &atoms, const GridInfo &gridinfo) const
 {
-    QElapsedTimer t;
-    t.start();
-
     QVector<float> gridpot( gridinfo.nPoints(), 0.0 );
     
     if (this->supportsGridCalculation() and not gridinfo.isEmpty())
@@ -515,16 +511,6 @@ QVector<float> CLJFunction::calculate(const CLJAtoms &atoms, const GridInfo &gri
         SireMM::detail::CLJGridCalculator calc(atoms, gridinfo, *this, gridpot.data());
         tbb::parallel_for(tbb::blocked_range<int>(0,gridinfo.nPoints(),4096), calc);
     }
-
-    qint64 ns = t.nsecsElapsed();
-    qDebug() << "Building the grid took" << (0.000001*ns) << "ms";
-    
-    double sum = 0;
-    for (int i=0; i<gridinfo.nPoints(); ++i)
-    {
-        sum += gridpot.constData()[i];
-    }
-    qDebug() << "Sum of grid potential is" << sum;
     
     return gridpot;
 }
@@ -892,72 +878,34 @@ void CLJFunction::operator()(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
     }
 }
 
-/** Return the change in energy associated with the delta in 'delta' against the
-    other atoms in 'atoms', returning the coulomb part in 'cnrg' and the LJ part
-    in 'ljnrg' */
-void CLJFunction::operator()(const CLJDelta &delta, const CLJBoxes &atoms,
+/** Return the total energy between 'atoms0' and 'atoms1', returning the coulomb part in 'cnrg'
+    and the LJ part in 'ljnrg' */
+void CLJFunction::operator()(const CLJAtoms &atoms0, const CLJBoxes &atoms1,
                              double &cnrg, double &ljnrg) const
 {
-    if (this->hasCutoff() and delta.boxLength() == atoms.length().value())
+    cnrg = 0;
+    ljnrg = 0;
+    
+    if (this->hasCutoff())
     {
-        if (delta.isSingleBox())
-        {
-            cnrg = 0;
-            ljnrg = 0;
-            const float min_cutoff = qMax(this->coulombCutoff(), this->ljCutoff());
-            
-            for (CLJBoxes::const_iterator it = atoms.constBegin();
-                 it != atoms.constEnd();
-                 ++it)
-            {
-                const CLJBoxIndex &idx = it->read().index();
-            
-                const float mindist = atoms.getDistance(spce.read(), delta.boxIndex(), idx);
-                
-                if (mindist < min_cutoff)
-                {
-                    double icnrg(0), iljnrg(0);
-                    
-                    this->operator()(delta.changedAtoms(), it->read().atoms(),
-                                     icnrg, iljnrg, mindist);
-                    
-                    cnrg += icnrg;
-                    ljnrg += iljnrg;
-                }
-            }
-        }
-        else
-        {
-            cnrg = 0;
-            ljnrg = 0;
-            const float min_cutoff = qMax(this->coulombCutoff(), this->ljCutoff());
-            
-            for (CLJBoxes::const_iterator it = atoms.constBegin();
-                 it != atoms.constEnd();
-                 ++it)
-            {
-                const CLJBoxIndex &idx = it->read().index();
-            
-                const float mindist = atoms.getDistance(spce.read(), delta.boxIndex(), idx,
-                                                        delta.nBoxX(), delta.nBoxY(),
-                                                        delta.nBoxZ());
-                
-                if (mindist < min_cutoff)
-                {
-                    double icnrg(0), iljnrg(0);
-                    
-                    this->operator()(delta.changedAtoms(), it->read().atoms(),
-                                     icnrg, iljnrg, mindist);
-                    
-                    cnrg += icnrg;
-                    ljnrg += iljnrg;
-                }
-            }
-        }
+        this->operator()( CLJBoxes(atoms0, atoms1.length()), atoms1, cnrg, ljnrg );
     }
     else
     {
-        this->operator()(delta.changedAtoms(), atoms, cnrg, ljnrg);
+        const CLJBoxes::Container &boxes1 = atoms1.occupiedBoxes();
+        
+        for (CLJBoxes::const_iterator it1 = boxes1.constBegin();
+             it1 != boxes1.constEnd();
+             ++it1)
+        {
+            double icnrg(0), iljnrg(0);
+            
+            this->operator()(atoms0, it1->read().atoms(),
+                             icnrg, iljnrg);
+            
+            cnrg += icnrg;
+            ljnrg += iljnrg;
+        }
     }
 }
 
@@ -989,15 +937,6 @@ void CLJFunction::total(const CLJBoxes &atoms0, const CLJBoxes &atoms1,
                         double &cnrg, double &ljnrg) const
 {
     this->operator()(atoms0, atoms1, cnrg, ljnrg);
-}
-
-/** Return the change in energy associated with the delta in 'delta' against the
-    other atoms in 'atoms', returning the coulomb part in 'cnrg' and the LJ part
-    in 'ljnrg' */
-void CLJFunction::total(const CLJDelta &delta, const CLJBoxes &atoms,
-                        double &cnrg, double &ljnrg) const
-{
-    this->operator()(delta, atoms, cnrg, ljnrg);
 }
 
 /** Return the total energy between 'atoms', returning the coulomb part as the first
@@ -1038,14 +977,13 @@ boost::tuple<double,double> CLJFunction::calculate(const CLJBoxes &atoms0,
     return boost::tuple<double,double>(cnrg, ljnrg);
 }
 
-/** Return the change in energy associated with the delta in 'delta' against the
-    other atoms in 'atoms', returning the coulomb part in 'cnrg' and the LJ part
-    in 'ljnrg' */
-boost::tuple<double,double> CLJFunction::calculate(const CLJDelta &delta,
-                                                   const CLJBoxes &atoms) const
+/** Return the total energy between 'atoms0' and 'atoms1', returning the coulomb part as the first
+    element of the tuple and the LJ part as the second */
+boost::tuple<double,double> CLJFunction::calculate(const CLJAtoms &atoms0,
+                                                   const CLJBoxes &atoms1) const
 {
     double cnrg, ljnrg;
-    this->operator()(delta, atoms, cnrg, ljnrg);
+    this->operator()(atoms0, atoms1, cnrg, ljnrg);
     return boost::tuple<double,double>(cnrg, ljnrg);
 }
 
@@ -1211,6 +1149,101 @@ double CLJFunction::lj(const CLJAtoms &atoms0, const CLJAtoms &atoms1,
 double CLJFunction::lj(const CLJBoxes &atoms0, const CLJBoxes &atoms1) const
 {
     return this->calculate(atoms0, atoms1).get<1>();
+}
+
+tuple< QVector<double>,QVector<double> >
+CLJFunction::multiCalculate(const QVector<CLJFunctionPtr> &funcs, const CLJAtoms &atoms)
+{
+    if (funcs.isEmpty())
+        return tuple< QVector<double>,QVector<double> >();
+    
+    QVector<double> cnrgs(funcs.count()), ljnrgs(funcs.count());
+    
+    for (int i=0; i<funcs.count(); ++i)
+    {
+        tuple<double,double> nrgs = funcs.constData()[i].read().calculate(atoms);
+        cnrgs[i] = nrgs.get<0>();
+        ljnrgs[i] = nrgs.get<1>();
+    }
+    
+    return tuple< QVector<double>,QVector<double> >(cnrgs, ljnrgs);
+}
+
+tuple< QVector<double>,QVector<double> >
+CLJFunction::multiCalculate(const QVector<CLJFunctionPtr> &funcs,
+                            const CLJAtoms &atoms0, const CLJAtoms &atoms1,
+                            float min_distance)
+{
+    if (funcs.isEmpty())
+        return tuple< QVector<double>,QVector<double> >();
+    
+    QVector<double> cnrgs(funcs.count()), ljnrgs(funcs.count());
+    
+    for (int i=0; i<funcs.count(); ++i)
+    {
+        tuple<double,double> nrgs = funcs.constData()[i].read()
+                                                        .calculate(atoms0, atoms1, min_distance);
+        cnrgs[i] = nrgs.get<0>();
+        ljnrgs[i] = nrgs.get<1>();
+    }
+    
+    return tuple< QVector<double>,QVector<double> >(cnrgs, ljnrgs);
+}
+
+tuple< QVector<double>,QVector<double> >
+CLJFunction::multiCalculate(const QVector<CLJFunctionPtr> &funcs, const CLJBoxes &atoms)
+{
+    if (funcs.isEmpty())
+        return tuple< QVector<double>,QVector<double> >();
+    
+    QVector<double> cnrgs(funcs.count()), ljnrgs(funcs.count());
+    
+    for (int i=0; i<funcs.count(); ++i)
+    {
+        tuple<double,double> nrgs = funcs.constData()[i].read().calculate(atoms);
+        cnrgs[i] = nrgs.get<0>();
+        ljnrgs[i] = nrgs.get<1>();
+    }
+    
+    return tuple< QVector<double>,QVector<double> >(cnrgs, ljnrgs);
+}
+
+tuple< QVector<double>,QVector<double> >
+CLJFunction::multiCalculate(const QVector<CLJFunctionPtr> &funcs,
+                            const CLJBoxes &atoms0, const CLJBoxes &atoms1)
+{
+    if (funcs.isEmpty())
+        return tuple< QVector<double>,QVector<double> >();
+    
+    QVector<double> cnrgs(funcs.count()), ljnrgs(funcs.count());
+    
+    for (int i=0; i<funcs.count(); ++i)
+    {
+        tuple<double,double> nrgs = funcs.constData()[i].read().calculate(atoms0, atoms1);
+        cnrgs[i] = nrgs.get<0>();
+        ljnrgs[i] = nrgs.get<1>();
+    }
+    
+    return tuple< QVector<double>,QVector<double> >(cnrgs, ljnrgs);
+}
+
+tuple< QVector<double>,QVector<double> >
+CLJFunction::multiCalculate(const QVector<CLJFunctionPtr> &funcs,
+                            const CLJAtoms &atoms0, const CLJBoxes &atoms1)
+{
+    if (funcs.isEmpty())
+        return tuple< QVector<double>,QVector<double> >();
+    
+    QVector<double> cnrgs(funcs.count()), ljnrgs(funcs.count());
+    
+    for (int i=0; i<funcs.count(); ++i)
+    {
+        tuple<double,double> nrgs = funcs.constData()[i].read().calculate(atoms0, atoms1);
+        cnrgs[i] = nrgs.get<0>();
+        ljnrgs[i] = nrgs.get<1>();
+    }
+    
+    return tuple< QVector<double>,QVector<double> >(cnrgs, ljnrgs);
 }
 
 /////////
@@ -1526,9 +1559,6 @@ CLJFunctionPtr CLJCutoffFunction::setProperty(const QString &name, const Propert
     if (name == "switchingFunction")
     {
         const SwitchingFunction &switchfunc = value.asA<SwitchingFunction>();
-        
-        qDebug() << "Set switching function" << switchfunc.toString();
-        
         ret.edit().setCoulombCutoff( Length(switchfunc.electrostaticCutoffDistance()) );
         ret.edit().setLJCutoff( Length(switchfunc.vdwCutoffDistance()) );
     }
@@ -1793,14 +1823,8 @@ void CLJIntraFunction::setConnectivity(const Connectivity &c)
 {
     if (cty != c)
     {
-        QElapsedTimer t;
-        t.start();
-    
         cty = c;
         bond_matrix = cty.getBondMatrix(1,4);
-
-        quint64 ns1 = t.nsecsElapsed();
-        t.start();
 
         if (bond_matrix.count() > 0)
         {
@@ -1817,11 +1841,6 @@ void CLJIntraFunction::setConnectivity(const Connectivity &c)
             
             bond_matrix.squeeze();
         }
-        
-        quint64 ns2 = t.nsecsElapsed();
-        
-        qDebug() << "GETTING MATRIX TOOK" << (0.000001*(ns1+ns2)) << "ms, "
-                 << (0.000001*ns1) << "," << (0.000001*ns2);
     }
 }
 
@@ -1917,6 +1936,47 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJSoftFunction &func)
 /** Constructor */
 CLJSoftFunction::CLJSoftFunction()
                 : CLJCutoffFunction(), alpha_value(0), shift_delta(0), coulomb_power(1)
+{}
+
+
+/** Construct, specifying the cutoff */
+CLJSoftFunction::CLJSoftFunction(Length cutoff)
+                : CLJCutoffFunction(cutoff)
+{}
+
+/** Construct, specifying the coulomb and LJ cutoffs */
+CLJSoftFunction::CLJSoftFunction(Length coulomb, Length lj)
+                : CLJCutoffFunction(coulomb, lj)
+{}
+
+CLJSoftFunction::CLJSoftFunction(const Space &space, Length cutoff)
+                : CLJCutoffFunction(space, cutoff)
+{}
+
+CLJSoftFunction::CLJSoftFunction(const Space &space, Length coulomb, Length lj)
+                : CLJCutoffFunction(space, coulomb, lj)
+{}
+
+CLJSoftFunction::CLJSoftFunction(Length cutoff, COMBINING_RULES combining_rules)
+                : CLJCutoffFunction(cutoff, combining_rules)
+{}
+
+CLJSoftFunction::CLJSoftFunction(Length coulomb, Length lj, COMBINING_RULES combining_rules)
+                : CLJCutoffFunction(coulomb, lj, combining_rules)
+{}
+
+CLJSoftFunction::CLJSoftFunction(const Space &space, COMBINING_RULES combining_rules)
+                : CLJCutoffFunction(space, combining_rules)
+{}
+
+CLJSoftFunction::CLJSoftFunction(const Space &space, Length cutoff,
+                                 COMBINING_RULES combining_rules)
+                : CLJCutoffFunction(space, cutoff, combining_rules)
+{}
+
+CLJSoftFunction::CLJSoftFunction(const Space &space, Length coulomb, Length lj,
+                                 COMBINING_RULES combining_rules)
+                : CLJCutoffFunction(space, coulomb, lj, combining_rules)
 {}
 
 /** Copy constructor */
@@ -2089,6 +2149,291 @@ void CLJSoftFunction::setShiftDelta(float shift)
 
 /** Set the soft-core coulomb power parameter */
 void CLJSoftFunction::setCoulombPower(float power)
+{
+    pvt_set(alpha(), shiftDelta(), power);
+}
+
+/** Return (1-alpha)^(coulomb_power) */
+float CLJSoftFunction::oneMinusAlphaToN() const
+{
+    if (coulombPower() == 0)
+        return 1.0;
+    else if (coulombPower() == 1)
+        return (1.0 - alpha());
+    else
+        return std::pow( float(1.0 - alpha()), coulombPower() );
+}
+
+/** Return alpha * shift_delta */
+float CLJSoftFunction::alphaTimesShiftDelta() const
+{
+    return alpha() * shiftDelta();
+}
+
+/////////
+///////// Implementation of CLJSoftIntraFunction
+/////////
+
+static const RegisterMetaType<CLJSoftIntraFunction> r_softintra(MAGIC_ONLY,
+                                                                CLJSoftIntraFunction::typeName());
+
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJSoftIntraFunction &func)
+{
+    writeHeader(ds, r_softintra, 1);
+    
+    ds << func.alpha_value << func.shift_delta << func.coulomb_power
+       << static_cast<const CLJIntraFunction&>(func);
+    
+    return ds;
+}
+
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJSoftIntraFunction &func)
+{
+    VersionID v = readHeader(ds, r_softintra);
+    
+    if (v == 1)
+    {
+        ds >> func.alpha_value >> func.shift_delta >> func.coulomb_power
+           >> static_cast<CLJIntraFunction&>(func);
+    }
+    else
+        throw version_error(v, "1", r_softintra, CODELOC);
+    
+    return ds;
+}
+
+/** Constructor */
+CLJSoftIntraFunction::CLJSoftIntraFunction()
+                     : CLJIntraFunction(), alpha_value(0), shift_delta(0), coulomb_power(1)
+{}
+
+CLJSoftIntraFunction::CLJSoftIntraFunction(Length cutoff) : CLJIntraFunction(cutoff)
+{}
+
+CLJSoftIntraFunction::CLJSoftIntraFunction(Length coul_cutoff, Length lj_cutoff)
+                     : CLJIntraFunction(coul_cutoff, lj_cutoff)
+{}
+
+CLJSoftIntraFunction::CLJSoftIntraFunction(const Space &space, Length cutoff)
+                     : CLJIntraFunction(space, cutoff)
+{}
+
+CLJSoftIntraFunction::CLJSoftIntraFunction(const Space &space,
+                                           Length coul_cutoff, Length lj_cutoff)
+                     : CLJIntraFunction(space, coul_cutoff, lj_cutoff)
+{}
+
+CLJSoftIntraFunction::CLJSoftIntraFunction(Length cutoff, COMBINING_RULES combining_rules)
+                     : CLJIntraFunction(cutoff, combining_rules)
+{}
+
+CLJSoftIntraFunction::CLJSoftIntraFunction(Length coul_cutoff, Length lj_cutoff,
+                                           COMBINING_RULES combining_rules)
+                     : CLJIntraFunction(coul_cutoff, lj_cutoff, combining_rules)
+{}
+
+CLJSoftIntraFunction::CLJSoftIntraFunction(const Space &space, COMBINING_RULES combining_rules)
+                     : CLJIntraFunction(space, combining_rules)
+{}
+
+CLJSoftIntraFunction::CLJSoftIntraFunction(const Space &space, Length cutoff,
+                                           COMBINING_RULES combining_rules)
+                     : CLJIntraFunction(space, cutoff, combining_rules)
+{}
+
+CLJSoftIntraFunction::CLJSoftIntraFunction(const Space &space, Length coul_cutoff,
+                                           Length lj_cutoff,
+                                           COMBINING_RULES combining_rules)
+                     : CLJIntraFunction(space, coul_cutoff, lj_cutoff, combining_rules)
+{}
+
+/** Copy constructor */
+CLJSoftIntraFunction::CLJSoftIntraFunction(const CLJSoftIntraFunction &other)
+                     : CLJIntraFunction(other), alpha_value(other.alpha_value),
+                       shift_delta(other.shift_delta), coulomb_power(other.coulomb_power)
+{}
+
+/** Destructor */
+CLJSoftIntraFunction::~CLJSoftIntraFunction()
+{}
+
+/** Copy assignment operator */
+CLJSoftIntraFunction& CLJSoftIntraFunction::operator=(const CLJSoftIntraFunction &other)
+{
+    if (this != &other)
+    {
+        alpha_value = other.alpha_value;
+        shift_delta = other.shift_delta;
+        coulomb_power = other.coulomb_power;
+        CLJIntraFunction::operator=(other);
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool CLJSoftIntraFunction::operator==(const CLJSoftIntraFunction &other) const
+{
+    return alpha_value == other.alpha_value and
+           shift_delta == other.shift_delta and
+           coulomb_power == other.coulomb_power and
+           CLJIntraFunction::operator==(other);
+}
+
+const char* CLJSoftIntraFunction::typeName()
+{
+    return "SireMM::CLJSoftIntraFunction";
+}
+
+/** Return whether or not this is a softened function */
+bool CLJSoftIntraFunction::isSoftened() const
+{
+    return true;
+}
+
+/** Return the properties that can be set in this function */
+Properties CLJSoftIntraFunction::properties() const
+{
+    Properties props = CLJIntraFunction::properties();
+    
+    props.setProperty( "alpha", NumberProperty(alpha_value) );
+    props.setProperty( "shiftDelta", NumberProperty(shift_delta) );
+    props.setProperty( "coulombPower", NumberProperty(coulomb_power) );
+    
+    return props;
+}
+
+/** Set the property with name 'name' to value 'value' */
+CLJFunctionPtr CLJSoftIntraFunction::setProperty(const QString &name, const Property &value) const
+{
+    CLJFunctionPtr ret(*this);
+
+    if (name == "alpha")
+    {
+        ret.edit().asA<CLJSoftIntraFunction>()
+                  .setAlpha( value.asA<NumberProperty>().toDouble() );
+    }
+    else if (name == "shiftDelta")
+    {
+        ret.edit().asA<CLJSoftIntraFunction>()
+                  .setShiftDelta( value.asA<NumberProperty>().toDouble() );
+    }
+    else if (name == "coulombPower")
+    {
+        ret.edit().asA<CLJSoftIntraFunction>()
+                  .setCoulombPower( value.asA<NumberProperty>().toDouble() );
+    }
+    else
+    {
+        ret = CLJIntraFunction::setProperty(name, value);
+    }
+    
+    return ret;
+}
+
+/** Return the value of the property with name 'name' */
+PropertyPtr CLJSoftIntraFunction::property(const QString &name) const
+{
+    if (name == "alpha")
+    {
+        return NumberProperty(alpha_value);
+    }
+    else if (name == "shiftDelta")
+    {
+        return NumberProperty(shift_delta);
+    }
+    else if (name == "coulombPower")
+    {
+        return NumberProperty(coulomb_power);
+    }
+    else
+    {
+        return CLJIntraFunction::property(name);
+    }
+}
+
+/** Return whether or not this function contains a property called 'name' */
+bool CLJSoftIntraFunction::containsProperty(const QString &name) const
+{
+    return (name == "alpha") or (name == "shiftDelta") or
+           (name == "coulombPower") or CLJIntraFunction::containsProperty(name);
+}
+
+/** Return the soft-core alpha value. A value of 0 is a completely hard
+    potential, while increasing values of alpha will increasingly soften 
+    the potential */
+float CLJSoftIntraFunction::alpha() const
+{
+    return alpha_value;
+}
+
+/** Return the soft-core shift_delta parameter. This is used to soften
+    the LJ interactions */
+float CLJSoftIntraFunction::shiftDelta() const
+{
+    return shift_delta;
+}
+
+/** Return the soft-core coulomb_power parameter. This is used to soften
+    the electrostatic interactions */
+float CLJSoftIntraFunction::coulombPower() const
+{
+    return coulomb_power;
+}
+
+/** Return (1-alpha)^(coulomb_power) */
+float CLJSoftIntraFunction::oneMinusAlphaToN() const
+{
+    if (coulombPower() == 0)
+        return 1.0;
+    else if (coulombPower() == 1)
+        return (1.0 - alpha());
+    else
+        return std::pow( float(1.0 - alpha()), coulombPower() );
+}
+
+/** Return alpha * shift_delta */
+float CLJSoftIntraFunction::alphaTimesShiftDelta() const
+{
+    return alpha() * shiftDelta();
+}
+
+void CLJSoftIntraFunction::pvt_set(float alpha, float shift, float power)
+{
+    if (alpha < 0)
+        alpha = 0;
+    
+    if (shift < 0)
+        shift = 0;
+
+    if (alpha > 1)
+    {
+        if ( power != int(power) )
+            throw SireError::incompatible_error( QObject::tr(
+                    "You cannot have a soft-core function where alpha > 1 and "
+                    "you have a non-integer coulomb power (alpha = %1, coulomb power = %2)")
+                        .arg(alpha).arg(power), CODELOC );
+    }
+    
+    alpha_value = alpha;
+    shift_delta = shift;
+    coulomb_power = power;
+}
+
+/** Set the soft-core alpha parameter */
+void CLJSoftIntraFunction::setAlpha(float alp)
+{
+    pvt_set(alp, shiftDelta(), coulombPower());
+}
+
+/** Set the soft-core shift delta parameter */
+void CLJSoftIntraFunction::setShiftDelta(float shift)
+{
+    pvt_set(alpha(), shift, coulombPower());
+}
+
+/** Set the soft-core coulomb power parameter */
+void CLJSoftIntraFunction::setCoulombPower(float power)
 {
     pvt_set(alpha(), shiftDelta(), power);
 }

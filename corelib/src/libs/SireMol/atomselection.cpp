@@ -162,6 +162,12 @@ bool AtomSelection::isEmpty() const
     return nselected == 0;
 }
 
+/** Return whether or not this is a null selection */
+bool AtomSelection::isNull() const
+{
+    return nselected == 0 and info() == MoleculeInfoData::null();
+}
+
 /** Return the number of selected atoms */
 int AtomSelection::nSelected() const
 {

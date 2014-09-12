@@ -35,6 +35,8 @@
 #include "tbb/blocked_range.h"
 #include "tbb/parallel_for.h"
 
+#include <QElapsedTimer>
+
 using namespace SireMM;
 using namespace SireBase;
 using namespace SireStream;
@@ -171,6 +173,11 @@ namespace SireMM
                         
                         coul_nrg[i] = 0;
                     }
+                    else
+                    {
+                        coul_nrg[i] = 0;
+                        lj_nrg[i] = 0;
+                    }
                     
                     ptr += 1;
                 }
@@ -294,6 +301,11 @@ namespace SireMM
                         
                         coul_nrg[i] = 0;
                     }
+                    else
+                    {
+                        coul_nrg[i] = 0;
+                        lj_nrg[i] = 0;
+                    }
                     
                     ptr += 1;
                 }
@@ -363,15 +375,19 @@ namespace SireMM
         class DeltaWithCutoff
         {
         public:
-            DeltaWithCutoff() : func(0), delta(0), boxes(0)
+            DeltaWithCutoff() : func(0), dists(0), atoms0(0), boxes1(0),
+                                coul_cutoff(0), lj_cutoff(0)
             {}
         
             DeltaWithCutoff(const CLJFunction* const function,
-                            const CLJDelta &cljdelta,
-                            const CLJBoxes &cljboxes,
+                            const CLJBoxDistance* const distances,
+                            const CLJAtoms &cljatoms0,
+                            const CLJBoxes::Container &cljboxes1,
+                            const float coulomb_cutoff, const float lenj_cutoff,
                             double *coulomb_energy, double *lj_energy)
-                : func(function), delta(&cljdelta), boxes(&cljboxes),
-                  coul_nrg(coulomb_energy), lj_nrg(lj_energy)
+                : func(function), dists(distances), atoms0(&cljatoms0),
+                  boxes1(&cljboxes1), coul_nrg(coulomb_energy), lj_nrg(lj_energy),
+                  coul_cutoff(coulomb_cutoff), lj_cutoff(lenj_cutoff)
             {}
             
             ~DeltaWithCutoff()
@@ -379,56 +395,51 @@ namespace SireMM
             
             void operator()(const tbb::blocked_range<int> &range) const
             {
-                const CLJBoxPtr *ptr = boxes->constBegin();
-                
-                const float cutoff = qMax( func->coulombCutoff().value(),
-                                           func->ljCutoff().value() );
-                
-                if (delta->isSingleBox())
+                const CLJBoxDistance* ptr = dists + range.begin();
+                const CLJBoxPtr* const b1 = boxes1->constData();
+            
+                for (int i = range.begin(); i != range.end(); ++i)
                 {
-                    for (int i = range.begin(); i != range.end(); ++i)
+                    if (ptr->distance() < coul_cutoff and ptr->distance() < lj_cutoff)
                     {
-                        const CLJBox &box = ptr[i].read();
-                        
-                        const float mindist = boxes->getDistance(func->space(),
-                                                                 delta->boxIndex(), box.index());
-                    
-                        if (mindist < cutoff)
-                        {
-                            func->total(delta->changedAtoms(),
-                                        ptr[i].read().atoms(),
-                                        coul_nrg[i], lj_nrg[i], mindist);
-                        }
+                        func->total(*atoms0,
+                                    b1[ptr->box1()].read().atoms(),
+                                    coul_nrg[i], lj_nrg[i], ptr->distance());
                     }
-                }
-                else
-                {
-                    for (int i = range.begin(); i != range.end(); ++i)
+                    else if (ptr->distance() < coul_cutoff)
                     {
-                        const CLJBox &box = ptr[i].read();
+                        coul_nrg[i]
+                            = func->coulomb(*atoms0,
+                                            b1[ptr->box1()].read().atoms(),
+                                            ptr->distance());
                         
-                        const float mindist = boxes->getDistance(func->space(),
-                                                                 delta->boxIndex(), box.index(),
-                                                                 delta->nBoxX(), delta->nBoxY(),
-                                                                 delta->nBoxZ());
-                    
-                        if (mindist < cutoff)
-                        {
-                            func->total(delta->changedAtoms(),
-                                        ptr[i].read().atoms(),
-                                        coul_nrg[i], lj_nrg[i], mindist);
-                        }
+                        lj_nrg[i] = 0;
                     }
+                    else if (ptr->distance() < lj_cutoff)
+                    {
+                        lj_nrg[i]
+                            = func->lj(*atoms0,
+                                       b1[ptr->box1()].read().atoms(),
+                                       ptr->distance());
+                        
+                        coul_nrg[i] = 0;
+                    }
+                    
+                    ptr += 1;
                 }
             }
             
         private:
             const CLJFunction* const func;
-            const CLJDelta* const delta;
-            const CLJBoxes* const boxes;
+            const CLJBoxDistance* const dists;
+            const CLJAtoms* const atoms0;
+            const CLJBoxes::Container* const boxes1;
             
             double *coul_nrg;
             double *lj_nrg;
+            
+            const float coul_cutoff;
+            const float lj_cutoff;
         };
 
         /** This is a private helper class that is used to calculate the
@@ -436,15 +447,16 @@ namespace SireMM
         class DeltaWithoutCutoff
         {
         public:
-            DeltaWithoutCutoff() : func(0), delta(0), boxes(0)
+            DeltaWithoutCutoff() : func(0), atoms0(0), boxes1(0),
+                                   coul_nrg(0), lj_nrg(0)
             {}
         
             DeltaWithoutCutoff(const CLJFunction* const function,
-                               const CLJDelta &cljdelta,
-                               const CLJBoxes &cljboxes,
+                               const CLJAtoms &cljatoms0,
+                               const CLJBoxes::Container &cljboxes1,
                                double *coulomb_energy, double *lj_energy)
-                : func(function), delta(&cljdelta), boxes(&cljboxes),
-                  coul_nrg(coulomb_energy), lj_nrg(lj_energy)
+                : func(function), atoms0(&cljatoms0),
+                  boxes1(&cljboxes1), coul_nrg(coulomb_energy), lj_nrg(lj_energy)
             {}
             
             ~DeltaWithoutCutoff()
@@ -452,20 +464,20 @@ namespace SireMM
             
             void operator()(const tbb::blocked_range<int> &range) const
             {
-                const CLJBoxPtr *ptr = boxes->constBegin();
-                
+                const CLJBoxPtr* const b1 = boxes1->constData();
+            
                 for (int i = range.begin(); i != range.end(); ++i)
                 {
-                    func->total(delta->changedAtoms(),
-                                ptr[i].read().atoms(),
-                                coul_nrg[i], lj_nrg[i], 0);
+                    func->total(*atoms0,
+                                b1[i].read().atoms(),
+                                coul_nrg[i], lj_nrg[i]);
                 }
             }
             
         private:
             const CLJFunction* const func;
-            const CLJDelta* const delta;
-            const CLJBoxes* const boxes;
+            const CLJAtoms* const atoms0;
+            const CLJBoxes::Container* const boxes1;
             
             double *coul_nrg;
             double *lj_nrg;
@@ -492,8 +504,8 @@ tuple<double,double> CLJCalculator::calculate(const CLJFunction &func, const CLJ
         QVector<CLJBoxDistance> dists = CLJBoxes::getDistances(func.space(), boxes, max_cutoff);
 
         //now create the space to hold the calculated energies
-        QVector<double> coul_nrgs( dists.count() );
-        QVector<double> lj_nrgs( dists.count() );
+        QVarLengthArray<double> coul_nrgs( dists.count() );
+        QVarLengthArray<double> lj_nrgs( dists.count() );
         
         //now create the object that will be used by TBB to calculate the energies
         detail::TotalWithCutoff helper(&func, dists.constData(), boxes.occupiedBoxes(),
@@ -534,8 +546,8 @@ tuple<double,double> CLJCalculator::calculate(const CLJFunction &func, const CLJ
         QVector<CLJBoxDistance> dists = CLJBoxes::getDistances(func.space(), boxes);
 
         //now create the space to hold the calculated energies
-        QVector<double> coul_nrgs( dists.count() );
-        QVector<double> lj_nrgs( dists.count() );
+        QVarLengthArray<double> coul_nrgs( dists.count() );
+        QVarLengthArray<double> lj_nrgs( dists.count() );
         
         //now create the object that will be used by TBB to calculate the energies
         detail::TotalWithoutCutoff helper(&func, dists.constData(), boxes.occupiedBoxes(),
@@ -628,8 +640,8 @@ tuple<double,double> CLJCalculator::calculate(const CLJFunction &func,
                                                                    boxes0, boxes1, max_cutoff);
 
             //now create the space to hold the calculated energies
-            QVector<double> coul_nrgs( dists.count() );
-            QVector<double> lj_nrgs( dists.count() );
+            QVarLengthArray<double> coul_nrgs( dists.count() );
+            QVarLengthArray<double> lj_nrgs( dists.count() );
             
             //now create the object that will be used by TBB to calculate the energies
             detail::TotalWithCutoff2 helper(&func, dists.constData(),
@@ -672,8 +684,8 @@ tuple<double,double> CLJCalculator::calculate(const CLJFunction &func,
             QVector<CLJBoxDistance> dists = CLJBoxes::getDistances(func.space(), boxes0, boxes1);
 
             //now create the space to hold the calculated energies
-            QVector<double> coul_nrgs( dists.count() );
-            QVector<double> lj_nrgs( dists.count() );
+            QVarLengthArray<double> coul_nrgs( dists.count() );
+            QVarLengthArray<double> lj_nrgs( dists.count() );
             
             //now create the object that will be used by TBB to calculate the energies
             detail::TotalWithoutCutoff2 helper(&func, dists.constData(),
@@ -709,6 +721,114 @@ tuple<double,double> CLJCalculator::calculate(const CLJFunction &func,
             
             return tuple<double,double>(cnrg, ljnrg);
         }
+    }
+}
+
+/** Calculate the energy between all of the atoms in the 'atoms0' and 'atoms1'
+    using the passed CLJFunction, returning
+    the coulomb and LJ energy as a tuple (coulomb,lj) */
+tuple<double,double> CLJCalculator::calculate(const CLJFunction &func,
+                                              const CLJAtoms &atoms0, const CLJBoxes &boxes1) const
+{
+    const int n1 = boxes1.nOccupiedBoxes();
+
+    if (n1 == 0 or atoms0.count() == 0)
+        return tuple<double,double>(0,0);
+    
+    else if (n1 == 1)
+    {
+        return func.calculate(atoms0, boxes1);
+    }
+    else if (func.hasCutoff())
+    {
+        //we have a cutoff, so need to find all boxes that are
+        //within range of these atoms
+        Length coul_cutoff = func.coulombCutoff();
+        Length lj_cutoff = func.ljCutoff();
+        
+        Length max_cutoff( coul_cutoff.value() >= lj_cutoff.value() ?
+                           coul_cutoff : lj_cutoff );
+        
+        //get the list of box pairs that are within the cutoff distance
+        QVector<CLJBoxDistance> dists = CLJBoxes::getDistances(func.space(),
+                                                               atoms0, boxes1, max_cutoff);
+
+        //first, create the space to hold the calculated energies
+        QVarLengthArray<double> coul_nrgs(dists.count());
+        QVarLengthArray<double> lj_nrgs(dists.count());
+        
+        //now create the object that will be used by TBB to calculate the energies
+        detail::DeltaWithCutoff helper(&func, dists.constData(),
+                                       atoms0, boxes1.occupiedBoxes(),
+                                       coul_cutoff.value(), lj_cutoff.value(),
+                                       coul_nrgs.data(), lj_nrgs.data());
+
+        //now perform the calculation in parallel
+        tbb::parallel_for(tbb::blocked_range<int>(0,dists.count()), helper);
+        
+        if (reproducible_sum)
+        {
+            //do a sorted sum of energies so that we get the same result no matter the order
+            //of calculation
+            qSort(coul_nrgs);
+            qSort(lj_nrgs);
+        }
+        
+        double cnrg = 0;
+        double ljnrg = 0;
+        
+        const double *coul_nrgs_array = coul_nrgs.constData();
+        const double *lj_nrgs_array = lj_nrgs.constData();
+        
+        for (int i=0; i<coul_nrgs.count(); ++i)
+        {
+            cnrg += *coul_nrgs_array;
+            ljnrg += *lj_nrgs_array;
+            
+            ++coul_nrgs_array;
+            ++lj_nrgs_array;
+        }
+
+        return tuple<double,double>(cnrg,ljnrg);
+    }
+    else
+    {
+        //no cutoff, so just loop over all boxes in parallel
+        //first, create the space to hold the calculated energies
+        QVarLengthArray<double> coul_nrgs(n1);
+        QVarLengthArray<double> lj_nrgs(n1);
+        
+        //now create the object that will be used by TBB to calculate the energies
+        detail::DeltaWithoutCutoff helper(&func, atoms0, boxes1.occupiedBoxes(),
+                                          coul_nrgs.data(), lj_nrgs.data());
+
+        //now perform the calculation in parallel
+        tbb::parallel_for(tbb::blocked_range<int>(0,n1), helper);
+        
+        if (reproducible_sum)
+        {
+            //do a sorted sum of energies so that we get the same result no matter the order
+            //of calculation
+            qSort(coul_nrgs);
+            qSort(lj_nrgs);
+        }
+        
+        double cnrg = 0;
+        double ljnrg = 0;
+        
+        const double *coul_nrgs_array = coul_nrgs.constData();
+        const double *lj_nrgs_array = lj_nrgs.constData();
+        
+        for (int i=0; i<coul_nrgs.count(); ++i)
+        {
+            cnrg += *coul_nrgs_array;
+            ljnrg += *lj_nrgs_array;
+            
+            ++coul_nrgs_array;
+            ++lj_nrgs_array;
+        }
+
+        return tuple<double,double>(cnrg,ljnrg);
     }
 }
 
@@ -770,87 +890,27 @@ tuple< QVector<double>, QVector<double> > CLJCalculator::calculate(
     return tuple< QVector<double>,QVector<double> >(cnrgs, ljnrgs);
 }
 
-/** Return the change in energy associated with the delta in 'delta' against the
-    other atoms in 'atoms' using the passed energy function */
-tuple<double,double> CLJCalculator::calculate(const CLJFunction &func,
-                                              const CLJDelta &delta,
-                                              const CLJBoxes &boxes) const
-{
-    if (delta.isNull() or boxes.nOccupiedBoxes() == 0)
-        return tuple<double,double>(0,0);
-
-    //now create the space to hold the calculated energies
-    QVector<double> coul_nrgs( boxes.nOccupiedBoxes() );
-    QVector<double> lj_nrgs( boxes.nOccupiedBoxes() );
-    
-    if (func.hasCutoff())
-    {
-        //now create the object that will be used by TBB to calculate the energies
-        detail::DeltaWithCutoff helper(&func, delta, boxes,
-                                       coul_nrgs.data(), lj_nrgs.data());
-
-        //now perform the calculation in parallel
-        tbb::parallel_for(tbb::blocked_range<int>(0,boxes.nOccupiedBoxes()), helper);
-    }
-    else
-    {
-        //now create the object that will be used by TBB to calculate the energies
-        detail::DeltaWithoutCutoff helper(&func, delta, boxes,
-                                          coul_nrgs.data(), lj_nrgs.data());
-
-        //now perform the calculation in parallel
-        tbb::parallel_for(tbb::blocked_range<int>(0,boxes.nOccupiedBoxes()), helper);
-    }
-    
-    if (reproducible_sum)
-    {
-        //do a sorted sum of energies so that we get the same result no matter the order
-        //of calculation
-        qSort(coul_nrgs);
-        qSort(lj_nrgs);
-    }
-    
-    double cnrg = 0;
-    double ljnrg = 0;
-    
-    const double *coul_nrgs_array = coul_nrgs.constData();
-    const double *lj_nrgs_array = lj_nrgs.constData();
-    
-    for (int i=0; i<coul_nrgs.count(); ++i)
-    {
-        cnrg += *coul_nrgs_array;
-        ljnrg += *lj_nrgs_array;
-        
-        ++coul_nrgs_array;
-        ++lj_nrgs_array;
-    }
-    
-    return tuple<double,double>(cnrg, ljnrg);
-}
-
-/** Return the changes in energy associated with the delta in 'delta' against the
-    other atoms in 'atoms' using the passed energy functions */
-tuple< QVector<double>, QVector<double> >
-CLJCalculator::calculate( const QVector<CLJFunctionPtr> &funcs,
-                          const CLJDelta &delta, const CLJBoxes &boxes ) const
+/** Calculate the energy between all of the atoms in the passed atoms0 and atoms1
+    using the passed array of CLJFunctions, returning the energies as
+    a tuple of arrays of the coulomb and LJ energy (coulomb,lj) */
+tuple< QVector<double>, QVector<double> > CLJCalculator::calculate(
+                                const QVector<CLJFunctionPtr> &funcs,
+                                const CLJAtoms &atoms0, const CLJBoxes &boxes1) const
 {
     QVector<double> cnrgs;
     QVector<double> ljnrgs;
     
     if (funcs.count() == 1)
     {
-        tuple<double,double> nrgs = calculate( *(funcs.at(0)), delta, boxes );
+        tuple<double,double> nrgs = calculate( *(funcs.at(0)), atoms0, boxes1 );
         cnrgs = QVector<double>(1, nrgs.get<0>());
         ljnrgs = QVector<double>(1, nrgs.get<1>());
     }
     else if (funcs.count() > 1)
     {
-        cnrgs.reserve(funcs.count());
-        ljnrgs.reserve(funcs.count());
-    
         for (int i=0; i<funcs.count(); ++i)
         {
-            tuple<double,double> nrgs = calculate( *(funcs.at(i)), delta, boxes );
+            tuple<double,double> nrgs = calculate( *(funcs.at(i)), atoms0, boxes1 );
             cnrgs.append( nrgs.get<0>() );
             ljnrgs.append( nrgs.get<1>() );
         }

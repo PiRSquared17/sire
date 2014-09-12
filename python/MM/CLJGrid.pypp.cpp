@@ -128,6 +128,26 @@ void register_CLJGrid_class(){
                 , disableGrid_function_value );
         
         }
+        { //::SireMM::CLJGrid::disableParallelCalculation
+        
+            typedef void ( ::SireMM::CLJGrid::*disableParallelCalculation_function_type )(  ) ;
+            disableParallelCalculation_function_type disableParallelCalculation_function_value( &::SireMM::CLJGrid::disableParallelCalculation );
+            
+            CLJGrid_exposer.def( 
+                "disableParallelCalculation"
+                , disableParallelCalculation_function_value );
+        
+        }
+        { //::SireMM::CLJGrid::disableReproducibleCalculation
+        
+            typedef void ( ::SireMM::CLJGrid::*disableReproducibleCalculation_function_type )(  ) ;
+            disableReproducibleCalculation_function_type disableReproducibleCalculation_function_value( &::SireMM::CLJGrid::disableReproducibleCalculation );
+            
+            CLJGrid_exposer.def( 
+                "disableReproducibleCalculation"
+                , disableReproducibleCalculation_function_value );
+        
+        }
         { //::SireMM::CLJGrid::enableGrid
         
             typedef void ( ::SireMM::CLJGrid::*enableGrid_function_type )(  ) ;
@@ -136,6 +156,26 @@ void register_CLJGrid_class(){
             CLJGrid_exposer.def( 
                 "enableGrid"
                 , enableGrid_function_value );
+        
+        }
+        { //::SireMM::CLJGrid::enableParallelCalculation
+        
+            typedef void ( ::SireMM::CLJGrid::*enableParallelCalculation_function_type )(  ) ;
+            enableParallelCalculation_function_type enableParallelCalculation_function_value( &::SireMM::CLJGrid::enableParallelCalculation );
+            
+            CLJGrid_exposer.def( 
+                "enableParallelCalculation"
+                , enableParallelCalculation_function_value );
+        
+        }
+        { //::SireMM::CLJGrid::enableReproducibleCalculation
+        
+            typedef void ( ::SireMM::CLJGrid::*enableReproducibleCalculation_function_type )(  ) ;
+            enableReproducibleCalculation_function_type enableReproducibleCalculation_function_value( &::SireMM::CLJGrid::enableReproducibleCalculation );
+            
+            CLJGrid_exposer.def( 
+                "enableReproducibleCalculation"
+                , enableReproducibleCalculation_function_value );
         
         }
         { //::SireMM::CLJGrid::fixedAtoms
@@ -385,6 +425,28 @@ void register_CLJGrid_class(){
                 , ( bp::arg("on") ) );
         
         }
+        { //::SireMM::CLJGrid::setUseParallelCalculation
+        
+            typedef void ( ::SireMM::CLJGrid::*setUseParallelCalculation_function_type )( bool ) ;
+            setUseParallelCalculation_function_type setUseParallelCalculation_function_value( &::SireMM::CLJGrid::setUseParallelCalculation );
+            
+            CLJGrid_exposer.def( 
+                "setUseParallelCalculation"
+                , setUseParallelCalculation_function_value
+                , ( bp::arg("on") ) );
+        
+        }
+        { //::SireMM::CLJGrid::setUseReproducibleCalculation
+        
+            typedef void ( ::SireMM::CLJGrid::*setUseReproducibleCalculation_function_type )( bool ) ;
+            setUseReproducibleCalculation_function_type setUseReproducibleCalculation_function_value( &::SireMM::CLJGrid::setUseReproducibleCalculation );
+            
+            CLJGrid_exposer.def( 
+                "setUseReproducibleCalculation"
+                , setUseReproducibleCalculation_function_value
+                , ( bp::arg("on") ) );
+        
+        }
         { //::SireMM::CLJGrid::toString
         
             typedef ::QString ( ::SireMM::CLJGrid::*toString_function_type )(  ) const;
@@ -435,6 +497,26 @@ void register_CLJGrid_class(){
             CLJGrid_exposer.def( 
                 "usesGrid"
                 , usesGrid_function_value );
+        
+        }
+        { //::SireMM::CLJGrid::usesParallelCalculation
+        
+            typedef bool ( ::SireMM::CLJGrid::*usesParallelCalculation_function_type )(  ) const;
+            usesParallelCalculation_function_type usesParallelCalculation_function_value( &::SireMM::CLJGrid::usesParallelCalculation );
+            
+            CLJGrid_exposer.def( 
+                "usesParallelCalculation"
+                , usesParallelCalculation_function_value );
+        
+        }
+        { //::SireMM::CLJGrid::usesReproducibleCalculation
+        
+            typedef bool ( ::SireMM::CLJGrid::*usesReproducibleCalculation_function_type )(  ) const;
+            usesReproducibleCalculation_function_type usesReproducibleCalculation_function_value( &::SireMM::CLJGrid::usesReproducibleCalculation );
+            
+            CLJGrid_exposer.def( 
+                "usesReproducibleCalculation"
+                , usesReproducibleCalculation_function_value );
         
         }
         { //::SireMM::CLJGrid::what

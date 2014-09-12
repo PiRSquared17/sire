@@ -128,6 +128,12 @@ bool MoleculeView::operator!=(const MoleculeView &other) const
     return d != other.d and *d != *(other.d);
 }
 
+/** Return whether or not this molecule view is null */
+bool MoleculeView::isNull() const
+{
+    return *d == *MoleculeData::null();
+}
+
 /** Return whether or not this view is of the same molecule as 'other'
     (albeit perhaps a different version of the molecule) */
 bool MoleculeView::isSameMolecule(const MoleculeData &other) const

@@ -52,12 +52,13 @@ static const RegisterMetaType<MonteCarlo> r_mc(MAGIC_ONLY, "SireMove::MonteCarlo
 /** Serialise to a binary data stream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const MonteCarlo &mc)
 {
-    writeHeader(ds, r_mc, 1);
+    writeHeader(ds, r_mc, 2);
 
     SharedDataStream sds(ds);
 
     sds << mc.ensmble << mc.rangenerator
         << mc.naccept << mc.nreject
+        << mc.optimise_moves
         << static_cast<const Move&>(mc);
 
     return ds;
@@ -68,7 +69,19 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MonteCarlo &mc)
 {
     VersionID v = readHeader(ds, r_mc);
 
-    if (v == 1)
+    mc.optimise_moves = false;
+
+    if (v == 2)
+    {
+        SharedDataStream sds(ds);
+    
+        sds >> mc.ensmble
+            >> mc.rangenerator
+            >> mc.naccept >> mc.nreject
+            >> mc.optimise_moves
+            >> static_cast<Move&>(mc);
+    }
+    else if (v == 1)
     {
         SharedDataStream sds(ds);
     
@@ -78,20 +91,22 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MonteCarlo &mc)
             >> static_cast<Move&>(mc);
     }
     else
-        throw version_error(v, "1", r_mc, CODELOC);
+        throw version_error(v, "1,2", r_mc, CODELOC);
 
     return ds;
 }
 
 /** Construct using the supplied random number generator */
-MonteCarlo::MonteCarlo(const PropertyMap &map) : Move(map), naccept(0), nreject(0)
+MonteCarlo::MonteCarlo(const PropertyMap &map)
+           : Move(map), naccept(0), nreject(0), optimise_moves(false)
 {}
 
 /** Copy constructor */
 MonteCarlo::MonteCarlo(const MonteCarlo &other)
            : Move(other), ensmble(other.ensmble),
              rangenerator(other.rangenerator),
-             naccept(other.naccept), nreject(other.nreject)
+             naccept(other.naccept), nreject(other.nreject),
+             optimise_moves(other.optimise_moves)
 {}
 
 /** Destructor */
@@ -118,6 +133,7 @@ MonteCarlo& MonteCarlo::operator=(const MonteCarlo &other)
     rangenerator = other.rangenerator;
     naccept = other.naccept;
     nreject = other.nreject;
+    optimise_moves = other.optimise_moves;
 
     Move::operator=(other);
 
@@ -129,7 +145,8 @@ bool MonteCarlo::operator==(const MonteCarlo &other) const
 {
     return rangenerator == other.rangenerator and
            naccept == other.naccept and
-           nreject == other.nreject;
+           nreject == other.nreject and
+           optimise_moves == other.optimise_moves;
 }
 
 /** Comparison operator */
@@ -191,6 +208,34 @@ void MonteCarlo::clearStatistics()
 {
     naccept = 0;
     nreject = 0;
+}
+
+/** Turn on use of optimised MC moves. This turns on newer (and potentially more buggy)
+    code that aims to speed up the memory allocation and energy calculation for 
+    MC moves. */
+void MonteCarlo::enableOptimisedMoves()
+{
+    setUseOptimisedMoves(true);
+}
+
+/** Turn off use of optimised MC moves. This uses slightly slower, but likely
+    less buggy code, and is worth using if you suspect there are problems with
+    the optimised code */
+void MonteCarlo::disableOptimisedMoves()
+{
+    setUseOptimisedMoves(false);
+}
+
+/** Switch on or off use of the optimised MC code */
+void MonteCarlo::setUseOptimisedMoves(bool on)
+{
+    optimise_moves = on;
+}
+
+/** Return whether or not the optimised MC code is being used */
+bool MonteCarlo::usingOptimisedMoves() const
+{
+    return optimise_moves;
 }
 
 /** Perform the NVT Monte Carlo test, using the supplied change in energy

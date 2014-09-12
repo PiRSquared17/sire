@@ -29,12 +29,10 @@
 #ifndef SIREMM_INTERFF_H
 #define SIREMM_INTERFF_H
 
-#include "cljcomponent.h"
 #include "cljgrid.h"
 #include "cljfunction.h"
-#include "cljworkspace.h"
-
-#include "SireBase/chunkedvector.hpp"
+#include "cljgroup.h"
+#include "multicljcomponent.h"
 
 #include "SireFF/g1ff.h"
 
@@ -91,10 +89,22 @@ public:
 
     InterFF* clone() const;
 
-    const CLJComponent& components() const;
+    const MultiCLJComponent& components() const;
 
     void setCLJFunction(const CLJFunction &cljfunc);
     const CLJFunction& cljFunction() const;
+
+    void setCLJFunction(QString key, const CLJFunction &cljfunc);
+
+    void removeCLJFunctionAt(QString key);
+    void removeAllCLJFunctions();
+
+    const CLJFunction& cljFunction(QString key) const;
+
+    int nCLJFunctions() const;
+    QStringList cljFunctionKeys() const;
+    
+    QHash<QString,CLJFunctionPtr> cljFunctions() const;
 
     void addFixedAtoms(const MoleculeView &molecule, const PropertyMap &map = PropertyMap());
     void addFixedAtoms(const Molecules &molecules, const PropertyMap &map = PropertyMap());
@@ -120,6 +130,16 @@ public:
 
     GridInfo grid() const;
 
+    void enableParallelCalculation();
+    void disableParallelCalculation();
+    void setUseParallelCalculation(bool on);
+    bool usesParallelCalculation() const;
+
+    void enableReproducibleCalculation();
+    void disableReproducibleCalculation();
+    void setUseReproducibleCalculation(bool on);
+    bool usesReproducibleCalculation() const;
+
     bool setProperty(const QString &name, const Property &property);
     const Property& property(const QString &name) const;
     bool containsProperty(const QString &name) const;
@@ -135,11 +155,6 @@ private:
 
     void recalculateEnergy();
     void rebuildProps();
-    
-    void reboxChangedAtoms();
-    
-    void reextractAtoms(const SireMol::PartialMolecule &mol);
-    void reextractAtoms();
     
     void regridAtoms();
     
@@ -158,21 +173,14 @@ private:
 
     void _pvt_updateName();
 
-    /** The locations of the atoms of all of the molecules in the boxes,
-        indexed by the ID of their enclosing group in the forcefield */
-    SireBase::ChunkedVector< QVector<CLJBoxIndex> > atom_locs;
-
-    /** The workspace containing everything about the changes during a move */
-    CLJWorkspace wspace;
-
-    /** All of the boxed-up atoms */
-    CLJBoxes cljboxes;
+    /** The CLJGroup containing all of the extracted molecules */
+    CLJGroup cljgroup;
 
     /** Implicitly shared pointer to the (mostly) const data for this forcefield */
     QSharedDataPointer<detail::InterFFData> d;
     
-    /** Whether or not the changed atoms need re-boxing */
-    bool needs_reboxing;
+    /** Whether or not we need to 'accept' this move */
+    bool needs_accepting;
 };
 
 }

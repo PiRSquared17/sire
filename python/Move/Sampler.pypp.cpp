@@ -56,6 +56,16 @@ void register_Sampler_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        { //::SireMove::Sampler::isBiased
+        
+            typedef bool ( ::SireMove::Sampler::*isBiased_function_type )(  ) const;
+            isBiased_function_type isBiased_function_value( &::SireMove::Sampler::isBiased );
+            
+            Sampler_exposer.def( 
+                "isBiased"
+                , isBiased_function_value );
+        
+        }
         { //::SireMove::Sampler::null
         
             typedef ::SireMove::UniformSampler const & ( *null_function_type )(  );

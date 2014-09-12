@@ -7,6 +7,7 @@ set ( PYPP_SOURCES
        TwoAtomFunctions.pypp.cpp
        CLJShiftFunction.pypp.cpp
        InterLJFFBase.pypp.cpp
+       CLJ14Group.pypp.cpp
        CLJAtoms.pypp.cpp
        IntraCoulombFFBase.pypp.cpp
        StretchStretchComponent.pypp.cpp
@@ -21,6 +22,7 @@ set ( PYPP_SOURCES
        LJNBPairs.pypp.cpp
        UreyBradleyParameterName.pypp.cpp
        InternalSymbolsBase.pypp.cpp
+       CLJGroup.pypp.cpp
        IntraGroupLJFFBase.pypp.cpp
        CLJNBPairs.pypp.cpp
        RestraintComponent.pypp.cpp
@@ -50,6 +52,7 @@ set ( PYPP_SOURCES
        IntraGroupCLJFFBase.pypp.cpp
        SoftCLJPotentialInterface_InterSoftCLJPotential_.pypp.cpp
        BendBendComponent.pypp.cpp
+       CLJRFFunction.pypp.cpp
        AngleSymbols.pypp.cpp
        IntraLJFFBase.pypp.cpp
        SwitchingFunction.pypp.cpp
@@ -62,25 +65,32 @@ set ( PYPP_SOURCES
        LJParameterName3D.pypp.cpp
        StretchBendComponent.pypp.cpp
        ChargeParameterName3D.pypp.cpp
+       CLJIntraRFFunction.pypp.cpp
        CoulombPotentialInterface_InterCoulombPotential_.pypp.cpp
        IntraCLJFF.pypp.cpp
        Restraint.pypp.cpp
        BendBendParameterName.pypp.cpp
        GridFF2.pypp.cpp
+       CLJSoftShiftFunction.pypp.cpp
        IntraGroupCoulombFFBase.pypp.cpp
        IntraCLJFFBase.pypp.cpp
        LJPerturbation.pypp.cpp
        AngleComponent.pypp.cpp
        SoftCLJComponent.pypp.cpp
+       IntraFF.pypp.cpp
        AtomPairs_CLJScaleFactor_.pypp.cpp
        InternalFF.pypp.cpp
        BendBendSymbols.pypp.cpp
        InterGroupSoftCLJFF.pypp.cpp
+       Intra14Component.pypp.cpp
        DihedralParameterName.pypp.cpp
+       CLJSoftIntraRFFunction.pypp.cpp
        InterSoftCLJFFBase.pypp.cpp
+       MultiCLJComponent.pypp.cpp
        CoulombComponent.pypp.cpp
        Restraint3D.pypp.cpp
        TripleDistanceRestraint.pypp.cpp
+       IntraGroupFF.pypp.cpp
        CLJCutoffFunction.pypp.cpp
        InterSoftCLJFF.pypp.cpp
        LJParameterName.pypp.cpp
@@ -101,13 +111,16 @@ set ( PYPP_SOURCES
        IntraGroupCoulombFF.pypp.cpp
        InternalParameters.pypp.cpp
        CoulombNBPairs.pypp.cpp
+       Intra14LJComponent.pypp.cpp
        StretchStretchParameterName.pypp.cpp
+       CLJSoftRFFunction.pypp.cpp
        ScaledCLJParameterNames3D.pypp.cpp
        InterCoulombFFBase.pypp.cpp
        CLJParameterNames3D.pypp.cpp
        LJPotentialInterface_InterLJPotential_.pypp.cpp
        CLJBoxIndex.pypp.cpp
        CLJWorkspace.pypp.cpp
+       Intra14CoulombComponent.pypp.cpp
        FourAtomFunction.pypp.cpp
        CLJSoftFunction.pypp.cpp
        IntraSoftCLJFF.pypp.cpp
@@ -128,6 +141,7 @@ set ( PYPP_SOURCES
        CLJPotentialInterface_IntraCLJPotential_.pypp.cpp
        InterFF.pypp.cpp
        AtomFunction.pypp.cpp
+       CLJSoftIntraShiftFunction.pypp.cpp
        BondSymbols.pypp.cpp
        LJComponent.pypp.cpp
        IntraGroupCLJFF.pypp.cpp
@@ -141,17 +155,20 @@ set ( PYPP_SOURCES
        FourAtomFunctions.pypp.cpp
        CLJFunction.pypp.cpp
        InterCLJFFBase.pypp.cpp
+       CLJSoftIntraFunction.pypp.cpp
        StretchBendTorsionSymbols.pypp.cpp
        CLJBoxDistance.pypp.cpp
        CLJScaleFactor.pypp.cpp
        ThreeAtomFunction.pypp.cpp
        StretchBendTorsionParameterName.pypp.cpp
        NullRestraint.pypp.cpp
+       CLJExtractor.pypp.cpp
        DihedralRestraint.pypp.cpp
        InterLJFF.pypp.cpp
        CLJComponent.pypp.cpp
        InternalParameterNames3D.pypp.cpp
        CLJBoxes.pypp.cpp
+       InterGroupFF.pypp.cpp
        SireMM_containers.cpp
        SireMM_properties.cpp
        SireMM_registrars.cpp

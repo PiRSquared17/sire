@@ -333,7 +333,8 @@ if ( ${SIRE_CXX_COMPILER_ID} MATCHES "GNU" )
     set ( SIRE_RELEASE_FLAGS "-O3 -ffast-math" )
 
     # -fomit-frame-pointer breaks backtrace on an apple
-    set ( SIRE_RELEASE_FLAGS "${SIRE_RELEASE_FLAGS} -fomit-frame-pointer" )
+    # and can cause segfaults when exceptions are not caught
+    # set ( SIRE_RELEASE_FLAGS "${SIRE_RELEASE_FLAGS} -fomit-frame-pointer" )
 
     set ( SIRE_OPENMP_FLAGS "-fopenmp" )
     set ( SIRE_PLATFORM_FLAGS "-pipe" )
@@ -425,7 +426,7 @@ elseif ( ${SIRE_CXX_COMPILER_ID} MATCHES "CLANG" )
     set ( SIRE_RELEASE_FLAGS "-O3 -ffast-math" )
 
     # -fomit-frame-pointer breaks backtrace on an apple
-    set ( SIRE_RELEASE_FLAGS "${SIRE_RELEASE_FLAGS} -fomit-frame-pointer" )
+    # set ( SIRE_RELEASE_FLAGS "${SIRE_RELEASE_FLAGS} -fomit-frame-pointer" )
 
     set ( SIRE_OPENMP_FLAGS "-fopenmp" )
     set ( SIRE_PLATFORM_FLAGS "-pipe" )
@@ -518,7 +519,7 @@ elseif( ${CMAKE_CXX_COMPILER} MATCHES "icpc" )
 
     set ( SIRE_SMALL_FLAGS  "-Os" )
     set ( SIRE_WARNALL_FLAGS  "-w1" )
-    set ( SIRE_RELEASE_FLAGS  "-O3 -fomit-frame-pointer -inline-level=2" )
+    set ( SIRE_RELEASE_FLAGS  "-O3 -inline-level=2" )
     set ( SIRE_VECTOR_FLAGS  "-DSIRE_USE_SSE -msse3" )
     set ( SIRE_DEBUG_FLAGS   "-g" )
     set ( SIRE_VISIBILITY_FLAGS "-DSIRE_NO_VISIBILITY_AVAILABLE" )    

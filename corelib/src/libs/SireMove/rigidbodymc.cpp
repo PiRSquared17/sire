@@ -1119,6 +1119,9 @@ void RigidBodyMC::performMove(System &system,
     Quaternion rotdelta( rdel * generator().rand(),
                          generator().vectorOnSphere() );
 
+    old_bias = 1;
+    new_bias = 1;
+
     if (reflect_moves and (sync_trans or sync_rot))
         throw SireError::incomplete_code( QObject::tr(
                 "Sire does not yet support using the reflection sphere together with "
@@ -1130,7 +1133,9 @@ void RigidBodyMC::performMove(System &system,
         tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
 
         const PartialMolecule &oldmol = mol_and_bias.get<0>();
-        old_bias = mol_and_bias.get<1>();
+        
+        if (smplr.read().isBiased())
+            old_bias = mol_and_bias.get<1>();
         
         if (oldmol.isEmpty())
         {
@@ -1153,8 +1158,6 @@ void RigidBodyMC::performMove(System &system,
         {
             if (reflect_radius == 0)
             {
-                old_bias = 1;
-                new_bias = 1;
                 qDebug() << "CANNOT MOVE MOLECULE AS RESTRICT VOLUME RADIUS IS ZERO"
                          << oldmol.number().toString();
                 return;
@@ -1177,8 +1180,6 @@ void RigidBodyMC::performMove(System &system,
             if (not ::inVolume(old_center,reflect_points,reflect_rad))
             {
                 //the molecule is already outside the volume, so cannot be moved
-                old_bias = 1;
-                new_bias = 1;
                 qDebug() << "HOW IS THE MOLECULE OUTSIDE THE VOLUME?"
                          << oldmol.number().toString();
                 return;
@@ -1358,8 +1359,6 @@ void RigidBodyMC::performMove(System &system,
                         qDebug() << "Cannot move molecule as the number of volume reflection "
                                     "attempts has exceeded 50." << oldmol.number().toString();
                         
-                        old_bias = 1;
-                        new_bias = 1;
                         return;
                     }
                 }
@@ -1428,8 +1427,6 @@ void RigidBodyMC::performMove(System &system,
                 if ( (old_center-reflect_cent).length() > reflect_rad )
                 {
                     //the molecule is already outside the sphere, so cannot be moved
-                    old_bias = 1;
-                    new_bias = 1;
                     qDebug() << "HOW IS THE MOLECULE OUTSIDE THE SPHERE?";
                     qDebug() << (old_center-reflect_cent).length() << reflect_rad;
                     return;
@@ -1455,27 +1452,26 @@ void RigidBodyMC::performMove(System &system,
                 if (not ok)
                 {
                     qDebug() << "Something went wrong with the reflection move...";
-                    old_bias = 1;
-                    new_bias = 1;
                     return;
                 }
             }
         }
 
         //update the system with the new coordinates
-        system.update(newmol);
+        if (MonteCarlo::usingOptimisedMoves())
+            system.update(newmol, false);
+        else
+            system.update(newmol, true);
 
         //get the new bias on this molecule
-        new_bias = smplr.read().probabilityOf(newmol);
+        if (smplr.read().isBiased())
+            new_bias = smplr.read().probabilityOf(newmol);
     }
     else if (sync_trans)
     {
         if (sync_rot)
         {
             //translate and rotate all molecules
-            old_bias = 1;
-            new_bias = 1;
-
             const Molecules &molecules = smplr.read().group().molecules();
 
             Molecules new_molecules = molecules;
@@ -1557,7 +1553,9 @@ void RigidBodyMC::performMove(System &system,
             tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
 
             const PartialMolecule &oldmol = mol_and_bias.get<0>();
-            old_bias = mol_and_bias.get<1>();
+            
+            if (smplr.read().isBiased())
+                old_bias = mol_and_bias.get<1>();
 
             PartialMolecule newmol;
             
@@ -1582,7 +1580,8 @@ void RigidBodyMC::performMove(System &system,
             system.update(newmol);
 
             //get the new bias on this molecule
-            new_bias = smplr.read().probabilityOf(newmol);
+            if (smplr.read().isBiased())
+                new_bias = smplr.read().probabilityOf(newmol);
         }
     }
     else if (sync_rot)
@@ -1673,7 +1672,9 @@ void RigidBodyMC::performMove(System &system,
             tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
 
             const PartialMolecule &oldmol = mol_and_bias.get<0>();
-            old_bias = mol_and_bias.get<1>();
+            
+            if (smplr.read().isBiased())
+                old_bias = mol_and_bias.get<1>();
 
             PartialMolecule newmol = oldmol.move()
                                            .translate(delta, map)
@@ -1683,14 +1684,9 @@ void RigidBodyMC::performMove(System &system,
             system.update(newmol);
 
             //get the new bias on this molecule
-            new_bias = smplr.read().probabilityOf(newmol);
+            if (smplr.read().isBiased())
+                new_bias = smplr.read().probabilityOf(newmol);
         }
-        else
-        {
-            old_bias = 1;
-            new_bias = 1;
-        }
-
     }
 }
 
@@ -1847,129 +1843,111 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
     if (nmoves <= 0)
         return;
 
-    //save our, and the system's, current state
-    RigidBodyMC old_state(*this);
+    QElapsedTimer t, t2;
+    
+    qint64 old_ns = 0;
+    qint64 copy_ns = 0;
+    qint64 nrg_ns = 0;
+    qint64 move_ns = 0;
+    qint64 test_ns = 0;
+    qint64 reject_ns = 0;
+    qint64 accept_ns = 0;
 
-    System old_system_state(system);
+    const PropertyMap &map = Move::propertyMap();
     
-    try
+    if (nmoves > 1)
+        t2.start();
+    
+    for (int i=0; i<nmoves; ++i)
     {
-        QElapsedTimer t, t2;
+        //get the old total energy of the system
+        if (nmoves > 1)
+            t.start();
+
+        double old_nrg = system.energy( this->energyComponent() );
+
+        if (nmoves > 1)
+            old_ns += t.nsecsElapsed();
+
+        //save the old system
+        if (nmoves > 1)
+            t.start();
         
-        qint64 old_ns = 0;
-        qint64 copy_ns = 0;
-        qint64 nrg_ns = 0;
-        qint64 move_ns = 0;
-        qint64 test_ns = 0;
-        qint64 reject_ns = 0;
-        qint64 accept_ns = 0;
-    
-        const PropertyMap &map = Move::propertyMap();
+        System old_system = system;
+
+        if (nmoves > 1)
+            copy_ns += t.nsecsElapsed();
+
+        double old_bias = 1;
+        double new_bias = 1;
+
+        if (nmoves > 1)
+            t.start();
+
+        this->performMove(system, old_bias, new_bias, map);
+
+        if (nmoves > 1)
+            move_ns += t.nsecsElapsed();
+
+        //calculate the energy of the system
+        if (nmoves > 1)
+            t.start();
+
+        double new_nrg = system.energy( this->energyComponent() );
+
+        if (nmoves > 1)
+            nrg_ns += t.nsecsElapsed();
+
+        //accept or reject the move based on the change of energy
+        //and the biasing factors
+        if (nmoves > 1)
+            t.start();
+
+        const bool accept_move = this->test(new_nrg, old_nrg, new_bias, old_bias);
         
         if (nmoves > 1)
-            t2.start();
-        
-        for (int i=0; i<nmoves; ++i)
+            test_ns += t.nsecsElapsed();
+
+        if (accept_move)
         {
-            //get the old total energy of the system
+            //the move has been rejected. Destroy the old state and accept the move
             if (nmoves > 1)
                 t.start();
             
-            double old_nrg = system.energy( this->energyComponent() );
-
-            if (nmoves > 1)
-                old_ns += t.nsecsElapsed();
-
-            //save the old system
-            if (nmoves > 1)
-                t.start();
-            
-            System old_system = system;
-
-            if (nmoves > 1)
-                copy_ns += t.nsecsElapsed();
-
-            double old_bias = 1;
-            double new_bias = 1;
-
-            if (nmoves > 1)
-                t.start();
-
-            this->performMove(system, old_bias, new_bias, map);
-
-            if (nmoves > 1)
-                move_ns += t.nsecsElapsed();
-    
-            //calculate the energy of the system
-            if (nmoves > 1)
-                t.start();
-
-            double new_nrg = system.energy( this->energyComponent() );
-
-            if (nmoves > 1)
-                nrg_ns += t.nsecsElapsed();
-
-            //accept or reject the move based on the change of energy
-            //and the biasing factors
-            if (nmoves > 1)
-                t.start();
-
-            const bool accept_move = this->test(new_nrg, old_nrg, new_bias, old_bias);
+            old_system = System();
+            system.accept();
             
             if (nmoves > 1)
-                test_ns += t.nsecsElapsed();
-
-            if (accept_move)
-            {
-                //the move has been rejected. Destroy the old state and accept the move
-                if (nmoves > 1)
-                    t.start();
-                
-                old_system = System();
-                system.accept();
-                
-                if (nmoves > 1)
-                    accept_ns += t.nsecsElapsed();
-            }
-            else
-            {
-                //the move has been rejected - reset the state
-                if (nmoves > 1)
-                    t.start();
-                
-                system = old_system;
-                
-                if (nmoves > 1)
-                    reject_ns += t.nsecsElapsed();
-            }
-
-            if (record_stats)
-            {
-                system.collectStats();
-            }
-
-            if (nmoves > 1)
-                test_ns += t.nsecsElapsed();
+                accept_ns += t.nsecsElapsed();
         }
-        
-        //qint64 ns = t2.nsecsElapsed();
-        
-        /*if (nmoves > 1)
+        else
         {
-            qDebug() << "Timing for" << nmoves << "(" << (0.000001*ns) << ")";
-            qDebug() << "OLD:" << (0.000001*old_ns) << "COPY:" << (0.000001*copy_ns)
-                     << "MOVE:" << (0.000001*move_ns) << "ENERGY:" << (0.000001*nrg_ns)
-                     << "TEST:" << (0.000001*test_ns) << "ACCEPT:" << (0.000001*accept_ns)
-                     << "REJECT:" << (0.000001*reject_ns);
-        }*/
-    }
-    catch(...)
-    {
-        system = old_system_state;
-        this->operator=(old_state);
+            //the move has been rejected - reset the state
+            if (nmoves > 1)
+                t.start();
+            
+            system = old_system;
+            
+            if (nmoves > 1)
+                reject_ns += t.nsecsElapsed();
+        }
 
-        throw;
+        if (record_stats)
+        {
+            system.collectStats();
+        }
     }
+    
+    qint64 ns = t2.nsecsElapsed();
+    
+    /*if (nmoves > 1)
+    {
+        qDebug() << "Timing for" << nmoves << "(" << (0.000001*ns) << ")";
+        qDebug() << "OLD:" << (0.000001*old_ns) << "COPY:" << (0.000001*copy_ns)
+                 << "MOVE:" << (0.000001*move_ns) << "ENERGY:" << (0.000001*nrg_ns)
+                 << "TEST:" << (0.000001*test_ns) << "ACCEPT:" << (0.000001*accept_ns)
+                 << "REJECT:" << (0.000001*reject_ns);
+    }*/
 }
 
 const char* RigidBodyMC::typeName()

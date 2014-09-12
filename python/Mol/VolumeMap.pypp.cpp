@@ -13,6 +13,8 @@ namespace bp = boost::python;
 
 #include "SireUnits/units.h"
 
+#include "SireVol/cartesian.h"
+
 #include "atomcoords.h"
 
 #include "atomelements.h"

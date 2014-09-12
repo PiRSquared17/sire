@@ -16,17 +16,21 @@ set ( SIREMM_HEADERS
       atomfunctions.h
       atomljs.h
       atompairs.hpp
+      clj14group.h
       cljatoms.h
       cljboxes.h
       cljcalculator.h
       cljcomponent.h
       cljdelta.h
+      cljextractor.h
       cljfunction.h
       cljgrid.h
+      cljgroup.h
       cljparam.h
       cljpotential.h
       cljprobe.h
       cljnbpairs.h
+      cljrffunction.h
       cljshiftfunction.h
       cljworkspace.h
       coulombpotential.h
@@ -39,6 +43,7 @@ set ( SIREMM_HEADERS
       intercljff.h
       intercoulombff.h
       interff.h
+      intergroupff.h
       interljff.h
       internalcomponent.h
       internalff.h
@@ -47,6 +52,8 @@ set ( SIREMM_HEADERS
       intersoftcljff.h
       intracljff.h
       intracoulombff.h
+      intraff.h
+      intragroupff.h
       intraljff.h
       intrasoftcljff.h
       ljfunction.h
@@ -55,6 +62,7 @@ set ( SIREMM_HEADERS
       ljparameterdb.h
       ljperturbation.h
       ljpotential.h
+      multicljcomponent.h
       restraint.h
       restraintcomponent.h
       restraintff.h
@@ -78,17 +86,21 @@ set ( SIREMM_SOURCES
       anglerestraint.cpp
       atomfunctions.cpp
       atomljs.cpp
+      clj14group.cpp
       cljatoms.cpp
       cljboxes.cpp
       cljcalculator.cpp
       cljcomponent.cpp
       cljdelta.cpp
+      cljextractor.cpp
       cljfunction.cpp
       cljgrid.cpp
+      cljgroup.cpp
       cljparam.cpp
       cljpotential.cpp
       cljprobe.cpp
       cljnbpairs.cpp
+      cljrffunction.cpp
       cljshiftfunction.cpp
       cljworkspace.cpp
       coulombpotential.cpp
@@ -101,6 +113,7 @@ set ( SIREMM_SOURCES
       intercljff.cpp
       intercoulombff.cpp
       interff.cpp
+      intergroupff.cpp
       interljff.cpp
       internalcomponent.cpp
       internalff.cpp
@@ -109,6 +122,8 @@ set ( SIREMM_SOURCES
       intersoftcljff.cpp
       intracljff.cpp
       intracoulombff.cpp
+      intraff.cpp
+      intragroupff.cpp
       intraljff.cpp
       intrasoftcljff.cpp
       ljpair.cpp
@@ -116,6 +131,7 @@ set ( SIREMM_SOURCES
       ljparameterdb.cpp
       ljperturbation.cpp
       ljpotential.cpp
+      multicljcomponent.cpp
       restraint.cpp
       restraintcomponent.cpp
       restraintff.cpp

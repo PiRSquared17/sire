@@ -53,13 +53,14 @@ static const RegisterMetaType<CLJGrid> r_grid(NO_ROOT);
 
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJGrid &grid)
 {
-    writeHeader(ds, r_grid, 1);
+    writeHeader(ds, r_grid, 2);
     
     SharedDataStream sds(ds);
     
     sds << grid.grid_info << grid.grid_buffer
         << grid.cljfunc << grid.grid_pots << grid.cljboxes
-        << grid.close_atoms << grid.use_grid;
+        << grid.close_atoms << grid.use_grid
+        << grid.parallel_calc << grid.repro_sum;
     
     return ds;
 }
@@ -68,7 +69,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJGrid &grid)
 {
     VersionID v = readHeader(ds, r_grid);
     
-    if (v == 1)
+    if (v <= 2)
     {
         SharedDataStream sds(ds);
         
@@ -88,9 +89,19 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJGrid &grid)
             grid.clearGrid();
             grid.setGrid(old);
         }
+        
+        if (v == 2)
+        {
+            sds >> grid.parallel_calc >> grid.repro_sum;
+        }
+        else
+        {
+            grid.parallel_calc = true;
+            grid.repro_sum = false;
+        }
     }
     else
-        throw version_error(v, "1", r_grid, CODELOC);
+        throw version_error(v, "1,2", r_grid, CODELOC);
     
     return ds;
 }
@@ -111,14 +122,17 @@ void CLJGrid::checkIfGridSupported()
 }
 
 /** Constructor */
-CLJGrid::CLJGrid() : grid_buffer(global_grid_buffer), cljfunc(global_func), use_grid(true)
+CLJGrid::CLJGrid() : grid_buffer(global_grid_buffer),
+                     cljfunc(global_func), use_grid(true),
+                     parallel_calc(true), repro_sum(false)
 {
     checkIfGridSupported();
 }
 
 /** Construct, specifying the dimensions of the grid */
 CLJGrid::CLJGrid(const AABox &grid_dimensions)
-        : grid_buffer(global_grid_buffer), cljfunc(global_func), use_grid(true)
+        : grid_buffer(global_grid_buffer), cljfunc(global_func), use_grid(true),
+          parallel_calc(true), repro_sum(false)
 {
     setGrid( GridInfo(grid_dimensions, global_grid_spacing) );
     checkIfGridSupported();
@@ -126,7 +140,8 @@ CLJGrid::CLJGrid(const AABox &grid_dimensions)
 
 /** Construct, specifying the dimensions and spacing for the grid */
 CLJGrid::CLJGrid(const AABox &grid_dimensions, Length spacing)
-        : grid_buffer(global_grid_buffer), cljfunc(global_func), use_grid(true)
+        : grid_buffer(global_grid_buffer), cljfunc(global_func), use_grid(true),
+          parallel_calc(true), repro_sum(false)
 {
     setGrid( GridInfo(grid_dimensions,spacing) );
     checkIfGridSupported();
@@ -134,7 +149,8 @@ CLJGrid::CLJGrid(const AABox &grid_dimensions, Length spacing)
 
 /** Construct, specifying the grid */
 CLJGrid::CLJGrid(const GridInfo &grid)
-        : grid_buffer(global_grid_buffer), cljfunc(global_func), use_grid(true)
+        : grid_buffer(global_grid_buffer), cljfunc(global_func), use_grid(true),
+          parallel_calc(true), repro_sum(false)
 {
     setGrid(grid);
     checkIfGridSupported();
@@ -142,7 +158,8 @@ CLJGrid::CLJGrid(const GridInfo &grid)
 
 /** Construct, specifying the function to use to calculate the energy */
 CLJGrid::CLJGrid(const CLJFunction &func)
-        : grid_buffer(global_grid_buffer), cljfunc(func), use_grid(true)
+        : grid_buffer(global_grid_buffer), cljfunc(func), use_grid(true),
+          parallel_calc(true), repro_sum(false)
 {
     checkIfGridSupported();
 }
@@ -150,7 +167,8 @@ CLJGrid::CLJGrid(const CLJFunction &func)
 /** Construct, specifying the function to use to calculate the energy and 
     the grid dimensions */
 CLJGrid::CLJGrid(const CLJFunction &func, const AABox &grid_dimensions)
-        : grid_buffer(global_grid_buffer), cljfunc(func), use_grid(true)
+        : grid_buffer(global_grid_buffer), cljfunc(func), use_grid(true),
+          parallel_calc(true), repro_sum(false)
 {
     setGrid( GridInfo(grid_dimensions,global_grid_spacing) );
     checkIfGridSupported();
@@ -159,7 +177,8 @@ CLJGrid::CLJGrid(const CLJFunction &func, const AABox &grid_dimensions)
 /** Construct, specifying the function to use to calculate the energy and
     the grid dimensions and grid spacing */
 CLJGrid::CLJGrid(const CLJFunction &func, const AABox &grid_dimensions, Length spacing)
-        : grid_buffer(global_grid_buffer), cljfunc(func), use_grid(true)
+        : grid_buffer(global_grid_buffer), cljfunc(func), use_grid(true),
+          parallel_calc(true), repro_sum(false)
 {
     setGrid( GridInfo(grid_dimensions,spacing) );
     checkIfGridSupported();
@@ -167,7 +186,8 @@ CLJGrid::CLJGrid(const CLJFunction &func, const AABox &grid_dimensions, Length s
 
 /** Construct, specifying the grid and the energy function */
 CLJGrid::CLJGrid(const CLJFunction &func, const GridInfo &grid)
-        : grid_buffer(global_grid_buffer), cljfunc(func), use_grid(true)
+        : grid_buffer(global_grid_buffer), cljfunc(func), use_grid(true),
+          parallel_calc(true), repro_sum(false)
 {
     setGrid(grid);
     checkIfGridSupported();
@@ -178,7 +198,8 @@ CLJGrid::CLJGrid(const CLJGrid &other)
         : grid_info(other.grid_info),
           grid_buffer(other.grid_buffer), grid_pots(other.grid_pots),
           cljfunc(other.cljfunc), cljboxes(other.cljboxes), close_atoms(other.close_atoms),
-          use_grid(other.use_grid), cljfunc_supports_grid(other.cljfunc_supports_grid)
+          use_grid(other.use_grid), cljfunc_supports_grid(other.cljfunc_supports_grid),
+          parallel_calc(other.parallel_calc), repro_sum(other.repro_sum)
 {}
 
 /** Destructor */
@@ -198,6 +219,8 @@ CLJGrid& CLJGrid::operator=(const CLJGrid &other)
         close_atoms = other.close_atoms;
         use_grid = other.use_grid;
         cljfunc_supports_grid = other.cljfunc_supports_grid;
+        parallel_calc = other.parallel_calc;
+        repro_sum = other.repro_sum;
     }
     
     return *this;
@@ -208,7 +231,9 @@ bool CLJGrid::operator==(const CLJGrid &other) const
 {
     return grid_info == other.grid_info and
            grid_buffer == other.grid_buffer and cljfunc == other.cljfunc and
-           cljboxes == other.cljboxes;
+           cljboxes == other.cljboxes and
+           parallel_calc == other.parallel_calc and
+           repro_sum == other.repro_sum;
 }
 
 /** Comparison operator */
@@ -306,6 +331,63 @@ void CLJGrid::setCLJFunction(const CLJFunction &function)
 const CLJFunction& CLJGrid::cljFunction() const
 {
     return cljfunc.read();
+}
+
+/** Enable use of a parallel multicore algorithm to calculate energies */
+void CLJGrid::enableParallelCalculation()
+{
+    setUseParallelCalculation(true);
+}
+
+/** Disable use of the parallel algorithm for calculating energies */
+void CLJGrid::disableParallelCalculation()
+{
+    setUseParallelCalculation(false);
+}
+
+/** Switch on or off use of a parallel multicore algorithm for calculating
+    energies */
+void CLJGrid::setUseParallelCalculation(bool on)
+{
+    parallel_calc = on;
+}
+
+/** Return whether or not a parallel algorithm is being used
+    to calculate grid energies */
+bool CLJGrid::usesParallelCalculation() const
+{
+    return parallel_calc;
+}
+
+/** Turn on an energy summing algorithm that guarantees the same energy
+    regardless of whether a single core or multicore calculation is being
+    performed (i.e. rounding errors in both cases will be identical) */
+void CLJGrid::enableReproducibleCalculation()
+{
+    setUseReproducibleCalculation(true);
+}
+
+/** Turn off an energy summing algorithm that guarantees the same energy
+    regardless of whether a single core or multicore calculation is being
+    performed (i.e. rounding errors in both cases will not be identical) */
+void CLJGrid::disableReproducibleCalculation()
+{
+    setUseReproducibleCalculation(false);
+}
+
+/** Switch on or off use of an energy summing algorithm that guarantees the 
+    same energy regardless of whether a single core or multicore calculation 
+    is being performed */
+void CLJGrid::setUseReproducibleCalculation(bool on)
+{
+    repro_sum = on;
+}
+
+/** Return whether or not a reproducible energy summing algorithm is being
+    used to accumulate the energies */
+bool CLJGrid::usesReproducibleCalculation() const
+{
+    return repro_sum;
 }
 
 /** Set the grid spacing */
@@ -553,7 +635,15 @@ void CLJGrid::calculateGrid()
     }
     
     //now, go through any far atoms and add their potentials to the grid
-    QVector<float> pot = cljfunc.read().calculate(far_atoms, grid_info);
+    //if (parallel_calc)
+    //{
+    //    write a parallel algorithm for calculating the grid - divide the entire
+    //    grid into boxes that can be evaluated in parallel
+    //}
+    //else
+    //{
+            QVector<float> pot = cljfunc.read().calculate(far_atoms, grid_info);
+    //}
     
     //update the object - note that because this is called from a const function
     //we have to be doubly sure that this has not been called twice from two
@@ -588,9 +678,17 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
         }
 
         //calculate the energy between the atoms and the close atoms
-        //CLJCalculator cljcalc;
-        //tuple<double,double> nrgs = cljcalc.calculate(cljfunc.read(), close_atoms, atoms);
-        tuple<double,double> nrgs = cljfunc->calculate(atoms, close_atoms);
+        tuple<double,double> nrgs;
+        
+        if (parallel_calc)
+        {
+            CLJCalculator cljcalc(repro_sum);
+            nrgs = cljcalc.calculate(cljfunc.read(), close_atoms, atoms);
+        }
+        else
+        {
+            nrgs = cljfunc.read().calculate(atoms, close_atoms);
+        }
 
         //now calculate the grid energy of each atom
         const float *gridpot_array = grid_pots.constData();
@@ -694,11 +792,21 @@ void CLJGrid::total(const CLJBoxes &atoms, double &cnrg, double &ljnrg) const
     
     //either the grid is not used or something went wrong with the grid calculation
     //Do not use a grid
-    CLJCalculator cljcalc;
-    tuple<double,double> nrgs = cljcalc.calculate(cljfunc.read(), atoms, cljboxes);
+    if (parallel_calc)
+    {
+        CLJCalculator cljcalc(repro_sum);
+        tuple<double,double> nrgs = cljcalc.calculate(cljfunc.read(), atoms, cljboxes);
         
-    cnrg = nrgs.get<0>();
-    ljnrg = nrgs.get<1>();
+        cnrg = nrgs.get<0>();
+        ljnrg = nrgs.get<1>();
+    }
+    else
+    {
+        tuple<double,double> nrgs = cljfunc.read().calculate(atoms, cljboxes);
+        
+        cnrg = nrgs.get<0>();
+        ljnrg = nrgs.get<1>();
+    }
 }
 
 /** Calculate the total energy of interaction between the passed atoms and

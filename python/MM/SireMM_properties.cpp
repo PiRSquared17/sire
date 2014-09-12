@@ -27,7 +27,6 @@
 #include "SireVol/gridinfo.h"
 #include "SireVol/periodicbox.h"
 #include "cljboxes.h"
-#include "cljdelta.h"
 #include "cljfunction.h"
 #include "switchingfunction.h"
 #include "tbb/blocked_range.h"

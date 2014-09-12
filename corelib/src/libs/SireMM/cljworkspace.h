@@ -33,6 +33,8 @@
 
 #include "SireMol/moleculeview.h"
 
+#include <boost/tuple/tuple.hpp>
+
 SIRE_BEGIN_HEADER
 
 namespace SireMM
@@ -49,6 +51,8 @@ QDataStream& operator>>(QDataStream&, SireMM::detail::CLJWorkspaceData&);
 
 namespace SireMM
 {
+
+using boost::tuple;
 
 /** This class provides a workspace in which to hold the details of the changes
     that occur in a CLJ forcefield during a Monte Carlo move. The class is optimised
@@ -76,6 +80,11 @@ public:
     bool operator==(const CLJWorkspace &other) const;
     bool operator!=(const CLJWorkspace &other) const;
     
+    static const char* typeName();
+    const char* what() const;
+    
+    QString toString() const;
+    
     const CLJDelta& operator[](int i) const;
 
     const CLJDelta& at(int i) const;
@@ -85,19 +94,16 @@ public:
     int count() const;
     int size() const;
     
-    static const char* typeName();
-    
-    const char* what() const;
-    
     const CLJDelta* data() const;
     const CLJDelta* constData() const;
     
-    void push(const CLJDelta &delta);
-    void push(quint32 idnum, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
-              const MoleculeView &new_atoms, const PropertyMap &map = PropertyMap());
-    void push(quint32 idnum, const CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
-              const MoleculeView &new_atoms, CLJAtoms::ID_SOURCE source,
-              const PropertyMap &map = PropertyMap());
+    CLJDelta push(CLJBoxes &boxes, const QVector<CLJBoxIndex> &old_atoms,
+                  const CLJAtoms &new_atoms, const CLJDelta &old_delta);
+    
+    void removeSameIDAtoms(CLJBoxes &boxes);
+    
+    QVector<CLJBoxIndex> commit(CLJBoxes &boxes, const CLJDelta &delta);
+    QVector<CLJBoxIndex> revert(CLJBoxes &boxes, const CLJDelta &delta);
     
     int nDeltas() const;
     
@@ -105,9 +111,20 @@ public:
     
     bool isEmpty() const;
     
-    CLJDelta merge() const;
+    tuple<CLJAtoms,CLJAtoms,CLJAtoms> merge() const;
+    
+    CLJAtoms changedAtoms() const;
+    CLJAtoms oldAtoms() const;
+    CLJAtoms newAtoms() const;
 
     void clear();
+
+    bool needsAccepting() const;
+
+    void accept(CLJBoxes &boxes);
+    void mustRecalculateFromScratch(CLJBoxes &boxes);
+
+    bool recalculatingFromScratch() const;
 
 private:
     void returnToMemoryPool();
@@ -117,6 +134,9 @@ private:
 
     /** Implicitly shared pointer to the data */
     boost::shared_ptr<detail::CLJWorkspaceData> d;
+    
+    /** Whether or not we are recalculating everything from scratch */
+    bool recalc_from_scratch;
 };
 
 }

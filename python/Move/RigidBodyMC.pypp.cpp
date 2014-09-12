@@ -20,6 +20,8 @@ namespace bp = boost::python;
 
 #include "SireMol/atomelements.h"
 
+#include "SireMol/atommasses.h"
+
 #include "SireMol/atomselection.h"
 
 #include "SireMol/molecule.h"

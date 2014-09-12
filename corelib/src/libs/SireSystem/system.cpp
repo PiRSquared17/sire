@@ -2809,6 +2809,7 @@ bool System::remove(const QSet<MolNum> &molnums, const MGID &mgid)
 void System::update(const MoleculeData &moldata, bool auto_commit)
 {
     Delta delta(*this, auto_commit);
+    
     //this ensures that only a single copy of System is used - prevents
     //unnecessary copying
     this->operator=( System() );
@@ -2832,6 +2833,7 @@ void System::update(const MoleculeData &moldata, bool auto_commit)
 void System::update(const Molecules &molecules, bool auto_commit)
 {
     Delta delta(*this, auto_commit);
+    
     //this ensures that only a single copy of System is used - prevents
     //unnecessary copying
     this->operator=( System() );

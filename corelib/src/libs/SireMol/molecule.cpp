@@ -108,6 +108,18 @@ Molecule& Molecule::operator=(const Molecule &other)
     return *this;
 }
 
+/** Comparison operator */
+bool Molecule::operator==(const Molecule &other) const
+{
+    return MoleculeView::operator==(other);
+}
+
+/** Comparison operator */
+bool Molecule::operator!=(const Molecule &other) const
+{
+    return not operator==(other);
+}
+
 /** Return a string representation of this molecule */
 QString Molecule::toString() const
 {

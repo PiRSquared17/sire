@@ -41,6 +41,8 @@
 
 #include "CHARMMSwitchingFunction.pypp.hpp"
 
+#include "CLJ14Group.pypp.hpp"
+
 #include "CLJAtom.pypp.hpp"
 
 #include "CLJAtoms.pypp.hpp"
@@ -61,11 +63,17 @@
 
 #include "CLJDelta.pypp.hpp"
 
+#include "CLJExtractor.pypp.hpp"
+
 #include "CLJFunction.pypp.hpp"
 
 #include "CLJGrid.pypp.hpp"
 
+#include "CLJGroup.pypp.hpp"
+
 #include "CLJIntraFunction.pypp.hpp"
+
+#include "CLJIntraRFFunction.pypp.hpp"
 
 #include "CLJIntraShiftFunction.pypp.hpp"
 
@@ -85,11 +93,23 @@
 
 #include "CLJProbe.pypp.hpp"
 
+#include "CLJRFFunction.pypp.hpp"
+
 #include "CLJScaleFactor.pypp.hpp"
 
 #include "CLJShiftFunction.pypp.hpp"
 
 #include "CLJSoftFunction.pypp.hpp"
+
+#include "CLJSoftIntraFunction.pypp.hpp"
+
+#include "CLJSoftIntraRFFunction.pypp.hpp"
+
+#include "CLJSoftIntraShiftFunction.pypp.hpp"
+
+#include "CLJSoftRFFunction.pypp.hpp"
+
+#include "CLJSoftShiftFunction.pypp.hpp"
 
 #include "CLJWorkspace.pypp.hpp"
 
@@ -159,6 +179,8 @@
 
 #include "InterGroupCoulombFFBase.pypp.hpp"
 
+#include "InterGroupFF.pypp.hpp"
+
 #include "InterGroupLJFF.pypp.hpp"
 
 #include "InterGroupLJFFBase.pypp.hpp"
@@ -193,6 +215,12 @@
 
 #include "InternalSymbolsBase.pypp.hpp"
 
+#include "Intra14Component.pypp.hpp"
+
+#include "Intra14CoulombComponent.pypp.hpp"
+
+#include "Intra14LJComponent.pypp.hpp"
+
 #include "IntraCLJFF.pypp.hpp"
 
 #include "IntraCLJFFBase.pypp.hpp"
@@ -201,6 +229,8 @@
 
 #include "IntraCoulombFFBase.pypp.hpp"
 
+#include "IntraFF.pypp.hpp"
+
 #include "IntraGroupCLJFF.pypp.hpp"
 
 #include "IntraGroupCLJFFBase.pypp.hpp"
@@ -208,6 +238,8 @@
 #include "IntraGroupCoulombFF.pypp.hpp"
 
 #include "IntraGroupCoulombFFBase.pypp.hpp"
+
+#include "IntraGroupFF.pypp.hpp"
 
 #include "IntraGroupLJFF.pypp.hpp"
 
@@ -244,6 +276,8 @@
 #include "LJProbe.pypp.hpp"
 
 #include "LJScaleFactor.pypp.hpp"
+
+#include "MultiCLJComponent.pypp.hpp"
 
 #include "NoCutoff.pypp.hpp"
 
@@ -454,6 +488,10 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_CHARMMSwitchingFunction_class();
 
+    register_CLJFunction_class();
+
+    register_CLJ14Group_class();
+
     register_CLJAtom_class();
 
     register_CLJAtoms_class();
@@ -470,15 +508,19 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_CLJComponent_class();
 
-    register_CLJFunction_class();
-
     register_CLJCutoffFunction_class();
 
     register_CLJDelta_class();
 
+    register_CLJExtractor_class();
+
     register_CLJGrid_class();
 
+    register_CLJGroup_class();
+
     register_CLJIntraFunction_class();
+
+    register_CLJIntraRFFunction_class();
 
     register_CLJIntraShiftFunction_class();
 
@@ -494,9 +536,21 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_CLJProbe_class();
 
+    register_CLJRFFunction_class();
+
     register_CLJShiftFunction_class();
 
     register_CLJSoftFunction_class();
+
+    register_CLJSoftIntraFunction_class();
+
+    register_CLJSoftIntraRFFunction_class();
+
+    register_CLJSoftIntraShiftFunction_class();
+
+    register_CLJSoftRFFunction_class();
+
+    register_CLJSoftShiftFunction_class();
 
     register_CLJWorkspace_class();
 
@@ -544,6 +598,8 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_InterFF_class();
 
+    register_InterGroupFF_class();
+
     register_InternalComponent_class();
 
     register_InternalFF_class();
@@ -566,6 +622,16 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_InternalSymbols_class();
 
+    register_Intra14Component_class();
+
+    register_Intra14CoulombComponent_class();
+
+    register_Intra14LJComponent_class();
+
+    register_IntraFF_class();
+
+    register_IntraGroupFF_class();
+
     register_LJComponent_class();
 
     register_LJNBPairs_class();
@@ -577,6 +643,8 @@ BOOST_PYTHON_MODULE(_MM){
     register_LJPerturbation_class();
 
     register_LJProbe_class();
+
+    register_MultiCLJComponent_class();
 
     register_NoCutoff_class();
 

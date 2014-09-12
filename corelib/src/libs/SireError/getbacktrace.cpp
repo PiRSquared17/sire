@@ -66,7 +66,7 @@ QRegExp regexp("([^(]+)\\(([^)^+]+)(\\+[^)]+)\\)\\s(\\[[^]]+\\])");
     This is not well-optimised, requires compilation with "-rdynamic" on linux
     and doesn't do a great job of demangling the symbol names. It is sufficient
     though to work out call trace. */
-QStringList SIREBASE_EXPORT getBackTrace()
+QStringList SIREERROR_EXPORT getBackTrace()
 {
     //now get the backtrace of the code at this point
     //(we can only do this if we have 'execinfo.h'

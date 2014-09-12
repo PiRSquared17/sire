@@ -71,8 +71,6 @@ class Space;
 namespace SireMM
 {
 
-class CLJDelta;
-
 using SireUnits::Dimension::Length;
 using SireVol::Space;
 
@@ -211,9 +209,6 @@ public:
     void remove(const QVector<CLJBoxIndex> &atoms);
 
     CLJAtom take(int atom);
-    CLJAtom takeNegative(int atom);
-
-    QVector<CLJBoxIndex> apply(const CLJDelta &delta);
 
     const CLJBoxIndex& index() const;
     float boxLength() const;
@@ -406,14 +401,19 @@ public:
                                                 const CLJBoxes &boxes0, const CLJBoxes &boxes1,
                                                 Length cutoff);
     
+    static QVector<CLJBoxDistance> getDistances(const Space &space,
+                                                const CLJAtoms &atoms0, const CLJBoxes &boxes1);
+    static QVector<CLJBoxDistance> getDistances(const Space &space,
+                                                const CLJAtoms &atoms0, const CLJBoxes &boxes1,
+                                                Length cutoff);
+    
     QVector<CLJBoxIndex> add(const CLJAtoms &atoms);
 
     void remove(const QVector<CLJBoxIndex> &atoms);
     
-    QVector<CLJBoxIndex> apply(const CLJDelta &delta);
+    CLJAtoms get(const QVector<CLJBoxIndex> &atoms) const;
     
     CLJAtoms take(const QVector<CLJBoxIndex> &atoms);
-    CLJAtoms takeNegative(const QVector<CLJBoxIndex> &atoms);
     
     CLJAtoms atoms() const;
     CLJAtoms atoms(const QVector<CLJBoxIndex> &atoms) const;

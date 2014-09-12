@@ -536,7 +536,7 @@ static void setAtomParameters(AtomEditor &editatom, MolEditor &editmol,
     double sigma, epsilon, rstar;
 
     // is there a SMALL?
-    if (iAcoef < 0.000001)
+    if (iAcoef < 1e-10)
     {
         sigma = 0.0;
         epsilon = 0.0;

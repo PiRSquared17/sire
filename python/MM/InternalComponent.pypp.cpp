@@ -96,6 +96,39 @@ void register_InternalComponent_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        { //::SireMM::InternalComponent::intra14
+        
+            typedef ::SireMM::Intra14Component const & ( ::SireMM::InternalComponent::*intra14_function_type )(  ) const;
+            intra14_function_type intra14_function_value( &::SireMM::InternalComponent::intra14 );
+            
+            InternalComponent_exposer.def( 
+                "intra14"
+                , intra14_function_value
+                , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
+        { //::SireMM::InternalComponent::intra14Coulomb
+        
+            typedef ::SireMM::Intra14CoulombComponent const & ( ::SireMM::InternalComponent::*intra14Coulomb_function_type )(  ) const;
+            intra14Coulomb_function_type intra14Coulomb_function_value( &::SireMM::InternalComponent::intra14Coulomb );
+            
+            InternalComponent_exposer.def( 
+                "intra14Coulomb"
+                , intra14Coulomb_function_value
+                , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
+        { //::SireMM::InternalComponent::intra14LJ
+        
+            typedef ::SireMM::Intra14LJComponent const & ( ::SireMM::InternalComponent::*intra14LJ_function_type )(  ) const;
+            intra14LJ_function_type intra14LJ_function_value( &::SireMM::InternalComponent::intra14LJ );
+            
+            InternalComponent_exposer.def( 
+                "intra14LJ"
+                , intra14LJ_function_value
+                , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
         { //::SireMM::InternalComponent::setEnergy
         
             typedef void ( ::SireMM::InternalComponent::*setEnergy_function_type )( ::SireFF::FF &,::SireMM::InternalEnergy const & ) const;

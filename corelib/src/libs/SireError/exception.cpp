@@ -160,9 +160,61 @@ QString SIREERROR_EXPORT getPIDString()
 
 } // end of namespace SireError
 
+bool FastExceptionFlag::enable_fast_exceptions = false;
+
+FastExceptionFlag::FastExceptionFlag()
+{}
+
+FastExceptionFlag::FastExceptionFlag(const FastExceptionFlag &other) : d(other.d)
+{}
+
+FastExceptionFlag::~FastExceptionFlag()
+{}
+
+FastExceptionFlag& FastExceptionFlag::operator=(const FastExceptionFlag &other)
+{
+    d = other.d;
+    return *this;
+}
+
+FastExceptionFlag FastExceptionFlag::construct()
+{
+    FastExceptionFlag f;
+    f.d.reset( new FastExceptionFlagData() );
+    return f;
+}
+
+void FastExceptionFlag::disable()
+{
+    enable_fast_exceptions = false;
+    d.reset();
+}
+
+FastExceptionFlag::FastExceptionFlagData::FastExceptionFlagData()
+{
+    enable_fast_exceptions = true;
+}
+
+FastExceptionFlag::FastExceptionFlagData::~FastExceptionFlagData()
+{
+    enable_fast_exceptions = false;
+}
+
+/** Switch on fast exceptions. These are used, e.g. when you know that
+    you are going to be handling exceptions yourself, are throwing thousands
+    of them, and thus don't want to slow the code down generating
+    extra backtrace or other information */
+FastExceptionFlag exception::enableFastExceptions()
+{
+    return FastExceptionFlag::construct();
+}
+
 /** Construct a null exception */
 exception::exception()
 {
+    if (FastExceptionFlag::enable_fast_exceptions)
+        return;
+
     //pidstr = getPIDString();
 }
 
@@ -173,6 +225,9 @@ exception::exception()
 */
 exception::exception(QString error, QString place) : err(error), plce(place)
 {
+    if (FastExceptionFlag::enable_fast_exceptions)
+        return;
+
     #ifdef SIRE_ENABLE_BACKTRACE
         bt = getBackTrace();
         //pidstr = getPIDString();

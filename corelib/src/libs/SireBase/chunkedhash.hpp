@@ -854,7 +854,7 @@ T& ChunkedHash<Key,T,N>::operator[](const Key &key)
     if (idx == -1)
     {
         this->insert( key, T() );
-        idx = key_to_chunkidx(key, -1);
+        idx = key_to_chunkidx.value(key, -1);
         
         Q_ASSERT( idx != -1 );
     }

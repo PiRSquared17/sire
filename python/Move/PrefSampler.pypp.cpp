@@ -109,6 +109,16 @@ void register_PrefSampler_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireMove::PrefSampler::isBiased
+        
+            typedef bool ( ::SireMove::PrefSampler::*isBiased_function_type )(  ) const;
+            isBiased_function_type isBiased_function_value( &::SireMove::PrefSampler::isBiased );
+            
+            PrefSampler_exposer.def( 
+                "isBiased"
+                , isBiased_function_value );
+        
+        }
         { //::SireMove::PrefSampler::k
         
             typedef ::SireCAS::Symbol ( *k_function_type )(  );
